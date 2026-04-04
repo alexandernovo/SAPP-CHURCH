@@ -1,0 +1,223 @@
+/* Admin login — card on blurred parish photo */
+
+body.admin-login-page {
+    background-color: #1a1a1a;
+}
+
+.admin-login-root {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-login-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background-image: url('/assets/landingPage/BACKGROUND.jpg');
+    background-size: cover;
+    background-position: center;
+    filter: blur(8px);
+    transform: scale(1.06);
+}
+
+.admin-login-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+}
+
+.admin-login-shell {
+    position: relative;
+    z-index: 1;
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    box-sizing: border-box;
+}
+
+.admin-login-card {
+    --admin-gold: #a67c00;
+    --admin-gold-dark: #8a6600;
+    width: 100%;
+    max-width: 28rem;
+    padding: 2rem 1.75rem 1.75rem;
+    background: #fff;
+    border-radius: 1rem;
+    box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, 0.35);
+    position: relative;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+.admin-login-card__close {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e5e5e5;
+    border-radius: 999px;
+    background: #fff;
+    color: #444;
+    font-size: 1.25rem;
+    line-height: 1;
+    text-decoration: none;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.admin-login-card__close:hover {
+    background: #f5f5f5;
+    color: #111;
+}
+
+.admin-login-card__brand {
+    text-align: center;
+    padding-top: 0.25rem;
+}
+
+.admin-login-card__logo {
+    width: 6.5rem;
+    height: 6.5rem;
+    object-fit: cover;
+    object-position: center;
+    border-radius: 50%;
+    display: block;
+    margin: 0 auto 1rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.admin-login-card__title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.35;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #111;
+}
+
+.admin-login-card__divider {
+    margin: 1.25rem 0 1.5rem;
+    border: none;
+    border-top: 1px solid #e8e8e8;
+}
+
+.admin-login-card__intro {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.admin-login-card__intro h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #111;
+}
+
+.admin-login-card__intro p {
+    margin: 0;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: #555;
+}
+
+.admin-login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+}
+
+.admin-login-field label {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #111;
+}
+
+.admin-login-input-wrap {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid var(--admin-gold);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background: #fff;
+}
+
+.admin-login-input-wrap__icon {
+    flex: 0 0 2.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--admin-gold);
+    color: #fff;
+    font-size: 1rem;
+}
+
+.admin-login-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0.65rem 0.75rem;
+    border: none;
+    font-size: 0.9375rem;
+    outline: none;
+}
+
+.admin-login-input-wrap--password .admin-login-input {
+    padding-right: 2.5rem;
+}
+
+.admin-login-toggle-pw {
+    position: absolute;
+    right: 0.35rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2.25rem;
+    height: 2.25rem;
+    border: none;
+    background: transparent;
+    color: var(--admin-gold);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.35rem;
+}
+
+.admin-login-toggle-pw:hover {
+    background: rgba(166, 124, 0, 0.1);
+}
+
+.admin-login-input-wrap--password {
+    position: relative;
+}
+
+.admin-login-submit {
+    margin-top: 0.25rem;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: 0.5rem;
+    background: linear-gradient(180deg, #b8890a 0%, var(--admin-gold) 100%);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: filter 0.15s ease, transform 0.05s ease;
+}
+
+.admin-login-submit:hover {
+    filter: brightness(1.05);
+}
+
+.admin-login-submit:active {
+    transform: translateY(1px);
+}

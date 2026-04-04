@@ -1,0 +1,142 @@
+
+html:has(body.landing-page) {
+    height: 100%;
+    overflow: hidden;
+}
+
+html {
+    height: 100%;
+}
+
+body.landing-page {
+    height: 100dvh;
+    max-height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+    background-color: #0a0f14;
+    background-image: url('/assets/landingPage/BACKGROUND.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+.landing-ribbon {
+    position: fixed;
+    right: -10rem;
+    bottom: 0;
+    z-index: 1;
+    pointer-events: none;
+    width: min(95vw, 1000px);
+    height: min(95vh, 1000px);
+    background-color: transparent;
+    background-image: url('/assets/landingPage/RIBBON.png');
+    background-size: contain;
+    background-position: right bottom;
+    background-repeat: no-repeat;
+    mix-blend-mode: screen;
+}
+
+@media (max-width: 768px) {
+    body.landing-page {
+        background-attachment: scroll;
+    }
+}
+
+
+.landing-main {
+    position: relative;
+    z-index: 2;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.sappc-main {
+    position: relative;
+    z-index: 2;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    padding: clamp(1rem, 3vw, 2.5rem) 0;
+}
+
+.sappc-main .container {
+    position: relative;
+}
+
+.sappc-main__copy {
+    color: #fff;
+}
+
+.sappc-welcome {
+    margin: 0 0 0.35rem;
+    font-size: 1.0625rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    opacity: 0.95;
+}
+
+.sappc-main-title {
+    margin: 0 0 0.75rem;
+    font-size: clamp(1.85rem, 4.2vw, 2.65rem);
+    font-weight: 700;
+    line-height: 1.2;
+    text-wrap: balance;
+}
+
+.sappc-main-title-accent {
+    height: 3px;
+    max-width: 16rem;
+    margin-bottom: 1.25rem;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.15));
+    box-shadow: 0 0 24px rgba(255, 255, 255, 0.35);
+}
+
+.sappc-main-subtitle {
+    margin: 0 0 1rem;
+    font-size: clamp(1.1rem, 2.2vw, 1.35rem);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.sappc-main-quote {
+    margin: 0;
+    font-size: 1.0625rem;
+    font-style: italic;
+    line-height: 1.55;
+    opacity: 0.92;
+}
+
+
+.sappc-main-logo {
+    display: block;
+    max-width: min(100%, 500px);
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    height: auto;
+    object-fit: cover;
+    object-position: center;
+    border-radius: 50%;
+    filter: drop-shadow(0 12px 32px rgba(0, 0, 0, 0.35));
+}
+
+@media (min-width: 992px) {
+    .sappc-main-logo {
+        margin-left: auto;
+        transform: translateX(2.25rem);
+    }
+}
+
+@media (max-width: 991.98px) {
+    .sappc-main-logo {
+        max-width: min(100%, 380px);
+        margin-left: auto;
+        margin-right: auto;
+        transform: none;
+    }
+}
