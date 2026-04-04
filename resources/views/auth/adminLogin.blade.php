@@ -28,34 +28,44 @@
 
                 <div class="admin-login-card__intro">
                     <h2>Log in to your Account</h2>
-                    <p>Enter your username and password to log in your account</p>
+                    <p>Enter your username and password to log in to your account</p>
                 </div>
 
-                <form class="admin-login-form" method="POST" action="#" autocomplete="on">
+                @error('login')
+                    <p class="admin-login-card__error" role="alert">{{ $message }}</p>
+                @enderror
+
+                <form class="admin-login-form" method="POST" action="{{ route('admin.login.submit') }}" autocomplete="on">
                     @csrf
                     <div class="admin-login-field">
-                        <label for="admin-username">Username:</label>
+                        <label for="admin-username">Username</label>
                         <div class="admin-login-input-wrap">
                             <span class="admin-login-input-wrap__icon" aria-hidden="true">
                                 <i class="fa-solid fa-user"></i>
                             </span>
-                            <input id="admin-username" class="admin-login-input" type="text" name="username"
-                                value="{{ old('username') }}" autocomplete="username" required>
+                            <input id="admin-username" class="admin-login-input @error('userName') admin-login-input--error @enderror"
+                                type="text" name="userName" value="{{ old('userName') }}" autocomplete="username" required>
                         </div>
+                        @error('userName')
+                            <span class="admin-login-field__error">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <div class="admin-login-field">
-                        <label for="admin-password">Password:</label>
+                        <label for="admin-password">Password</label>
                         <div class="admin-login-input-wrap admin-login-input-wrap--password">
                             <span class="admin-login-input-wrap__icon" aria-hidden="true">
                                 <i class="fa-solid fa-lock"></i>
                             </span>
-                            <input id="admin-password" class="admin-login-input" type="password" name="password"
-                                autocomplete="current-password" required>
+                            <input id="admin-password" class="admin-login-input @error('userPass') admin-login-input--error @enderror"
+                                type="password" name="userPass" autocomplete="current-password" required>
                             <button type="button" class="admin-login-toggle-pw" aria-label="Show password">
                                 <i class="fa-solid fa-eye"></i>
                             </button>
                         </div>
+                        @error('userPass')
+                            <span class="admin-login-field__error">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <button type="submit" class="admin-login-submit">Login</button>
@@ -68,5 +78,16 @@
 @endsection
 
 @push('scripts')
-    @include('auth.adminLoginjs')
+    <script>
+        document.querySelector('.admin-login-toggle-pw')?.addEventListener('click', function () {
+            const input = document.getElementById('admin-password');
+            const icon = this.querySelector('i');
+            if (!input || !icon) return;
+            const show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            this.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+            icon.classList.toggle('fa-eye', !show);
+            icon.classList.toggle('fa-eye-slash', show);
+        });
+    </script>
 @endpush

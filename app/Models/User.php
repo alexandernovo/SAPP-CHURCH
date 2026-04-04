@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -13,37 +12,46 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
+    protected $table = 'users';
+
+    protected $primaryKey = 'userId';
+
     /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
+     * Password column for Auth::attempt / Hash::check (plain text is passed as credentials['password']).
      */
+    protected $authPasswordName = 'userPass';
+
+    /**
+     * No remember_token column in the current schema — disable "remember me" persistence.
+     */
+    protected $rememberTokenName = '';
+
     protected $fillable = [
-        'name',
-        'email',
-        'password',
+        'userName',
+        'userPass',
+        'userfName',
+        'userlName',
+        'address',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
-        'password',
-        'remember_token',
+        'userPass',
     ];
 
     /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
+     * Raw hash from DB (fixes common mistake: storing "\$2y\$..." with backslashes).
      */
+    public function getAuthPassword(): string
+    {
+        $hash = $this->attributes['userPass'] ?? '';
+
+        return is_string($hash) ? stripslashes($hash) : '';
+    }
+
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'userPass' => 'hashed',
         ];
     }
 }
