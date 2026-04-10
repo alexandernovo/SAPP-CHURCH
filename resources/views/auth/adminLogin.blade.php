@@ -5,7 +5,7 @@
 @section('body-class', 'admin-login-page bg-light')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/adminLogin.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/auth/adminLogin.css') }}">
 @endpush
 
 @section('content')

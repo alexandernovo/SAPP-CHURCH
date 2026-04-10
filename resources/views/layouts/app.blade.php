@@ -6,9 +6,9 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', config('app.name', 'Laravel'))</title>
     @include('layouts.cdn')
-    <link rel="stylesheet" href="{{ asset('css/headerNav.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/landingPage.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/footer.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/landing/headerNav.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/landing/landingPage.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/landing/footer.css') }}">
     @stack('styles')
 </head>
 <body class="sapp-site @yield('body-class')">
