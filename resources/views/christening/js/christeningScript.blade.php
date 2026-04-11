@@ -1,9 +1,5 @@
 <script>
     (function() {
-        'use strict';
-
-        // Cursor auto-accept test #3 — remove after testing.
-
         var initialTablePayload = @json($initialTablePayload);
 
         function esc(s) {
@@ -322,6 +318,61 @@
             if (reloadBtn) {
                 reloadBtn.addEventListener('click', function() {
                     fetchRecords();
+                });
+            }
+
+            var $scheduleBtn = $('#christeningScheduleRequestBtn');
+            if ($scheduleBtn.length) {
+                $scheduleBtn.on('click', function() {
+                    var scheduleUrl = ($scheduleBtn.attr('data-schedule-url') || '').trim();
+                    if (!scheduleUrl) {
+                        console.warn('christeningScheduleRequestBtn: missing data-schedule-url');
+                        return;
+                    }
+
+                    var method = ($scheduleBtn.attr('data-schedule-method') || 'POST')
+                        .toUpperCase();
+                    var viaNavigate =
+                        ($scheduleBtn.attr('data-schedule-via') || '').toLowerCase() ===
+                        'navigate';
+
+                    if (viaNavigate) {
+                        window.location.href = scheduleUrl;
+                        return;
+                    }
+
+                    $.ajax({
+                        url: scheduleUrl,
+                        type: method,
+                        dataType: 'json',
+                        headers: {
+                            'X-CSRF-TOKEN': getMetaCsrf(),
+                            'X-Requested-With': 'XMLHttpRequest',
+                            Accept: 'application/json',
+                        },
+                        data: method === 'GET' ?
+                            undefined :
+                            {
+                                _token: getMetaCsrf(),
+                            },
+                        success: function(res) {
+                            if (res && res.redirect) {
+                                window.location.href = res.redirect;
+                                return;
+                            }
+                            fetchRecords();
+                        },
+                        error: function(xhr) {
+                            var msg = 'Could not complete schedule request.';
+                            if (
+                                xhr.responseJSON &&
+                                typeof xhr.responseJSON.message === 'string'
+                            ) {
+                                msg = xhr.responseJSON.message;
+                            }
+                            alert(msg + (xhr.status ? ' (' + xhr.status + ')' : ''));
+                        },
+                    });
                 });
             }
         });

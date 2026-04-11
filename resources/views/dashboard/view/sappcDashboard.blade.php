@@ -97,25 +97,28 @@
                 </div>
 
                 <div class="modal fade" id="sappcStatMonthlyModal" tabindex="-1" aria-labelledby="sappcStatMonthlyModalTitle" aria-hidden="true">
-                    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable sappc-stat-monthly-dialog">
                         <div class="modal-content sappc-stat-monthly-modal">
-                            <div class="modal-header border-0 pb-0 align-items-center flex-wrap gap-2">
-                                <h2 class="modal-title h5 mb-0 flex-grow-1" id="sappcStatMonthlyModalTitle">Document</h2>
-                                <div class="d-flex align-items-center gap-2 sappc-stat-monthly-toolbar">
-                                    <i class="fa-solid fa-calendar-days text-secondary" aria-hidden="true"></i>
-                                    <label class="visually-hidden" for="sappcStatMonthlyYear">Year</label>
-                                    <select id="sappcStatMonthlyYear" class="form-select form-select-sm sappc-stat-monthly-year-select" aria-label="Filter by year">
-                                        @foreach ($statsYearOptions as $y)
-                                            <option value="{{ $y }}" @selected($y === $statsYear)>{{ $y }}</option>
-                                        @endforeach
-                                    </select>
+                            <div class="sappc-stat-monthly-modal__header">
+                                <h2 class="visually-hidden" id="sappcStatMonthlyModalTitle">Document</h2>
+                                <div class="sappc-stat-monthly-modal__head-row">
+                                    <div class="sappc-stat-monthly-modal__controls">
+                                        <span class="sappc-stat-monthly-cal-badge" aria-hidden="true">
+                                            <i class="fa-solid fa-calendar-days"></i>
+                                        </span>
+                                        <label class="visually-hidden" for="sappcStatMonthlyYear">Year</label>
+                                        <select id="sappcStatMonthlyYear" class="form-select form-select-sm sappc-stat-monthly-year-select" aria-label="Filter by year">
+                                            @foreach ($statsYearOptions as $y)
+                                                <option value="{{ $y }}" @selected($y === $statsYear)>{{ $y }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <button type="button" class="btn-close sappc-stat-monthly-modal__close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
-                            <div class="modal-body pt-2">
-                                <p class="small text-muted mb-3" id="sappcStatMonthlySubtitle">Total for <span id="sappcStatMonthlyYearLabel">{{ $statsYear }}</span>: <strong id="sappcStatMonthlyTotal">0</strong></p>
+                            <div class="modal-body sappc-stat-monthly-modal__body">
                                 <div class="sappc-stat-monthly-grid" id="sappcStatMonthlyGrid" role="list" aria-busy="false"></div>
-                                <p class="small text-danger mb-0 d-none" id="sappcStatMonthlyError" role="alert"></p>
+                                <p class="sappc-stat-monthly-error small text-danger mb-0 d-none" id="sappcStatMonthlyError" role="alert"></p>
                             </div>
                         </div>
                     </div>

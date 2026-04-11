@@ -6,11 +6,12 @@
             crossorigin="anonymous" referrerpolicy="no-referrer">
     @endpush
 
-    @push('scripts')
+    {{-- Prepend so scripts run before page @push('scripts'): child views render first and push before layout head runs. --}}
+    @prepend('scripts')
         <script src="https://code.jquery.com/jquery-3.7.1.min.js"
             integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous">
         </script>
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
-    @endpush
+    @endprepend
 @endonce

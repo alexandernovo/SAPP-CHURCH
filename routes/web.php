@@ -24,4 +24,5 @@ Route::middleware('auth')->group(function () {
     Route::view('/burial', 'burial.views.burial')->name('admin.burial');
     Route::view('/document', 'document.view.document')->name('admin.document');
     Route::view('/certification', 'certification.view.certification')->name('admin.certification');
+    Route::post('/christening/schedule-request', [ChristeningController::class, 'scheduleRequest'])->name('admin.christening.schedule-request');
 });

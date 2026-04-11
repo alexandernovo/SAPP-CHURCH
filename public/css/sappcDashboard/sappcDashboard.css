@@ -317,10 +317,9 @@
     color: #9e9e9e;
 }
 
-/* Black RECORD toolbar (registry subpages: Christening, etc.) */
 .sappc-registry-toolbar {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
     gap: 0.5rem 0.65rem;
     margin-bottom: 1rem;
@@ -341,20 +340,25 @@
 
 .sappc-registry-toolbar_actions {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
-    gap: 0.45rem;
+    justify-content: flex-end;
+    gap: 0.55rem;
     flex: 1 1 auto;
+    margin-left: auto;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
 }
 
 .sappc-registry-toolbar_btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.4rem;
-    padding: 0.4rem 0.85rem;
+    gap: 0.5rem;
+    padding: 0.48rem 0.95rem;
     font-family: var(--sappc-font-family);
-    font-size: 0.72rem;
+    font-size: 0.8rem;
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: none;
@@ -367,10 +371,11 @@
 
 .sappc-registry-toolbar_btn--reload {
     min-width: auto;
-    padding: 0.4rem 0.85rem;
+    padding: 0.48rem 0.95rem;
     background: #424242;
     border-color: #616161;
     color: #fff;
+    margin-right: auto;
 }
 
 .sappc-registry-toolbar_btn--reload:hover {
@@ -403,10 +408,41 @@
 }
 
 .sappc-registry-toolbar_btn i {
-    font-size: 0.8rem;
+    font-size: 0.86rem;
 }
 
-/* Square view / edit / delete in registry tables */
+@media (max-width: 1024px) and (min-width: 992px) {
+    .sappc-registry-toolbar {
+        flex-wrap: nowrap;
+        padding: 0.55rem 0.75rem;
+        gap: 0.45rem;
+    }
+
+    .sappc-registry-toolbar_record {
+        font-size: 1rem;
+        margin-right: 0.2rem;
+        white-space: nowrap;
+    }
+
+    .sappc-registry-toolbar_actions {
+        flex-wrap: nowrap;
+        gap: 0.45rem;
+        min-width: 0;
+    }
+
+    .sappc-registry-toolbar_btn,
+    .sappc-registry-toolbar_btn--reload {
+        padding: 0.45rem 0.8rem;
+        font-size: 0.75rem;
+        gap: 0.4rem;
+    }
+
+    .sappc-registry-toolbar_btn i {
+        font-size: 0.82rem;
+    }
+}
+
+
 .sappc-icon-action {
     display: inline-flex;
     align-items: center;
@@ -448,7 +484,7 @@
     justify-content: center;
 }
 
-/* Payment status (matches reference: deep green / red, white label, subtle corners) */
+
 .sappc-payment-badge {
     display: inline-block;
     min-width: 3.25rem;
@@ -472,7 +508,7 @@
     color: #fff;
 }
 
-/* ——— Document stat cards ——— */
+
 .sappc-doc-stats {
     margin-bottom: 1.25rem;
 }
@@ -553,31 +589,94 @@ button.sappc-doc-stat_clickable:focus-visible {
     outline-offset: 2px;
 }
 
-/* Monthly breakdown modal (stat cards) */
+.sappc-stat-monthly-dialog {
+    max-width: min(42rem, calc(100vw - 2rem));
+}
+
 .sappc-stat-monthly-modal {
     border-radius: 0.35rem;
+    border: 1px solid var(--sappc-border, #dee2e6);
+    box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.18);
+}
+
+.sappc-stat-monthly-modal__header {
+    padding: 1rem 1rem 0.75rem;
+}
+
+.sappc-stat-monthly-modal__head-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.sappc-stat-monthly-modal__controls {
+    display: flex;
+    flex: 0 1 auto;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sappc-stat-monthly-cal-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    flex-shrink: 0;
+    color: #fff;
+    background: #4a4a4a;
+    border-radius: 0.2rem;
+    font-size: 0.95rem;
 }
 
 .sappc-stat-monthly-year-select {
-    min-width: 5.5rem;
-    max-width: 7rem;
+    min-width: 5.75rem;
+    max-width: 7.5rem;
+    height: 2.25rem;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+    font-weight: 500;
+    color: #212529;
+    background-color: #fff;
+    border: 1px solid #212529;
+    border-radius: 0.2rem;
+}
+
+.sappc-stat-monthly-modal__close {
+    margin: 0;
+    padding: 0.5rem;
+    flex-shrink: 0;
+    opacity: 0.65;
+}
+
+.sappc-stat-monthly-modal__close:hover {
+    opacity: 1;
+}
+
+.sappc-stat-monthly-modal__body {
+    padding-top: 0.5rem !important;
+}
+
+.sappc-stat-monthly-error:not(.d-none) {
+    margin-top: 0.75rem;
 }
 
 .sappc-stat-monthly-grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 0.5rem;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 0.55rem 0.45rem;
 }
 
 @media (max-width: 767.98px) {
     .sappc-stat-monthly-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
 
 @media (max-width: 399.98px) {
     .sappc-stat-monthly-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
@@ -586,29 +685,32 @@ button.sappc-doc-stat_clickable:focus-visible {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.35rem;
-    min-height: 4.25rem;
-    padding: 0.85rem 0.4rem;
+    gap: 0.45rem;
+    min-height: 4.75rem;
+    padding: 0.75rem 0.35rem;
     text-align: center;
     color: #fff;
-    background: #757575;
-    border-radius: 0.25rem;
+    background: #5c5c5c;
+    border-radius: 0.35rem;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .sappc-stat-monthly-tile_label {
-    font-size: 0.7rem;
+    font-size: 0.6875rem;
     font-weight: 800;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.08em;
     line-height: 1;
+    text-transform: uppercase;
 }
 
 .sappc-stat-monthly-tile_value {
-    font-size: 1.35rem;
+    font-size: 1.5rem;
     font-weight: 800;
     line-height: 1;
+    font-variant-numeric: tabular-nums;
 }
 
-/* ——— Table panel ——— */
+
 .sappc-table-panel {
     background: var(--sappc-white);
     border: 1px solid var(--sappc-border);
@@ -655,7 +757,6 @@ button.sappc-doc-stat_clickable:focus-visible {
     color: var(--sappc-charcoal);
 }
 
-/* Segmented date strip: dark label/button cells + white inputs (matches reference; no Bootstrap form-control here) */
 .sappc-toolbar-date-strip {
     display: inline-flex;
     flex-direction: row;
@@ -743,7 +844,6 @@ button.sappc-doc-stat_clickable:focus-visible {
     outline-offset: -2px;
 }
 
-/* A–Z in a horizontal scroll strip (saves toolbar space) */
 .sappc-table-toolbar_letters {
     flex: 1 1 auto;
     display: flex;
@@ -853,7 +953,6 @@ button.sappc-doc-stat_clickable:focus-visible {
     background: var(--sappc-gold-dark);
 }
 
-/* Data table */
 .sappc-data-table {
     font-size: 0.8rem;
 }
@@ -945,7 +1044,6 @@ button.sappc-doc-stat_clickable:focus-visible {
     color: #fff;
 }
 
-/* ——— Chart section ——— */
 .sappc-chart-section {
     margin-bottom: 1rem;
 }
@@ -1030,7 +1128,6 @@ button.sappc-doc-stat_clickable:focus-visible {
     }
 }
 
-/* ——— Site footer ——— */
 .sappc-site-footer {
     margin-top: auto;
     padding: 0.85rem 1rem;
@@ -1043,7 +1140,6 @@ button.sappc-doc-stat_clickable:focus-visible {
     color: #fff;
 }
 
-/* ——— Mobile sidebar (drawer) ——— */
 .sappc-dash_backdrop {
     display: none;
     position: fixed;
@@ -1069,7 +1165,6 @@ button.sappc-doc-stat_clickable:focus-visible {
         box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25);
     }
 
-    /* Full labels in drawer (ignore desktop collapsed) */
     .sappc-sidebar_church,
     .sappc-sidebar_group-label {
         display: block !important;

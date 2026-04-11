@@ -90,10 +90,6 @@
                 var u = buildQueryUrl(monthlyUrl, { type: currentDocType, year: year });
                 fetchJson(u, { Accept: 'application/json' })
                     .then(function (res) {
-                        document.getElementById('sappcStatMonthlyYearLabel').textContent =
-                            res.year;
-                        document.getElementById('sappcStatMonthlyTotal').textContent =
-                            res.total;
                         var html = '';
                         (res.months || []).forEach(function (m) {
                             html +=

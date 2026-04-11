@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -20,6 +21,14 @@ class ChristeningController extends Controller
             'initialTablePayload' => $data['initialTablePayload'],
             'perPageOptions' => DashboardController::perPageOptionsList(),
             'letterOptions' => range('A', 'Z'),
+        ]);
+    }
+
+    public function scheduleRequest(Request $request): JsonResponse
+    {
+        return response()->json([
+            'ok' => true,
+            'message' => 'Schedule request acknowledged.',
         ]);
     }
 }
