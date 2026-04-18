@@ -24,5 +24,14 @@ Route::middleware('auth')->group(function () {
     Route::view('/burial', 'burial.views.burial')->name('admin.burial');
     Route::view('/document', 'document.view.document')->name('admin.document');
     Route::view('/certification', 'certification.view.certification')->name('admin.certification');
-    Route::post('/christening/schedule-request', [ChristeningController::class, 'scheduleRequest'])->name('admin.christening.schedule-request');
+    Route::post('/christening/schedule-request', [ChristeningController::class, 'scheduleChristening'])->name('admin.christening.schedule-request');
+    Route::post('/christening/application-form', [ChristeningController::class, 'christeningApplicationForm'])->name('admin.christening.application-form');
+    Route::get('/christening/application-details', [ChristeningController::class, 'christeningApplicationDetails'])->name('admin.christening.application-details');
+    Route::get('/christening/payment-details', [ChristeningController::class, 'christeningPaymentDetails'])->name('admin.christening.payment-details');
+    Route::post('/christening/payment-save', [ChristeningController::class, 'christeningPaymentSave'])->name('admin.christening.payment-save');
+    Route::post('/christening/certification-form', [ChristeningController::class, 'christeningCertificationForm'])->name('admin.christening.certification-form');
+    Route::get('/christening/certification-details', [ChristeningController::class, 'christeningCertificationDetails'])->name('admin.christening.certification-details');
+    Route::post('/christening/record/delete', [ChristeningController::class, 'deleteChristeningRecord'])->name('admin.christening.record-delete');
+    Route::get('/christening/schedule-reserved-dates', [ChristeningController::class, 'christeningReservedDates'])->name('admin.christening.schedule-reserved-dates');
+    Route::post('/admin/dashboard/records/delete', [DashboardController::class, 'deleteRecord' ])->name('admin.dashboard.records.delete');
 });

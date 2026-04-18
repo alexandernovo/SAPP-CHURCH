@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use App\Models\User;
 
 class DashboardController extends Controller
 {
@@ -245,7 +246,7 @@ class DashboardController extends Controller
         $confirmation = DB::table('confirmation')->selectRaw(
             "confirmationId AS record_id, 'Confirmation' AS document_type, {$shared}, NULL AS scheduleRequested, NULL AS paymentStatus"
         );
-
+        // Registry shows christening schedule row only; full application lives in christening_details (separate save).
         $christening = DB::table('christening')->selectRaw(
             "christeningId AS record_id, 'Christening' AS document_type, {$shared}, scheduleRequested, paymentStatus"
         );
@@ -318,5 +319,14 @@ class DashboardController extends Controller
         }
 
         return $query->orderByDesc('dateCreated')->orderByDesc('record_id');
+    }
+
+    public function deleteRecord(Request $request)
+    {
+        $customerId = $request->customerId;
+        User::where('userId', $customerId)->delete();
+        return response()->json([
+            'status' => 'success',
+        ]);
     }
 }

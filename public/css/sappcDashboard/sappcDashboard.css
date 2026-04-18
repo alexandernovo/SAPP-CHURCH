@@ -1,5 +1,3 @@
-
-
 :root {
     --sappc-charcoal: #212121;
     --sappc-charcoal-light: #2d2d2d;
@@ -27,7 +25,6 @@
     min-height: 100vh;
 }
 
-
 .sappc-sidebar {
     width: var(--sappc-sidebar-width);
     flex-shrink: 0;
@@ -41,7 +38,10 @@
     top: 0;
     overflow: hidden;
     opacity: 1;
-    transition: width 0.22s ease, transform 0.22s ease, opacity 0.2s ease;
+    transition:
+        width 0.22s ease,
+        transform 0.22s ease,
+        opacity 0.2s ease;
     border-right: 1px solid #0d0d0d;
     box-sizing: border-box;
 }
@@ -55,11 +55,13 @@
 .sappc-sidebar_logo {
     width: 5.5rem;
     height: 5.5rem;
-    object-fit: cover;
+    object-fit: contain;
     border-radius: 50%;
     display: block;
     margin: 0 auto;
     box-shadow: 0 2px 16px rgba(0, 0, 0, 0.4);
+    background: transparent;
+    mix-blend-mode: screen;
 }
 
 .sappc-sidebar_church {
@@ -365,7 +367,10 @@
     border-radius: 0.2rem;
     border: 1px solid transparent;
     cursor: pointer;
-    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    transition:
+        background 0.15s ease,
+        color 0.15s ease,
+        border-color 0.15s ease;
     white-space: nowrap;
 }
 
@@ -442,7 +447,6 @@
     }
 }
 
-
 .sappc-icon-action {
     display: inline-flex;
     align-items: center;
@@ -457,7 +461,9 @@
     line-height: 1;
     cursor: pointer;
     text-decoration: none;
-    transition: filter 0.15s ease, transform 0.1s ease;
+    transition:
+        filter 0.15s ease,
+        transform 0.1s ease;
 }
 
 .sappc-icon-action:hover {
@@ -484,7 +490,6 @@
     justify-content: center;
 }
 
-
 .sappc-payment-badge {
     display: inline-block;
     min-width: 3.25rem;
@@ -507,7 +512,6 @@
     background: #7f1d1d;
     color: #fff;
 }
-
 
 .sappc-doc-stats {
     margin-bottom: 1.25rem;
@@ -576,7 +580,9 @@ button.sappc-doc-stat_clickable {
     font: inherit;
     color: inherit;
     text-align: center;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
 }
 
 button.sappc-doc-stat_clickable:hover {
@@ -709,7 +715,6 @@ button.sappc-doc-stat_clickable:focus-visible {
     line-height: 1;
     font-variant-numeric: tabular-nums;
 }
-
 
 .sappc-table-panel {
     background: var(--sappc-white);
@@ -906,22 +911,18 @@ button.sappc-doc-stat_clickable:focus-visible {
     margin-bottom: -0.2rem;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-x: contain;
-    scrollbar-width: thin;
-    scrollbar-color: #9e9e9e #e8e8e8;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    cursor: grab;
+    user-select: none;
+}
+
+.sappc-letter-filter_letters.is-dragging {
+    cursor: grabbing;
 }
 
 .sappc-letter-filter_letters::-webkit-scrollbar {
-    height: 6px;
-}
-
-.sappc-letter-filter_letters::-webkit-scrollbar-track {
-    background: #e8e8e8;
-    border-radius: 3px;
-}
-
-.sappc-letter-filter_letters::-webkit-scrollbar-thumb {
-    background: #9e9e9e;
-    border-radius: 3px;
+    display: none;
 }
 
 .sappc-letter-filter_btn {
@@ -935,7 +936,9 @@ button.sappc-doc-stat_clickable:focus-visible {
     font-size: 0.78rem;
     font-weight: 700;
     cursor: pointer;
-    transition: background 0.15s ease, transform 0.1s ease;
+    transition:
+        background 0.15s ease,
+        transform 0.1s ease;
     line-height: 1;
     flex-shrink: 0;
 }
