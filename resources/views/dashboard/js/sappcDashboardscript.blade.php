@@ -321,13 +321,20 @@
                 fetchRecords();
             });
 
-            var dateFilterBtn = document.querySelector('.sappc-toolbar-date-strip_btn');
+            var dateFilterBtn = document.getElementById('sappcDateFilterBtn');
             if (dateFilterBtn) {
                 dateFilterBtn.addEventListener('click', function() {
                     state.date_from = document.getElementById('sappcDateFrom').value || '';
                     state.date_to = document.getElementById('sappcDateTo').value || '';
                     state.page = 1;
                     fetchRecords();
+                });
+            }
+
+            var reloadBtn = document.getElementById('sappcReloadRecords');
+            if (reloadBtn) {
+                reloadBtn.addEventListener('click', function() {
+                    window.location.reload();
                 });
             }
 
@@ -357,6 +364,93 @@
                     state.page = 1;
                     fetchRecords();
                 });
+            });
+
+            var deleteUrl = panel.getAttribute('data-delete-url');
+
+            function deleteRegistryRow(recordId, documentType) {
+                if (!deleteUrl) return;
+                var postHeaders = Object.assign({}, jsonHeaders, {
+                    'Content-Type': 'application/json',
+                });
+                fetch(deleteUrl, {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: postHeaders,
+                        body: JSON.stringify({
+                            record_id: parseInt(recordId, 10),
+                            document_type: documentType,
+                        }),
+                    })
+                    .then(function(r) {
+                        return r.json().then(function(data) {
+                            return { ok: r.ok, status: r.status, data: data };
+                        });
+                    })
+                    .then(function(result) {
+                        var d = result.data || {};
+                        if (result.ok && d.status === 'success') {
+                            fetchRecords();
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Deleted',
+                                    text: d.message || 'Record deleted.',
+                                    timer: 1800,
+                                    showConfirmButton: false,
+                                });
+                            }
+                            return;
+                        }
+                        var msg =
+                            d.message ||
+                            (result.status === 404 ?
+                                'Record not found.' :
+                                'Could not delete this record.');
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({ icon: 'error', title: 'Cannot delete', text: msg });
+                        } else {
+                            window.alert(msg);
+                        }
+                    })
+                    .catch(function() {
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Could not reach the server.',
+                            });
+                        } else {
+                            window.alert('Could not reach the server.');
+                        }
+                    });
+            }
+
+            panel.addEventListener('click', function(e) {
+                var btn = e.target.closest('.sappc-action-delete');
+                if (!btn) return;
+                e.preventDefault();
+                var rid = btn.getAttribute('data-record-id');
+                var dtype = btn.getAttribute('data-document-type');
+                if (!rid || !dtype || !deleteUrl) return;
+
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Delete this record?',
+                        text: 'This action cannot be undone.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Delete',
+                        cancelButtonText: 'Cancel',
+                        focusCancel: true,
+                    }).then(function(res) {
+                        if (res.isConfirmed) deleteRegistryRow(rid, dtype);
+                    });
+                } else if (
+                    window.confirm('Delete this record? This action cannot be undone.')
+                ) {
+                    deleteRegistryRow(rid, dtype);
+                }
             });
         });
 

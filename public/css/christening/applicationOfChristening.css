@@ -1,9 +1,15 @@
 
-#christeningScheduleRequestModal .modal-dialog {
+#christeningScheduleRequestModal .modal-dialog,
+#confirmationScheduleRequestModal .modal-dialog,
+#weddingScheduleRequestModal .modal-dialog,
+#burialScheduleRequestModal .modal-dialog {
     max-width: min(96vw, 1080px);
 }
 
-#christeningScheduleRequestModal .modal-content {
+#christeningScheduleRequestModal .modal-content,
+#confirmationScheduleRequestModal .modal-content,
+#weddingScheduleRequestModal .modal-content,
+#burialScheduleRequestModal .modal-content {
     border: none;
 }
 
@@ -24,7 +30,10 @@
     z-index: 2;
 }
 
-#christeningScheduleRequestModal .sappcScheduleRequestModalClose.btn-close {
+#christeningScheduleRequestModal .sappcScheduleRequestModalClose.btn-close,
+#confirmationScheduleRequestModal .sappcScheduleRequestModalClose.btn-close,
+#weddingScheduleRequestModal .sappcScheduleRequestModalClose.btn-close,
+#burialScheduleRequestModal .sappcScheduleRequestModalClose.btn-close {
     width: 2.35rem;
     height: 2.35rem;
     padding: 0;
@@ -39,12 +48,18 @@
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
-#christeningScheduleRequestModal .sappcScheduleRequestModalClose.btn-close:hover {
+#christeningScheduleRequestModal .sappcScheduleRequestModalClose.btn-close:hover,
+#confirmationScheduleRequestModal .sappcScheduleRequestModalClose.btn-close:hover,
+#weddingScheduleRequestModal .sappcScheduleRequestModalClose.btn-close:hover,
+#burialScheduleRequestModal .sappcScheduleRequestModalClose.btn-close:hover {
     background-color: #f4f4f4;
     opacity: 1;
 }
 
-#christeningScheduleRequestModal .sappcScheduleRequestModalClose.btn-close:focus {
+#christeningScheduleRequestModal .sappcScheduleRequestModalClose.btn-close:focus,
+#confirmationScheduleRequestModal .sappcScheduleRequestModalClose.btn-close:focus,
+#weddingScheduleRequestModal .sappcScheduleRequestModalClose.btn-close:focus,
+#burialScheduleRequestModal .sappcScheduleRequestModalClose.btn-close:focus {
     opacity: 1;
     box-shadow: 0 0 0 0.2rem rgba(178, 137, 40, 0.25);
 }
@@ -124,7 +139,10 @@
     border-top: 1px solid #bebebe;
 }
 
-#chCalDayCells {
+#chCalDayCells,
+#cnCalDayCells,
+#wdCalDayCells,
+#brCalDayCells {
     display: contents;
 }
 
@@ -1334,7 +1352,7 @@
         min-width: 0;
     }
 }
-#christeningPaymentFeeModal .modal-dialog.sappcPaymentFeeModalDialog {
+.sappcPaymentFeeModal .modal-dialog.sappcPaymentFeeModalDialog {
     max-width: min(94vw, 52rem);
     width: 100%;
     margin: 1.5rem auto;
@@ -1749,11 +1767,17 @@
     }
 }
 
-#christeningTableBody tr.is-schedule-selected td {
+#christeningTableBody tr.is-schedule-selected td,
+#confirmationTableBody tr.is-schedule-selected td,
+#weddingTableBody tr.is-schedule-selected td,
+#burialTableBody tr.is-schedule-selected td {
     background-color: rgba(178, 137, 28, 0.14);
 }
 
-#christeningTableBody tr.is-schedule-selected td:first-child {
+#christeningTableBody tr.is-schedule-selected td:first-child,
+#confirmationTableBody tr.is-schedule-selected td:first-child,
+#weddingTableBody tr.is-schedule-selected td:first-child,
+#burialTableBody tr.is-schedule-selected td:first-child {
     box-shadow: inset 5px 0 0 rgba(201, 162, 45, 0.92);
 }
 
@@ -1762,8 +1786,10 @@
     max-width: 20rem;
 }
 
-/* Baptism certification modal */
-#christeningCertificationModal .modal-dialog.sappcCertModalDialog {
+#christeningCertificationModal .modal-dialog.sappcCertModalDialog,
+#confirmationCertificationModal .modal-dialog.sappcCertModalDialog,
+#burialCertificationModal .modal-dialog.sappcCertModalDialog,
+#weddingCertificationModal .modal-dialog.sappcCertModalDialog {
     max-width: min(96vw, 46rem);
     width: 100%;
     margin: 1.5rem auto;
@@ -1776,23 +1802,31 @@
     font-family: var(--sappc-font-family, Arial, Helvetica, sans-serif);
 }
 
-.sappcChristeningCertificationModal .modal-header {
+.sappcChristeningCertificationModal .modal-header,
+.sappcConfirmationCertificationModal .modal-header,
+.sappcBurialCertificationModal .modal-header,
+.sappcWeddingCertificationModal .modal-header {
     padding-bottom: 0;
 }
 
-.sappcChristeningCertificationModal .modal-body {
+.sappcChristeningCertificationModal .modal-body,
+.sappcConfirmationCertificationModal .modal-body,
+.sappcBurialCertificationModal .modal-body,
+.sappcWeddingCertificationModal .modal-body {
     color: #111;
     padding: 0 1rem 0.85rem;
 }
 
 .sappcCertModalForm {
+    --sappc-cert-label-col: minmax(7.75rem, 10.75rem);
     font-size: 0.8rem;
 }
 
 .sappcCertModalMasthead {
     text-align: center;
-    margin-bottom: 1rem;
-    padding-top: 0.25rem;
+    margin-bottom: 0.85rem;
+    padding: 0.25rem 0 0.85rem;
+    border-bottom: 1px solid #e0e0e0;
 }
 
 .sappcCertModalLogoWrap {
@@ -1823,20 +1857,32 @@
 }
 
 .sappcCertModalMetaGrid {
-    margin-bottom: 1rem;
+    margin-bottom: 0.85rem;
+    padding-bottom: 0.15rem;
 }
 
 .sappcCertModalMetaRow {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-columns: var(--sappc-cert-label-col) minmax(0, 1fr) var(--sappc-cert-label-col) minmax(0, 1fr);
     gap: 0.4rem 0.65rem;
     align-items: center;
     margin-bottom: 0.45rem;
 }
 
+.sappcCertModalMetaRow .sappcCertModalLabel:nth-child(1),
+.sappcCertModalMetaRow .sappcCertModalLabel:nth-child(3) {
+    justify-self: start;
+    text-align: left;
+}
+
+/* Top block (reference, client, contact, address): value text left-aligned */
+.sappcCertModalMetaGrid .sappcCertModalInput {
+    text-align: left;
+}
+
 @media (max-width: 767.98px) {
     .sappcCertModalMetaRow {
-        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-columns: var(--sappc-cert-label-col) minmax(0, 1fr);
     }
 }
 
@@ -1845,7 +1891,9 @@
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    margin: 0 0 0.65rem;
+    margin: 0.35rem 0 0.75rem;
+    padding-top: 0.35rem;
+    border-top: 1px solid #e8e8e8;
     color: #111;
 }
 
@@ -1874,12 +1922,42 @@
     margin-bottom: 0.65rem;
 }
 
-.sappcCertModalField--triple .sappcCertModalLabel.sappcCertModalLabel--block::after {
+/* Side-by-side label + control (replaces stacked block labels inside certification form) */
+.sappcCertModalForm .sappcCertModalField--stack {
+    display: grid;
+    grid-template-columns: var(--sappc-cert-label-col) minmax(0, 1fr);
+    gap: 0.45rem 0.65rem;
+    align-items: center;
+    margin-bottom: 0.65rem;
+}
+
+.sappcCertModalForm .sappcCertModalField--stack .sappcCertModalLabel--block {
+    margin-bottom: 0;
+    justify-self: start;
+    text-align: left;
+}
+
+.sappcCertModalForm .sappcCertModalField--stack .sappcCertModalLabel--block::after {
     content: ':';
 }
 
-.sappcCertModalField--stack {
+.sappcCertModalForm .sappcCertModalField--triple {
+    display: grid;
+    grid-template-columns: var(--sappc-cert-label-col) minmax(0, 1fr);
+    gap: 0.45rem 0.65rem;
+    align-items: center;
     margin-bottom: 0.65rem;
+}
+
+.sappcCertModalForm .sappcCertModalField--triple .sappcCertModalLabel--block {
+    margin-bottom: 0;
+    align-self: center;
+    justify-self: start;
+    text-align: left;
+}
+
+.sappcCertModalForm .sappcCertModalField--triple .sappcCertModalLabel.sappcCertModalLabel--block::after {
+    content: ':';
 }
 
 .sappcCertModalTriple,
@@ -1894,7 +1972,7 @@
     grid-template-columns: 1fr 1.35fr;
     gap: 0.65rem;
     margin-bottom: 0.65rem;
-    align-items: end;
+    align-items: center;
 }
 
 @media (max-width: 767.98px) {
@@ -1903,6 +1981,20 @@
     .sappcCertModalAddress3,
     .sappcCertModalRow2 {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 575.98px) {
+
+    .sappcCertModalForm .sappcCertModalField--stack,
+    .sappcCertModalForm .sappcCertModalField--triple {
+        grid-template-columns: 1fr;
+    }
+
+    .sappcCertModalForm .sappcCertModalField--stack .sappcCertModalLabel--block,
+    .sappcCertModalForm .sappcCertModalField--triple .sappcCertModalLabel--block {
+        justify-self: start;
+        text-align: left;
     }
 }
 
@@ -1933,26 +2025,72 @@
 
 .sappcCertModalField--inline {
     display: grid;
-    grid-template-columns: auto 1fr;
+    grid-template-columns: var(--sappc-cert-label-col) minmax(0, 1fr);
     gap: 0.45rem 0.55rem;
     align-items: center;
     margin-bottom: 0;
+    min-width: 0;
 }
 
 .sappcCertModalField--inline .sappcCertModalLabel {
+    justify-self: start;
     text-align: left;
+}
+
+/*
+ * Under the section title (Baptism / Confirmation information): placeholders and values
+ * align right inside inputs, matching the paper form.
+ */
+.sappcCertModalForm h4.sappcCertModalSectionTitle ~ .sappcCertModalField .sappcCertModalInput,
+.sappcCertModalForm h4.sappcCertModalSectionTitle ~ .sappcCertModalField .sappcCertModalSelect,
+.sappcCertModalForm h4.sappcCertModalSectionTitle ~ .sappcCertModalRow2 .sappcCertModalInput,
+.sappcCertModalForm h4.sappcCertModalSectionTitle ~ .sappcCertModalRow2 .sappcCertModalSelect,
+.sappcCertModalForm h4.sappcCertModalSectionTitle ~ .sappcCertModalRow2 .sappcCertModalDateWrap .sappcCertModalInput,
+.sappcCertModalForm h4.sappcCertModalSectionTitle ~ .sappcCertModalTrackingGrid .sappcCertModalInput {
+    text-align: right;
 }
 
 .sappcCertModalTrackingGrid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 0.5rem 1rem;
+    grid-template-rows: auto auto;
+    gap: 0.5rem 1.25rem;
     margin-top: 0.15rem;
+    align-items: center;
+}
+
+.sappcCertModalTrackingGrid .sappcCertModalField--inline:nth-child(1) {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.sappcCertModalTrackingGrid .sappcCertModalField--inline:nth-child(2) {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.sappcCertModalTrackingGrid .sappcCertModalField--inline:nth-child(3) {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.sappcCertModalTrackingGrid .sappcCertModalField--inline:nth-child(4) {
+    grid-column: 2;
+    grid-row: 2;
 }
 
 @media (max-width: 575.98px) {
     .sappcCertModalTrackingGrid {
         grid-template-columns: 1fr;
+        grid-template-rows: auto;
+    }
+
+    .sappcCertModalTrackingGrid .sappcCertModalField--inline:nth-child(1),
+    .sappcCertModalTrackingGrid .sappcCertModalField--inline:nth-child(2),
+    .sappcCertModalTrackingGrid .sappcCertModalField--inline:nth-child(3),
+    .sappcCertModalTrackingGrid .sappcCertModalField--inline:nth-child(4) {
+        grid-column: 1;
+        grid-row: auto;
     }
 }
 
@@ -1974,7 +2112,10 @@
     font-size: 0.95rem;
 }
 
-.sappcChristeningCertificationModal .modal-footer.sappcChristeningAppModalFooter {
+.sappcChristeningCertificationModal .modal-footer.sappcChristeningAppModalFooter,
+.sappcConfirmationCertificationModal .modal-footer.sappcChristeningAppModalFooter,
+.sappcBurialCertificationModal .modal-footer.sappcChristeningAppModalFooter,
+.sappcWeddingCertificationModal .modal-footer.sappcChristeningAppModalFooter {
     flex-wrap: wrap;
     justify-content: flex-end;
     gap: 0.5rem;
