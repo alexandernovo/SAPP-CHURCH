@@ -2,7 +2,10 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\ChristeningController;
+use App\Http\Controllers\BurialController;
+use App\Http\Controllers\ConfirmationController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\WeddingController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'landingPage')->name('landingPage');
@@ -19,9 +22,21 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/dashboard/stats/monthly', [DashboardController::class, 'monthlyStats'])->name('admin.dashboard.stats.monthly');
     Route::post('/admin/logout', [AuthController::class, 'logout'])->name('admin.logout');
     Route::get('/christening', [ChristeningController::class, 'index'])->name('admin.christening');
-    Route::view('/confirmation', 'confirmation.view.confirmation')->name('admin.confirmation');
-    Route::view('/wedding', 'wedding.view.wedding')->name('admin.wedding');
-    Route::view('/burial', 'burial.views.burial')->name('admin.burial');
+    Route::get('/confirmation', [ConfirmationController::class, 'index'])->name('admin.confirmation');
+    Route::post('/confirmation/schedule-request', [ConfirmationController::class, 'scheduleConfirmation'])->name('admin.confirmation.schedule-request');
+    Route::get('/confirmation/schedule-reserved-dates', [ConfirmationController::class, 'confirmationReservedDates'])->name('admin.confirmation.schedule-reserved-dates');
+    Route::get('/confirmation/payment-details', [ConfirmationController::class, 'confirmationPaymentDetails'])->name('admin.confirmation.payment-details');
+    Route::post('/confirmation/payment-save', [ConfirmationController::class, 'confirmationPaymentSave'])->name('admin.confirmation.payment-save');
+    Route::get('/wedding', [WeddingController::class, 'index'])->name('admin.wedding');
+    Route::post('/wedding/schedule-request', [WeddingController::class, 'scheduleWedding'])->name('admin.wedding.schedule-request');
+    Route::get('/wedding/schedule-reserved-dates', [WeddingController::class, 'weddingReservedDates'])->name('admin.wedding.schedule-reserved-dates');
+    Route::get('/wedding/payment-details', [WeddingController::class, 'weddingPaymentDetails'])->name('admin.wedding.payment-details');
+    Route::post('/wedding/payment-save', [WeddingController::class, 'weddingPaymentSave'])->name('admin.wedding.payment-save');
+    Route::get('/burial', [BurialController::class, 'index'])->name('admin.burial');
+    Route::post('/burial/schedule-request', [BurialController::class, 'scheduleBurial'])->name('admin.burial.schedule-request');
+    Route::get('/burial/schedule-reserved-dates', [BurialController::class, 'burialReservedDates'])->name('admin.burial.schedule-reserved-dates');
+    Route::get('/burial/payment-details', [BurialController::class, 'burialPaymentDetails'])->name('admin.burial.payment-details');
+    Route::post('/burial/payment-save', [BurialController::class, 'burialPaymentSave'])->name('admin.burial.payment-save');
     Route::view('/document', 'document.view.document')->name('admin.document');
     Route::view('/certification', 'certification.view.certification')->name('admin.certification');
     Route::post('/christening/schedule-request', [ChristeningController::class, 'scheduleChristening'])->name('admin.christening.schedule-request');

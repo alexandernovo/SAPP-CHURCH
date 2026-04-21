@@ -24,6 +24,9 @@ class Confirmation extends Model
         'address',
         'sex',
         'contactNum',
+        'scheduleRequested',
+        'paymentStatus',
+        'paymentFeeRows',
         'dateCreated',
         'customerId',
     ];
@@ -32,6 +35,8 @@ class Confirmation extends Model
     {
         return [
             'dateCreated' => 'datetime',
+            'scheduleRequested' => 'datetime',
+            'paymentFeeRows' => 'array',
         ];
     }
 

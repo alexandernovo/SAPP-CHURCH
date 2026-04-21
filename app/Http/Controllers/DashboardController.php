@@ -9,14 +9,14 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
-use App\Models\User;
+use Illuminate\Database\QueryException;
 
 class DashboardController extends Controller
 {
 
     private const PER_PAGE_OPTIONS = [10, 25, 50, 100];
 
-    /** Toolbar letters A–Z (scrollable strip); filter uses `clientLName` (with fallback) on the union of all registry tables. */
+
     private const LETTER_FILTER_END = 'Z';
 
     private static function letterFilterOptions(): array
@@ -24,7 +24,6 @@ class DashboardController extends Controller
         return range('A', self::LETTER_FILTER_END);
     }
 
-    /** Lowercase `LIKE` pattern with `%` / `_` escaped for MySQL. */
     private static function searchLikePattern(string $term): string
     {
         $t = mb_strtolower(trim($term));
@@ -244,19 +243,18 @@ class DashboardController extends Controller
         $shared = 'referenceCode, clientFName, clientMName, clientLName, address, sex, contactNum, dateCreated, customerId';
 
         $confirmation = DB::table('confirmation')->selectRaw(
-            "confirmationId AS record_id, 'Confirmation' AS document_type, {$shared}, NULL AS scheduleRequested, NULL AS paymentStatus"
+            "confirmationId AS record_id, 'Confirmation' AS document_type, {$shared}, scheduleRequested, paymentStatus"
         );
-        // Registry shows christening schedule row only; full application lives in christening_details (separate save).
         $christening = DB::table('christening')->selectRaw(
             "christeningId AS record_id, 'Christening' AS document_type, {$shared}, scheduleRequested, paymentStatus"
         );
 
         $wedding = DB::table('wedding')->selectRaw(
-            "weddingId AS record_id, 'Wedding' AS document_type, {$shared}, NULL AS scheduleRequested, NULL AS paymentStatus"
+            "weddingId AS record_id, 'Wedding' AS document_type, {$shared}, scheduleRequested, paymentStatus"
         );
 
         $burial = DB::table('burial')->selectRaw(
-            "burialId AS record_id, 'Burial' AS document_type, {$shared}, NULL AS scheduleRequested, paymentStatus"
+            "burialId AS record_id, 'Burial' AS document_type, {$shared}, scheduleRequested, paymentStatus"
         );
 
         return $confirmation->unionAll($christening)->unionAll($wedding)->unionAll($burial);
@@ -321,12 +319,123 @@ class DashboardController extends Controller
         return $query->orderByDesc('dateCreated')->orderByDesc('record_id');
     }
 
-    public function deleteRecord(Request $request)
+    public function deleteRecord(Request $request): JsonResponse
     {
-        $customerId = $request->customerId;
-        User::where('userId', $customerId)->delete();
+        $validated = $request->validate([
+            'record_id' => ['required', 'integer', 'min:1'],
+            'document_type' => ['required', 'string', 'in:Confirmation,Christening,Wedding,Burial'],
+        ]);
+
+        $recordId = (int) $validated['record_id'];
+        $documentType = $validated['document_type'];
+
+        $exists = match ($documentType) {
+            'Confirmation' => DB::table('confirmation')->where('confirmationId', $recordId)->exists(),
+            'Christening' => DB::table('christening')->where('christeningId', $recordId)->exists(),
+            'Wedding' => DB::table('wedding')->where('weddingId', $recordId)->exists(),
+            'Burial' => DB::table('burial')->where('burialId', $recordId)->exists(),
+        };
+
+        if (! $exists) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Record not found.',
+            ], 404);
+        }
+
+        try {
+            DB::transaction(function () use ($documentType, $recordId) {
+                match ($documentType) {
+                    'Confirmation' => $this->deleteConfirmationRegistryRow($recordId),
+                    'Christening' => $this->deleteChristeningRegistryRow($recordId),
+                    'Wedding' => $this->deleteWeddingRegistryRow($recordId),
+                    'Burial' => $this->deleteBurialRegistryRow($recordId),
+                };
+            });
+        } catch (QueryException $e) {
+            report($e);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Could not delete this record. If this persists, run database migrations and try again.',
+            ], 422);
+        }
+
         return response()->json([
             'status' => 'success',
+            'ok' => true,
+            'message' => 'Record deleted.',
         ]);
     }
+
+    private function deleteChristeningRegistryRow(int $christeningId): void
+    {
+        $row = DB::table('christening')->where('christeningId', $christeningId)->first();
+        if ($row === null) {
+            return;
+        }
+
+        DB::table('christening_certification')->where('christeningId', $christeningId)->delete();
+        DB::table('christening_details')->where('christeningId', $christeningId)->delete();
+        DB::table('christening')->where('christeningId', $christeningId)->delete();
+
+        $this->deleteCustomerIfOrphaned($row->customerId ?? null);
+    }
+
+    private function deleteConfirmationRegistryRow(int $confirmationId): void
+    {
+        $row = DB::table('confirmation')->where('confirmationId', $confirmationId)->first();
+        if ($row === null) {
+            return;
+        }
+        DB::table('confirmation')->where('confirmationId', $confirmationId)->delete();
+        $this->deleteCustomerIfOrphaned($row->customerId ?? null);
+    }
+
+    private function deleteWeddingRegistryRow(int $weddingId): void
+    {
+        $row = DB::table('wedding')->where('weddingId', $weddingId)->first();
+        if ($row === null) {
+            return;
+        }
+        DB::table('wedding')->where('weddingId', $weddingId)->delete();
+        $this->deleteCustomerIfOrphaned($row->customerId ?? null);
+    }
+
+    private function deleteBurialRegistryRow(int $burialId): void
+    {
+        $row = DB::table('burial')->where('burialId', $burialId)->first();
+        if ($row === null) {
+            return;
+        }
+        DB::table('burial')->where('burialId', $burialId)->delete();
+        $this->deleteCustomerIfOrphaned($row->customerId ?? null);
+    }
+
+    private function deleteCustomerIfOrphaned(mixed $customerId): void
+    {
+        if ($customerId === null || $customerId === '') {
+            return;
+        }
+        $cid = (int) $customerId;
+        if ($cid < 1) {
+            return;
+        }
+        if (DB::table('christening')->where('customerId', $cid)->exists()) {
+            return;
+        }
+        if (DB::table('confirmation')->where('customerId', $cid)->exists()) {
+            return;
+        }
+        if (DB::table('wedding')->where('customerId', $cid)->exists()) {
+            return;
+        }
+        if (DB::table('burial')->where('customerId', $cid)->exists()) {
+            return;
+        }
+        if (DB::getSchemaBuilder()->hasTable('customer')) {
+            DB::table('customer')->where('customerId', $cid)->delete();
+        }
+    }
 }
+

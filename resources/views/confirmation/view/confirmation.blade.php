@@ -2,6 +2,10 @@
 
 @section('title', 'Confirmation — ' . config('app.name', 'SAPP Church'))
 
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/christening/applicationOfChristening.css') }}">
+@endpush
+
 @section('content')
     <h1 class="sappc-page-title">
         <i class="fa-solid fa-file-lines" aria-hidden="true"></i>
@@ -20,15 +24,25 @@
                 <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
                 Reload
             </button>
-            <button type="button" class="sappc-registry-toolbar_btn sappc-registry-toolbar_btn--cta">
+            <button type="button" class="sappc-registry-toolbar_btn sappc-registry-toolbar_btn--cta"
+                id="confirmationScheduleRequestBtn"
+                data-schedule-save-url="{{ route('admin.confirmation.schedule-request') }}" title="Schedule request"
+                aria-label="Open schedule request" aria-expanded="false" aria-controls="confirmationScheduleRequestModal"
+                data-bs-toggle="modal" data-bs-target="#confirmationScheduleRequestModal">
                 <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
                 Schedule Request
             </button>
-            <button type="button" class="sappc-registry-toolbar_btn sappc-registry-toolbar_btn--outline">
+            <button type="button" class="sappc-registry-toolbar_btn sappc-registry-toolbar_btn--outline"
+                id="confirmationCertificationBtn" title="Confirmation certification"
+                aria-label="Open confirmation certification form" aria-expanded="false"
+                aria-controls="confirmationCertificationModal" data-bs-toggle="modal"
+                data-bs-target="#confirmationCertificationModal">
                 <i class="fa-solid fa-certificate" aria-hidden="true"></i>
                 Certification
             </button>
-            <button type="button" class="sappc-registry-toolbar_btn sappc-registry-toolbar_btn--outline">
+            <button type="button" class="sappc-registry-toolbar_btn sappc-registry-toolbar_btn--outline"
+                id="confirmationPaymentFeeBtn" title="Payment fee" aria-label="Open payment fee" aria-expanded="false"
+                aria-controls="confirmationPaymentFeeModal">
                 <i class="fa-solid fa-money-bill-wave" aria-hidden="true"></i>
                 Payment Fee
             </button>
@@ -39,11 +53,145 @@
         </div>
     </div>
 
+    <div class="sappcPaymentFeeModal">
+        <div class="modal fade" id="confirmationPaymentFeeModal" tabindex="-1"
+            aria-labelledby="confirmationPaymentFeeModalTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered sappcPaymentFeeModalDialog">
+                <div class="modal-content sappcPaymentFeeModalSurface">
+                    <div class="modal-header flex-wrap gap-2 border-bottom-0 pb-0 align-items-center">
+                        <h2 class="modal-title h6 mb-0 text-muted fw-normal visually-hidden"
+                            id="confirmationPaymentFeeModalTitle">Payment fee record</h2>
+                        <div class="d-flex flex-wrap gap-2 align-items-center ms-auto">
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                    </div>
+                    <div class="modal-body pt-0">
+                        <form class="sappcPaymentFeeModalForm" id="confirmationPaymentFeeForm" action="#"
+                            method="post" autocomplete="off"
+                            data-save-url="{{ route('admin.confirmation.payment-save') }}">
+                            <div class="sappcChOfficial sappcPaymentFeeModalOfficial">
+                                <header class="sappcChOfficialHeader">
+                                    <div class="sappcChOfficialLogo sappcChOfficialLogoLeft">
+                                        <img src="{{ asset('assets/logos/DSA.jpg') }}" width="72" height="72"
+                                            alt="Diocese of San Jose de Antique" class="sappcChOfficialLogoImg">
+                                    </div>
+                                    <div class="sappcChOfficialMasthead">
+                                        <p class="sappcChOfficialMastheadLine sappcChOfficialMastheadLineStrong">
+                                            The Roman Catholic Parish of St. Anthony of Padua</p>
+                                        <p class="sappcChOfficialMastheadLine">Diocese of San Jose de Antique</p>
+                                        <p class="sappcChOfficialMastheadLine">Barbaza, 5706, Antique, Philippines</p>
+                                    </div>
+                                    <div class="sappcChOfficialLogo sappcChOfficialLogoRight sappcChOfficialLogoParishSeal">
+                                        <img src="{{ asset('assets/logos/SAPPC.png') }}" width="72" height="72"
+                                            alt="Parish of St. Anthony of Padua, Barbaza"
+                                            class="sappcChOfficialLogoImg sappcChOfficialLogoImgParishSeal">
+                                    </div>
+                                </header>
+
+                                <div class="sappcPaymentFeeModalFields">
+                                    <div class="sappcPaymentFeeModalField">
+                                        <label class="sappcPaymentFeeModalLabel" for="cnPaymentRefCode">Reference
+                                            Code</label>
+                                        <input type="text" class="sappcPaymentFeeModalInput" id="cnPaymentRefCode"
+                                            name="reference_code" value="" readonly
+                                            title="System-generated; use when creating a new record">
+                                    </div>
+                                    <div class="sappcPaymentFeeModalField">
+                                        <label class="sappcPaymentFeeModalLabel" for="cnPaymentClient">Client</label>
+                                        <input type="text" class="sappcPaymentFeeModalInput" id="cnPaymentClient"
+                                            name="client" value="">
+                                    </div>
+                                    <div class="sappcPaymentFeeModalField">
+                                        <label class="sappcPaymentFeeModalLabel" for="cnPaymentContact">Contact
+                                            Number</label>
+                                        <input type="text" class="sappcPaymentFeeModalInput" id="cnPaymentContact"
+                                            name="contact_number" value="" inputmode="tel">
+                                    </div>
+                                    <div class="sappcPaymentFeeModalField">
+                                        <label class="sappcPaymentFeeModalLabel" for="cnPaymentAddress">Address</label>
+                                        <input type="text" class="sappcPaymentFeeModalInput" id="cnPaymentAddress"
+                                            name="address" value="">
+                                    </div>
+                                </div>
+
+                                <h3 class="sappcPaymentFeeModalFeeHeading">Arancel kang kumpirma</h3>
+
+                                <div class="table-responsive sappcPaymentFeeModalTableWrap">
+                                    <table class="table table-bordered mb-0 sappcPaymentFeeModalTable">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col"
+                                                    class="sappcPaymentFeeModalTh sappcPaymentFeeModalThNo">No.</th>
+                                                <th scope="col" class="sappcPaymentFeeModalTh">Item</th>
+                                                <th scope="col" class="sappcPaymentFeeModalTh">Status Fee</th>
+                                                <th scope="col" class="sappcPaymentFeeModalTh">Date of Paid</th>
+                                                <th scope="col"
+                                                    class="sappcPaymentFeeModalTh sappcPaymentFeeModalThAction text-center">
+                                                    Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="confirmationPaymentFeeItemsBody">
+                                            <tr class="sappcPaymentFeeModalRow" data-fee-row>
+                                                <td class="sappcPaymentFeeModalCellNo">1</td>
+                                                <td>
+                                                    <input type="text" class="sappcPaymentFeeModalItemInput"
+                                                        name="fee_items[]" value="" aria-label="Fee item 1">
+                                                </td>
+                                                <td>
+                                                    <span
+                                                        class="sappcPaymentFeeModalStatus sappcPaymentFeeModalStatusUnpaid">Unpaid</span>
+                                                </td>
+                                                <td>
+                                                    <span class="sappcPaymentFeeModalDatePaid" data-date-paid="">&#8212;</span>
+                                                </td>
+                                                <td class="text-center">
+                                                    <div class="sappcPaymentFeeModalActions">
+                                                        <button type="button"
+                                                            class="sappcPaymentFeeModalToggleUnpaid">Paid</button>
+                                                        <button type="button" class="sappcPaymentFeeModalBtnRemove"
+                                                            aria-label="Remove row">
+                                                            <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="sappcPaymentFeeModalBelowTable">
+                                    <button type="button" class="sappcPaymentFeeModalBtnAddItem"
+                                        id="confirmationPaymentFeeAddItemBtn">
+                                        <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                                        Add item
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer sappcPaymentFeeModalFooter sappcChristeningAppModalFooter">
+                        <button type="submit" form="confirmationPaymentFeeForm"
+                            class="sappcChristeningAppModalBtn sappcChristeningAppModalBtnSave"
+                            id="confirmationPaymentFeeSaveBtn">
+                            Save
+                        </button>
+                        <button type="button" class="sappcChristeningAppModalBtn sappcChristeningAppModalBtnCancel"
+                            data-bs-dismiss="modal">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <section
         class="sappc-table-panel"
         id="confirmationRecordsPanel"
         data-records-url="{{ route('admin.dashboard.records') }}"
         data-registry-type="confirmation"
+        data-payment-details-url="{{ route('admin.confirmation.payment-details') }}"
+        data-payment-save-url="{{ route('admin.confirmation.payment-save') }}"
         aria-label="Confirmation records"
     >
         <div class="sappc-table-toolbar">
@@ -109,218 +257,307 @@
             <nav class="sappc-pagination" id="confirmationPagination" aria-label="Table pagination"></nav>
         </div>
     </section>
+
+    <div class="modal fade" id="confirmationScheduleRequestModal" tabindex="-1"
+        aria-labelledby="confirmationScheduleRequestModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered">
+            <div class="modal-content sappcScheduleRequestModal">
+                <div class="modal-body">
+                    <button type="button" class="btn-close sappcScheduleRequestModalClose" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+
+                    <div class="sappcScheduleRequestLayout">
+                        <section class="sappcScheduleCalendarCard" aria-label="Calendar">
+                            <div class="sappcScheduleCalendarHead sappcScheduleCalendarHead--interactive">
+                                <button type="button" class="sappcScheduleCalNav" id="cnCalPrev"
+                                    aria-label="Previous month">‹</button>
+                                <span class="sappcScheduleCalendarMonthNo" id="cnCalMonthNum">3</span>
+                                <select class="sappcScheduleCalendarMonth" id="cnCalMonth" aria-label="Month"></select>
+                                <select class="sappcScheduleCalendarYear" id="cnCalYear" aria-label="Year"></select>
+                                <button type="button" class="sappcScheduleCalNav" id="cnCalNext"
+                                    aria-label="Next month">›</button>
+                            </div>
+
+                            <div class="sappcScheduleCalendarGrid" role="grid" aria-label="Select confirmation date"
+                                id="cnCalGrid">
+                                <div class="sappcScheduleCalendarWeekday sunday">SUN</div>
+                                <div class="sappcScheduleCalendarWeekday">MON</div>
+                                <div class="sappcScheduleCalendarWeekday">TUE</div>
+                                <div class="sappcScheduleCalendarWeekday">WED</div>
+                                <div class="sappcScheduleCalendarWeekday">THU</div>
+                                <div class="sappcScheduleCalendarWeekday">FRI</div>
+                                <div class="sappcScheduleCalendarWeekday saturday">SAT</div>
+                                <div id="cnCalDayCells"></div>
+                            </div>
+                        </section>
+
+                        <section class="sappcScheduleFormCard">
+                            <header class="sappcScheduleFormHeader">
+                                <img src="{{ asset('assets/logos/SAPPC.png') }}" alt="Parish logo"
+                                    class="sappcScheduleFormLogo">
+                                <h2 id="confirmationScheduleRequestModalTitle">Confirmation Schedule Request Form</h2>
+                            </header>
+
+                            <hr class="sappcScheduleFormDivider" aria-hidden="true">
+
+                            <form id="confirmationScheduleRequestForm" method="post" autocomplete="off"
+                                data-schedule-save-url="{{ route('admin.confirmation.schedule-request') }}"
+                                data-schedule-reserved-url="{{ route('admin.confirmation.schedule-reserved-dates') }}"
+                                data-default-reference-code="{{ $generatedReferenceCode ?? '' }}">
+                                @csrf
+                                <div class="sappcScheduleFormField">
+                                    <input type="hidden" name="confirmation_id" id="cnScheduleConfirmationId" value="">
+                                    <label for="cnScheduleRefCode">Reference Code:</label>
+                                    <input type="text" name="reference_code" id="cnScheduleRefCode"
+                                        value="{{ $generatedReferenceCode ?? '' }}"
+                                        placeholder="System default; edit or pick a table row"
+                                        title="Generated on page load. Click a row to use that record's code.">
+                                </div>
+                                <div class="sappcScheduleFormField">
+                                    <label for="cnScheduleContact">Contact Number:</label>
+                                    <input type="text" name="contact_number" id="cnScheduleContact" value="">
+                                </div>
+                                <div class="sappcScheduleFormField">
+                                    <label for="cnScheduleClient">Client:</label>
+                                    <input type="text" name="client" id="cnScheduleClient" value="">
+                                </div>
+                                <div class="sappcScheduleFormField">
+                                    <label for="cnScheduleAddress">Address:</label>
+                                    <input type="text" name="address" id="cnScheduleAddress" value="">
+                                </div>
+                                <div class="sappcScheduleFormField">
+                                    <label for="cnScheduleSex">Sex:</label>
+                                    <select name="sex" id="cnScheduleSex" class="form-select">
+                                        <option value="">Select Sex</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                    </select>
+                                </div>
+                                <div class="sappcScheduleFormField">
+                                    <label for="cnScheduleDate">Date:</label>
+                                    <input type="date" name="schedule_date" id="cnScheduleDate" required
+                                        class="sappcScheduleNativeInput">
+                                </div>
+                                <div class="sappcScheduleFormField">
+                                    <label for="cnScheduleTime24">Time:</label>
+                                    <input type="time" name="schedule_time" id="cnScheduleTime24" required
+                                        step="60" class="sappcScheduleNativeInput">
+                                </div>
+                            </form>
+
+                            <hr class="sappcScheduleFormDivider" aria-hidden="true">
+
+                            <div class="sappcScheduleFormActions">
+                                <button type="button" class="sappcScheduleActionBtn is-cancel"
+                                    data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" form="confirmationScheduleRequestForm"
+                                    class="sappcScheduleActionBtn is-reserve">Reserved Schedule</button>
+                                <button type="button" class="sappcScheduleActionBtn is-calendar">View Calendar</button>
+                            </div>
+
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="sappcConfirmationCertificationModal">
+        <div class="modal fade" id="confirmationCertificationModal" tabindex="-1"
+            aria-labelledby="confirmationCertificationModalTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered sappcCertModalDialog">
+                <div class="modal-content sappcCertModalSurface">
+                    <div class="modal-header flex-wrap gap-2 border-bottom-0 pb-0 align-items-center">
+                        <h2 class="modal-title h6 mb-0 fw-normal visually-hidden"
+                            id="confirmationCertificationModalTitle">Confirmation certification form</h2>
+                        <div class="d-flex flex-wrap gap-2 align-items-center ms-auto">
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                        </div>
+                    </div>
+                    <div class="modal-body pt-0">
+                        <form class="sappcCertModalForm" id="confirmationCertificationForm" action="#" method="post"
+                            autocomplete="off">
+                            <div class="sappcCertModalMasthead">
+                                <div class="sappcCertModalLogoWrap">
+                                    <img src="{{ asset('assets/logos/SAPPC.png') }}" width="72" height="72"
+                                        alt="Parish of St. Anthony of Padua, Barbaza"
+                                        class="sappcCertModalLogoImg">
+                                </div>
+                                <h3 class="sappcCertModalTitle">Confirmation Certification Form</h3>
+                            </div>
+
+                            <div class="sappcCertModalMetaGrid">
+                                <div class="sappcCertModalMetaRow">
+                                    <label class="sappcCertModalLabel" for="cnCertRefCode">Reference Code</label>
+                                    <input type="text" class="sappcCertModalInput" id="cnCertRefCode"
+                                        name="reference_code" value="" readonly
+                                        title="Populated from selected record">
+                                    <label class="sappcCertModalLabel" for="cnCertClient">Client</label>
+                                    <input type="text" class="sappcCertModalInput" id="cnCertClient" name="client"
+                                        value="" readonly>
+                                </div>
+                                <div class="sappcCertModalMetaRow">
+                                    <label class="sappcCertModalLabel" for="cnCertContact">Contact Number</label>
+                                    <input type="text" class="sappcCertModalInput" id="cnCertContact"
+                                        name="contact_number" value="" readonly inputmode="tel">
+                                    <label class="sappcCertModalLabel" for="cnCertTopAddress">Address</label>
+                                    <input type="text" class="sappcCertModalInput" id="cnCertTopAddress" name="top_address"
+                                        value="" readonly>
+                                </div>
+                            </div>
+
+                            <h4 class="sappcCertModalSectionTitle">Confirmation Information</h4>
+
+                            <div class="sappcCertModalField sappcCertModalField--triple">
+                                <span class="sappcCertModalLabel sappcCertModalLabel--block">Complete Name</span>
+                                <div class="sappcCertModalTriple">
+                                    <input type="text" class="sappcCertModalInput sappcCertModalInput--center"
+                                        id="cnCertChildFirst" name="child_first_name" placeholder="First Name"
+                                        aria-label="Confirmand first name">
+                                    <input type="text" class="sappcCertModalInput sappcCertModalInput--center"
+                                        id="cnCertChildMiddle" name="child_middle_name" placeholder="Middle Name"
+                                        aria-label="Confirmand middle name">
+                                    <input type="text" class="sappcCertModalInput sappcCertModalInput--center"
+                                        id="cnCertChildLast" name="child_last_name" placeholder="Last Name"
+                                        aria-label="Confirmand last name">
+                                </div>
+                            </div>
+
+                            <div class="sappcCertModalRow2">
+                                <div class="sappcCertModalField sappcCertModalField--stack">
+                                    <label class="sappcCertModalLabel sappcCertModalLabel--block"
+                                        for="cnCertBirthday">Birthday</label>
+                                    <input type="date" class="sappcCertModalInput sappcCertModalInput--center"
+                                        id="cnCertBirthday" name="birthday">
+                                </div>
+                                <div class="sappcCertModalField sappcCertModalField--stack">
+                                    <label class="sappcCertModalLabel sappcCertModalLabel--block"
+                                        for="cnCertBirthplace">Birthplace</label>
+                                    <input type="text" class="sappcCertModalInput sappcCertModalInput--center"
+                                        id="cnCertBirthplace" name="birthplace" placeholder="">
+                                </div>
+                            </div>
+
+                            <div class="sappcCertModalField sappcCertModalField--triple">
+                                <span class="sappcCertModalLabel sappcCertModalLabel--block">Father's Name</span>
+                                <div class="sappcCertModalTriple">
+                                    <input type="text" class="sappcCertModalInput sappcCertModalInput--center"
+                                        id="cnCertFatherFirst" name="father_first_name" placeholder="First Name"
+                                        aria-label="Father first name">
+                                    <input type="text" class="sappcCertModalInput sappcCertModalInput--center"
+                                        id="cnCertFatherMiddle" name="father_middle_name" placeholder="Middle Name"
+                                        aria-label="Father middle name">
+                                    <input type="text" class="sappcCertModalInput sappcCertModalInput--center"
+                                        id="cnCertFatherLast" name="father_last_name" placeholder="Last Name"
+                                        aria-label="Father last name">
+                                </div>
+                            </div>
+
+                            <div class="sappcCertModalField sappcCertModalField--triple">
+                                <span class="sappcCertModalLabel sappcCertModalLabel--block">Mother's Name</span>
+                                <div class="sappcCertModalTriple">
+                                    <input type="text" class="sappcCertModalInput sappcCertModalInput--center"
+                                        id="cnCertMotherFirst" name="mother_first_name" placeholder="First Name"
+                                        aria-label="Mother first name">
+                                    <input type="text" class="sappcCertModalInput sappcCertModalInput--center"
+                                        id="cnCertMotherMiddle" name="mother_middle_name" placeholder="Middle Name"
+                                        aria-label="Mother middle name">
+                                    <input type="text" class="sappcCertModalInput sappcCertModalInput--center"
+                                        id="cnCertMotherLast" name="mother_last_name" placeholder="Last Name"
+                                        aria-label="Mother last name">
+                                </div>
+                            </div>
+
+                            <div class="sappcCertModalField sappcCertModalField--triple">
+                                <span class="sappcCertModalLabel sappcCertModalLabel--block">Address</span>
+                                <div class="sappcCertModalAddress3">
+                                    <select class="sappcCertModalInput sappcCertModalInput--center sappcCertModalSelect"
+                                        id="cnCertBarangay" name="barangay" aria-label="Barangay">
+                                        <option value="">Barangay</option>
+                                    </select>
+                                    <input type="text" class="sappcCertModalInput sappcCertModalInput--center"
+                                        id="cnCertMunicipality" name="municipality" placeholder="Municipality">
+                                    <input type="text" class="sappcCertModalInput sappcCertModalInput--center"
+                                        id="cnCertProvince" name="province" value="Antique" placeholder="Province">
+                                </div>
+                            </div>
+
+                            <div class="sappcCertModalRow2">
+                                <div class="sappcCertModalField sappcCertModalField--stack sappcCertModalField--dateIcon">
+                                    <label class="sappcCertModalLabel sappcCertModalLabel--block"
+                                        for="cnCertDateReceived">Date Received</label>
+                                    <div class="sappcCertModalDateWrap">
+                                        <input type="date" class="sappcCertModalInput sappcCertModalInput--center"
+                                            id="cnCertDateReceived" name="date_received">
+                                        <i class="fa-regular fa-calendar sappcCertModalDateIcon" aria-hidden="true"></i>
+                                    </div>
+                                </div>
+                                <div class="sappcCertModalField sappcCertModalField--stack">
+                                    <label class="sappcCertModalLabel sappcCertModalLabel--block"
+                                        for="cnCertPriest">Rev. / Priest</label>
+                                    <input type="text" class="sappcCertModalInput sappcCertModalInput--center"
+                                        id="cnCertPriest" name="priest" placeholder="">
+                                </div>
+                            </div>
+
+                            <div class="sappcCertModalField sappcCertModalField--stack">
+                                <label class="sappcCertModalLabel sappcCertModalLabel--block"
+                                    for="cnCertSponsors">Sponsors</label>
+                                <input type="text" class="sappcCertModalInput sappcCertModalInput--center"
+                                    id="cnCertSponsors" name="sponsors" placeholder="">
+                            </div>
+
+                            <div class="sappcCertModalField sappcCertModalField--stack">
+                                <label class="sappcCertModalLabel sappcCertModalLabel--block"
+                                    for="cnCertPurpose">Purpose</label>
+                                <input type="text" class="sappcCertModalInput sappcCertModalInput--center"
+                                    id="cnCertPurpose" name="purpose" placeholder="">
+                            </div>
+
+                            <div class="sappcCertModalTrackingGrid">
+                                <div class="sappcCertModalField sappcCertModalField--inline">
+                                    <label class="sappcCertModalLabel" for="cnCertBookNo">Book No.</label>
+                                    <input type="text" class="sappcCertModalInput sappcCertModalInput--center"
+                                        id="cnCertBookNo" name="book_no">
+                                </div>
+                                <div class="sappcCertModalField sappcCertModalField--inline">
+                                    <label class="sappcCertModalLabel" for="cnCertRegisterNo">Register No.</label>
+                                    <input type="text" class="sappcCertModalInput sappcCertModalInput--center"
+                                        id="cnCertRegisterNo" name="register_no">
+                                </div>
+                                <div class="sappcCertModalField sappcCertModalField--inline">
+                                    <label class="sappcCertModalLabel" for="cnCertPageNo">Page No.</label>
+                                    <input type="text" class="sappcCertModalInput sappcCertModalInput--center"
+                                        id="cnCertPageNo" name="page_no">
+                                </div>
+                                <div class="sappcCertModalField sappcCertModalField--inline sappcCertModalField--dateIcon">
+                                    <label class="sappcCertModalLabel" for="cnCertDateIssued">Date Issued</label>
+                                    <div class="sappcCertModalDateWrap">
+                                        <input type="date" class="sappcCertModalInput sappcCertModalInput--center"
+                                            id="cnCertDateIssued" name="date_issued">
+                                        <i class="fa-regular fa-calendar sappcCertModalDateIcon" aria-hidden="true"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer sappcChristeningAppModalFooter">
+                        <button type="submit" form="confirmationCertificationForm"
+                            class="sappcChristeningAppModalBtn sappcChristeningAppModalBtnSave" id="cnCertAddRecordBtn">
+                            Add Record
+                        </button>
+                        <button type="button" class="sappcChristeningAppModalBtn sappcChristeningAppModalBtnCancel"
+                            data-bs-dismiss="modal">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
-    <script>
-        (function() {
-            'use strict';
-
-            function esc(s) {
-                var d = document.createElement('div');
-                d.textContent = s == null ? '' : String(s);
-                return d.innerHTML;
-            }
-
-            function buildQueryUrl(base, params) {
-                var q = new URLSearchParams();
-                Object.keys(params).forEach(function(k) {
-                    var v = params[k];
-                    if (v !== undefined && v !== null && String(v) !== '') {
-                        q.set(k, String(v));
-                    }
-                });
-                var sep = base.indexOf('?') >= 0 ? '&' : '?';
-                return base + sep + q.toString();
-            }
-
-            function fetchJson(url) {
-                return fetch(url, {
-                    method: 'GET',
-                    credentials: 'same-origin',
-                    headers: {
-                        Accept: 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                    },
-                }).then(function(r) {
-                    if (!r.ok) throw new Error(String(r.status));
-                    return r.json();
-                });
-            }
-
-            function rowHtml(row) {
-                return (
-                    '<tr data-record-id="' + esc(row.recordId) + '" data-document-type="' + esc(row.documentType) + '">' +
-                    '<td>' + esc(row.rowNumber) + '</td>' +
-                    '<td>' + esc(row.referenceCode) + '</td>' +
-                    '<td>' + esc(row.client) + '</td>' +
-                    '<td>' + esc(row.address) + '</td>' +
-                    '<td>' + esc(row.sex) + '</td>' +
-                    '<td>' + esc(row.contactNum) + '</td>' +
-                    '<td>' + esc(row.dateCreated) + '</td>' +
-                    '<td class="text-center"><div class="sappc-icon-action_group">' +
-                    '<a href="#" class="sappc-icon-action sappc-icon-action--view" title="View" aria-label="View record"><i class="fa-solid fa-eye" aria-hidden="true"></i></a>' +
-                    '<a href="#" class="sappc-icon-action sappc-icon-action--edit" title="Edit" aria-label="Edit record"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>' +
-                    '<button type="button" class="sappc-icon-action sappc-icon-action--delete" title="Delete" aria-label="Delete record"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>' +
-                    '</div></td></tr>'
-                );
-            }
-
-            function whenDomReady(fn) {
-                if (document.readyState === 'loading') {
-                    document.addEventListener('DOMContentLoaded', fn);
-                } else {
-                    fn();
-                }
-            }
-
-            whenDomReady(function() {
-                var panel = document.getElementById('confirmationRecordsPanel');
-                if (!panel) return;
-
-                var url = panel.getAttribute('data-records-url');
-                if (!url) return;
-
-                var state = {
-                    page: 1,
-                    per_page: 10,
-                    search: '',
-                    letter: '',
-                    date_from: '',
-                    date_to: '',
-                };
-
-                var searchInput = document.getElementById('confirmationSearch');
-                var body = document.getElementById('confirmationTableBody');
-                var info = document.getElementById('confirmationTableFooterInfo');
-                var nav = document.getElementById('confirmationPagination');
-
-                function renderTable(res) {
-                    var html = '';
-                    if (!res || !res.data || !res.data.length) {
-                        html = '<tr class="sappc-table-empty"><td colspan="8" class="text-center text-muted py-4">No records found.</td></tr>';
-                    } else {
-                        res.data.forEach(function(row) {
-                            html += rowHtml(row);
-                        });
-                    }
-                    body.innerHTML = html;
-
-                    var m = res && res.meta ? res.meta : {};
-                    if (!m.total) {
-                        info.textContent = 'Showing 0 entries';
-                    } else {
-                        info.textContent = 'Showing ' + m.from + ' to ' + m.to + ' of ' + m.total + ' entries';
-                    }
-
-                    nav.innerHTML = '';
-                    var last = Math.max(1, m.last_page || 1);
-                    var cur = m.current_page || 1;
-
-                    function appendBtn(h) {
-                        nav.insertAdjacentHTML('beforeend', h);
-                    }
-
-                    appendBtn(
-                        '<button type="button" class="sappc-pagination_btn" data-page="' + (cur - 1) + '" ' + (cur <= 1 ? 'disabled' : '') + ' aria-label="Previous">&lt;</button>'
-                    );
-                    for (var p = 1; p <= last; p++) {
-                        var active = p === cur ? ' is-active' : '';
-                        var aria = p === cur ? ' aria-current="page"' : '';
-                        appendBtn('<button type="button" class="sappc-pagination_btn' + active + '" data-page="' + p + '"' + aria + '>' + p + '</button>');
-                    }
-                    appendBtn(
-                        '<button type="button" class="sappc-pagination_btn" data-page="' + (cur + 1) + '" ' + (cur >= last ? 'disabled' : '') + ' aria-label="Next">&gt;</button>'
-                    );
-                }
-
-                function fetchRecords() {
-                    body.innerHTML = '<tr class="sappc-table-loading"><td colspan="8" class="text-center text-muted py-4">Loading...</td></tr>';
-                    var reqUrl = buildQueryUrl(url, {
-                        page: state.page,
-                        per_page: state.per_page,
-                        search: state.search,
-                        letter: state.letter,
-                        date_from: state.date_from,
-                        date_to: state.date_to,
-                        registry_type: 'confirmation',
-                    });
-
-                    fetchJson(reqUrl)
-                        .then(renderTable)
-                        .catch(function(err) {
-                            body.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-3">Could not load records (' + esc(err.message || '?') + ').</td></tr>';
-                        });
-                }
-
-                var searchDebounceTimer;
-                searchInput.addEventListener('input', function() {
-                    clearTimeout(searchDebounceTimer);
-                    searchDebounceTimer = setTimeout(function() {
-                        state.search = (searchInput.value || '').trim();
-                        state.page = 1;
-                        fetchRecords();
-                    }, 400);
-                });
-
-                searchInput.addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        clearTimeout(searchDebounceTimer);
-                        state.search = (searchInput.value || '').trim();
-                        state.page = 1;
-                        fetchRecords();
-                    }
-                });
-
-                document.getElementById('confirmationEntries').addEventListener('change', function() {
-                    state.per_page = parseInt(this.value, 10) || 10;
-                    state.page = 1;
-                    fetchRecords();
-                });
-
-                panel.querySelector('.sappc-toolbar-date-strip_btn').addEventListener('click', function() {
-                    state.date_from = document.getElementById('confirmationDateFrom').value || '';
-                    state.date_to = document.getElementById('confirmationDateTo').value || '';
-                    state.page = 1;
-                    fetchRecords();
-                });
-
-                panel.querySelectorAll('.sappc-letter-filter_btn').forEach(function(el) {
-                    el.addEventListener('click', function() {
-                        var letter = el.getAttribute('data-letter');
-                        if (el.classList.contains('is-active')) {
-                            el.classList.remove('is-active');
-                            state.letter = '';
-                        } else {
-                            panel.querySelectorAll('.sappc-letter-filter_btn').forEach(function(btn) {
-                                btn.classList.remove('is-active');
-                            });
-                            el.classList.add('is-active');
-                            state.letter = letter;
-                        }
-                        state.page = 1;
-                        fetchRecords();
-                    });
-                });
-
-                nav.addEventListener('click', function(e) {
-                    var btn = e.target.closest('.sappc-pagination_btn:not(:disabled)');
-                    if (!btn) return;
-                    var p = parseInt(btn.getAttribute('data-page'), 10);
-                    if (!isNaN(p) && p >= 1) {
-                        state.page = p;
-                        fetchRecords();
-                    }
-                });
-
-                var reloadBtn = document.getElementById('confirmationReloadBtn');
-                if (reloadBtn) {
-                    reloadBtn.addEventListener('click', fetchRecords);
-                }
-
-                fetchRecords();
-            });
-        })();
-    </script>
+    @include('confirmation.js.confirmationScript');
 @endpush
