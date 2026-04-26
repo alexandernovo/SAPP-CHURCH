@@ -1,0 +1,315 @@
+/* Confirmation: Aplikasyon sa Kompirma + Arancel (modals) */
+
+#confirmationApplicationModal .modal-dialog.sappcCnKompirmaDialog {
+    max-width: min(98vw, 1140px);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+#confirmationApplicationModal .sappcCnApp,
+#confirmationApplicationModal .sappcCnAr {
+    color: #111;
+    font-size: 0.8rem;
+    line-height: 1.35;
+    padding: 0.15rem 0.1rem 0.75rem;
+}
+
+#confirmationApplicationModal .sappcCnAppHeader,
+#confirmationApplicationModal .sappcCnArHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.4rem;
+    margin-bottom: 0.4rem;
+}
+
+#confirmationApplicationModal .sappcCnAppLogo,
+#confirmationApplicationModal .sappcCnArLogo {
+    flex: 0 0 4.25rem;
+    text-align: center;
+}
+
+#confirmationApplicationModal .sappcCnAppLogo img,
+#confirmationApplicationModal .sappcCnArLogo img {
+    width: 4rem;
+    height: 4rem;
+    object-fit: contain;
+    border-radius: 50%;
+}
+
+#confirmationApplicationModal .sappcCnAppMasthead,
+#confirmationApplicationModal .sappcCnArMasthead {
+    flex: 1 1 auto;
+    text-align: center;
+    padding: 0 0.15rem;
+}
+
+#confirmationApplicationModal .sappcCnAppMasthead p,
+#confirmationApplicationModal .sappcCnArMasthead p {
+    margin: 0;
+    line-height: 1.2;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+#confirmationApplicationModal .sappcCnAppTitle {
+    text-align: center;
+    color: #b1891c;
+    font-weight: 800;
+    font-size: 1.1rem;
+    letter-spacing: 0.1em;
+    margin: 0.35rem 0 0.5rem;
+    text-transform: uppercase;
+}
+
+#confirmationApplicationModal .sappcCnArTitle {
+    text-align: center;
+    font-weight: 800;
+    font-size: 1.05rem;
+    letter-spacing: 0.08em;
+    margin: 0.25rem 0 0.45rem;
+    text-transform: uppercase;
+    color: #000;
+    font-family: "Times New Roman", Times, Georgia, serif;
+}
+
+#confirmationApplicationModal .sappcCnAppRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.5rem;
+    margin-bottom: 0.4rem;
+}
+
+#confirmationApplicationModal .sappcCnAppLabel {
+    flex: 0 0 11.5rem;
+    max-width: 100%;
+    font-weight: 800;
+    font-size: 0.68rem;
+    line-height: 1.2;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    margin: 0;
+}
+
+#confirmationApplicationModal .sappcCnAppLabel .sappcCnAppHint {
+    display: block;
+    font-size: 0.58rem;
+    font-style: italic;
+    font-weight: 600;
+    text-transform: none;
+    color: #333;
+    margin-top: 0.1rem;
+}
+
+#confirmationApplicationModal .sappcCnAppIn {
+    flex: 1 1 12rem;
+    min-width: 0;
+    border: 1px solid #1a1a1a;
+    border-radius: 0.1rem;
+    padding: 0.2rem 0.4rem;
+    font-size: 0.75rem;
+    min-height: 1.6rem;
+    background: #fff;
+}
+
+#confirmationApplicationModal .sappcCnAppIn--dob,
+#confirmationApplicationModal .sappcCnRegIn {
+    max-width: 10rem;
+}
+
+#confirmationApplicationModal .sappcCnRegRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.5rem 0.75rem;
+    margin-bottom: 0.4rem;
+    margin-left: 0;
+    padding-left: 0;
+}
+
+#confirmationApplicationModal .sappcCnRegItem {
+    flex: 0 0 auto;
+}
+
+#confirmationApplicationModal .sappcCnRegItem label,
+#confirmationApplicationModal .sappcCnGpHead {
+    display: block;
+    font-size: 0.62rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    margin-bottom: 0.1rem;
+}
+
+#confirmationApplicationModal .sappcCnGpBlock {
+    margin: 0.5rem 0 0.35rem;
+}
+
+#confirmationApplicationModal .sappcCnGpHead {
+    text-align: center;
+    font-size: 0.65rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 0.35rem;
+    text-transform: none;
+}
+
+#confirmationApplicationModal .sappcCnGpHead .sappcCnAppHint {
+    display: block;
+    font-size: 0.58rem;
+    font-style: italic;
+    font-weight: 600;
+    text-transform: none;
+    color: #333;
+    margin-top: 0.15rem;
+}
+
+#confirmationApplicationModal .sappcCnGpGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem 0.75rem;
+}
+
+#confirmationApplicationModal .sappcCnPah {
+    margin-top: 0.5rem;
+    padding: 0.4rem 0.35rem 0.35rem;
+    border: 1px solid #1a1a1a;
+    background: #fafaf7;
+    border-radius: 0.1rem;
+}
+
+#confirmationApplicationModal .sappcCnPahTitle {
+    display: table;
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    margin: 0 0 0.3rem 0;
+}
+
+#confirmationApplicationModal .sappcCnPah ul {
+    margin: 0;
+    padding-left: 1.1rem;
+    font-size: 0.68rem;
+    line-height: 1.35;
+}
+
+#confirmationApplicationModal .sappcCnKompirmaModalBody {
+    min-height: 0;
+}
+
+#confirmationApplicationModal .sappcCnArEmbed {
+    margin-top: 0.75rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid #c9c3b3;
+}
+
+#confirmationApplicationModal .sappcCnArTitle--embed {
+    color: #b1891c;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+#confirmationApplicationModal .sappcCnArTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.75rem;
+    font-family: "Times New Roman", Times, Georgia, serif;
+    margin-bottom: 0.5rem;
+}
+
+#confirmationApplicationModal .sappcCnArOtherLine {
+    width: 100%;
+    max-width: 100%;
+    border: 1px solid #999;
+    border-radius: 0.1rem;
+    padding: 0.1rem 0.25rem;
+    font-size: 0.72rem;
+    text-align: left;
+}
+
+#confirmationApplicationModal .sappcCnArTable th,
+#confirmationApplicationModal .sappcCnArTable td {
+    border: 1px solid #000;
+    padding: 0.25rem 0.4rem;
+    vertical-align: middle;
+}
+
+#confirmationApplicationModal .sappcCnArTable th {
+    background: #f2f0eb;
+    font-weight: 700;
+}
+
+#confirmationApplicationModal .sappcCnArTable .sappcCnArNum {
+    text-align: right;
+    width: 8rem;
+}
+
+#confirmationApplicationModal .sappcCnArAmt {
+    width: 100%;
+    min-width: 0;
+    border: none;
+    text-align: right;
+    background: #fff;
+    font-size: 0.8rem;
+    padding: 0.15rem 0.1rem;
+}
+
+#confirmationApplicationModal .sappcCnArTable tr.sappcCnArTotal td {
+    font-weight: 800;
+}
+
+#confirmationApplicationModal .sappcCnArTable tr.sappcCnArTotal .sappcCnArNum {
+    text-align: right;
+    padding-left: 0.5rem;
+}
+
+#confirmationApplicationModal .sappcCnArSignBox {
+    border: 1px solid #000;
+    padding: 0.5rem 0.4rem 0.45rem;
+    margin-top: 0.25rem;
+    background: #fff;
+}
+
+#confirmationApplicationModal .sappcCnArSignGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem 0.6rem;
+}
+
+#confirmationApplicationModal .sappcCnArSignCell {
+    text-align: center;
+}
+
+#confirmationApplicationModal .sappcCnArSignIn {
+    display: block;
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid #000;
+    background: transparent;
+    min-height: 1.4rem;
+    text-align: center;
+    font-size: 0.7rem;
+    margin-bottom: 0.1rem;
+}
+
+#confirmationApplicationModal .sappcCnArSignCap {
+    font-size: 0.5rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    line-height: 1.15;
+    text-transform: uppercase;
+    color: #000;
+}
+
+@media (max-width: 600px) {
+    #confirmationApplicationModal .sappcCnAppLabel {
+        flex: 1 1 100%;
+    }
+
+    #confirmationApplicationModal .sappcCnGpGrid,
+    #confirmationApplicationModal .sappcCnArSignGrid {
+        grid-template-columns: 1fr;
+    }
+}

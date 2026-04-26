@@ -7,6 +7,7 @@
 @endpush
 
 @section('content')
+    <div class="sappc-registry-page">
     <h1 class="sappc-page-title">
         <i class="fa-solid fa-file-lines" aria-hidden="true"></i>
         BURIAL
@@ -230,7 +231,7 @@
             </div>
         </div>
 
-        <div class="table-responsive">
+        <div class="table-responsive sappc-table-panel_scroll">
             <table class="table table-bordered mb-0 sappc-data-table">
                 <thead>
                     <tr>
@@ -555,6 +556,7 @@
                 </div>
             </div>
         </div>
+    </div>
     </div>
 @endsection
 

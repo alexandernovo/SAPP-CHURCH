@@ -33,6 +33,11 @@ class ChristeningController extends Controller
         ]);
     }
 
+    public function certificationPage(): View
+    {
+        return view('certification.view.certification');
+    }
+
     private function generateUniqueChristeningReferenceCode(): string
     {
         $year = (int) date('Y');

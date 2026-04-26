@@ -4,7 +4,19 @@
 @push('styles')
     <link rel="stylesheet" href="{{ asset('css/christening/applicationOfChristening.css') }}">
 @endpush
+
 @section('content')
+    <div class="sappc-registry-page">
+    <h1 class="sappc-page-title">
+        <i class="fa-solid fa-file-lines" aria-hidden="true"></i>
+        CHRISTENING
+    </h1>
+    <p class="sappc-page-breadcrumb mb-0">
+        <a href="{{ route('admin.dashboard') }}">Dashboard</a>
+        <span class="sappc-page-breadcrumb_sep" aria-hidden="true">|</span>
+        <span>Christening</span>
+    </p>
+
     <div class="sappc-registry-toolbar" role="toolbar" aria-label="Christening record actions">
         <span class="sappc-registry-toolbar_record">RECORD</span>
         <div class="sappc-registry-toolbar_actions">
@@ -834,7 +846,7 @@
             </div>
         </div>
 
-        <div class="table-responsive">
+        <div class="table-responsive sappc-table-panel_scroll">
             <table class="table table-bordered mb-0 sappc-data-table">
                 <thead>
                     <tr>
@@ -858,6 +870,7 @@
             <nav class="sappc-pagination" id="christeningPagination" aria-label="Table pagination"></nav>
         </div>
     </section>
+    </div>
 @endsection
 
 @push('scripts')

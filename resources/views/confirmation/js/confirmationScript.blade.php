@@ -288,6 +288,11 @@
 
             var paymentDetailsUrl = ($panel.attr('data-payment-details-url') || '').trim();
             var paymentSaveUrlPanel = ($panel.attr('data-payment-save-url') || '').trim();
+            var $appFormBtn = $('#confirmationApplicationFormBtn');
+            var confirmationAppDetailsUrl = ($panel.attr('data-confirmation-application-details-url') || $appFormBtn.attr('data-confirmation-application-details-url') || '').trim();
+            var confirmationAppSaveUrl = ($panel.attr('data-confirmation-application-save-url') || $appFormBtn.attr('data-confirmation-application-save-url') || '').trim();
+            var confirmationArancelDetailsUrl = ($panel.attr('data-confirmation-arancel-details-url') || $appFormBtn.attr('data-confirmation-arancel-details-url') || '').trim();
+            var confirmationArancelSaveUrl = ($panel.attr('data-confirmation-arancel-save-url') || $appFormBtn.attr('data-confirmation-arancel-save-url') || '').trim();
 
             var $paymentModal = $('#confirmationPaymentFeeModal');
             var $paymentBtn = $('#confirmationPaymentFeeBtn');
@@ -549,6 +554,237 @@
                         });
                 });
             }
+
+            (function initConfirmationKompirmaModals() {
+                var applicationFieldNames = {
+                    'first_name': 1, 'middle_name': 1, 'family_name': 1, 'date_of_birth': 1, 'place_of_birth': 1,
+                    'father_name': 1, 'mother_maiden': 1, 'address': 1, 'baptism_date': 1, 'baptism_place': 1,
+                    'minister_baptism': 1, 'book_no': 1, 'page_no': 1, 'registry_no': 1, 'confirmation_date': 1,
+                    'confirmation_minister': 1, 'godparent_1': 1, 'godparent_2': 1, 'godparent_3': 1, 'godparent_4': 1,
+                };
+                var arancelFieldNames = {
+                    'amt_arancel': 1, 'amt_candle': 1, 'amt_godparents': 1, 'other_label_1': 1, 'other_label_2': 1,
+                    'other_label_3': 1, 'amt_other_1': 1, 'amt_other_2': 1, 'amt_other_3': 1, 'total_payment': 1,
+                    'sig_bpc_chairman': 1, 'sig_parish_secretary': 1, 'sig_presacramental_instructor': 1, 'sig_parish_priest': 1,
+                };
+
+                function applyFormObject($f, d) {
+                    if (!$f || !$f.length || !d || typeof d !== 'object') {
+                        return;
+                    }
+                    $f.find('input, textarea, select').each(function() {
+                        var n = this.name;
+                        if (!n) {
+                            return;
+                        }
+                        if (!(n in d) || d[n] == null) {
+                            return;
+                        }
+                        if (this.type === 'checkbox') {
+                            $(this).prop('checked', d[n] == 1 || d[n] === true || d[n] === '1' || d[n] === 'on');
+                        } else {
+                            $(this).val(String(d[n]));
+                        }
+                    });
+                }
+
+                function collectFormObject($f) {
+                    var o = {};
+                    if (!$f || !$f.length) {
+                        return o;
+                    }
+                    $f.find('input, textarea, select').each(function() {
+                        var n = this.name;
+                        if (!n || n === '_token') {
+                            return;
+                        }
+                        if (this.type === 'checkbox') {
+                            if ($(this).is(':checked')) {
+                                o[n] = this.value;
+                            }
+                            return;
+                        }
+                        o[n] = $(this).val() == null ? '' : String($(this).val());
+                    });
+                    return o;
+                }
+
+                function pickFields(src, set) {
+                    var o = {};
+                    if (!src || typeof src !== 'object') {
+                        return o;
+                    }
+                    Object.keys(src).forEach(function(k) {
+                        if (set[k]) {
+                            o[k] = src[k];
+                        }
+                    });
+                    return o;
+                }
+
+                var $mApp = $('#confirmationApplicationModal');
+                var $fApp = $('#confirmationApplicationForm');
+
+                if (typeof bootstrap !== 'undefined' && $mApp.length && $fApp.length && $appFormBtn.length) {
+                    $mApp.on('shown.bs.modal', function() {
+                        $appFormBtn.attr('aria-expanded', 'true');
+                    });
+                    $mApp.on('hidden.bs.modal', function() {
+                        $appFormBtn.attr('aria-expanded', 'false');
+                    });
+                    $appFormBtn.on('click', function(e) {
+                        e.preventDefault();
+                        var cid = ($('#cnScheduleConfirmationId').val() || '').trim();
+                        if (!cid) {
+                            sappcSwalSelectConfirmationRowFirst();
+                            return;
+                        }
+                        if (!confirmationAppDetailsUrl) {
+                            window.alert('Application form is not configured.');
+                            return;
+                        }
+                        if (!confirmationArancelDetailsUrl) {
+                            window.alert('Arancel is not configured.');
+                            return;
+                        }
+                        var mbs = bootstrap.Modal.getOrCreateInstance($mApp[0]);
+                        var dApp = fetchJson(buildQueryUrl(confirmationAppDetailsUrl, {
+                            confirmation_id: cid
+                        }), jsonHeaders);
+                        var dAr = fetchJson(buildQueryUrl(confirmationArancelDetailsUrl, {
+                            confirmation_id: cid
+                        }), jsonHeaders);
+                        $.when(dApp, dAr)
+                            .done(function(resA, resB) {
+                                var r1 = (resA && resA[0]) ? resA[0] : resA;
+                                var r2 = (resB && resB[0]) ? resB[0] : resB;
+                                if (r1 && r1.ok && r2 && r2.ok) {
+                                    if ($fApp[0]) {
+                                        $fApp[0].reset();
+                                    }
+                                    $('#cnApplicationConfirmationId').val(cid);
+                                    applyFormObject($fApp, r1.data || {});
+                                    applyFormObject($fApp, r2.data || {});
+                                    mbs.show();
+                                } else {
+                                    if (typeof Swal !== 'undefined') {
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Error',
+                                            text: 'Could not load the form data.'
+                                        });
+                                    } else {
+                                        window.alert('Could not load the form data.');
+                                    }
+                                }
+                            })
+                            .fail(function() {
+                                var msg = 'Could not load confirmation application and arancel.';
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error',
+                                        text: msg
+                                    });
+                                } else {
+                                    window.alert(msg);
+                                }
+                            });
+                    });
+                    $('#confirmationApplicationSaveBtn').on('click', function() {
+                        if (!confirmationAppSaveUrl || !confirmationArancelSaveUrl) {
+                            return;
+                        }
+                        var wid = ($('#cnApplicationConfirmationId').val() || '').trim() || ($('#cnScheduleConfirmationId')
+                            .val() || '').trim();
+                        if (!wid) {
+                            sappcSwalSelectConfirmationRowFirst();
+                            return;
+                        }
+                        var wn = parseInt(wid, 10);
+                        if (isNaN(wn) || wn < 1) {
+                            window.alert('Invalid record.');
+                            return;
+                        }
+                        var all = collectFormObject($fApp);
+                        var pApp = pickFields(all, applicationFieldNames);
+                        var pAr = pickFields(all, arancelFieldNames);
+                        pApp.confirmation_id = wn;
+                        pAr.confirmation_id = wn;
+                        var $s = $('#confirmationApplicationSaveBtn');
+                        $s.prop('disabled', true);
+                        fetchPostJson(confirmationAppSaveUrl, pApp, csrf)
+                            .done(function(r1) {
+                                if (!r1 || !r1.ok) {
+                                    var m1 = (r1 && r1.message) ? r1.message : 'Application could not be saved.';
+                                    if (typeof Swal !== 'undefined') {
+                                        Swal.fire({ icon: 'error', title: 'Error', text: m1 });
+                                    } else {
+                                        window.alert(m1);
+                                    }
+                                    $s.prop('disabled', false);
+                                    return;
+                                }
+                                fetchPostJson(confirmationArancelSaveUrl, pAr, csrf)
+                                    .done(function(r2) {
+                                        if (r2 && r2.ok) {
+                                            if (typeof bootstrap !== 'undefined' && $mApp.length) {
+                                                var instM = bootstrap.Modal.getInstance($mApp[0]);
+                                                if (instM) {
+                                                    instM.hide();
+                                                }
+                                            }
+                                            if (typeof Swal !== 'undefined') {
+                                                Swal.fire({
+                                                    icon: 'success',
+                                                    title: 'Saved',
+                                                    text: (r2 && r2.message) ? r2.message : 'Application and arancel saved.',
+                                                    confirmButtonText: 'OK',
+                                                });
+                                            } else {
+                                                window.alert('Saved.');
+                                            }
+                                        } else {
+                                            var m2 = (r2 && r2.message) ? r2.message : 'Arancel could not be saved.';
+                                            if (typeof Swal !== 'undefined') {
+                                                Swal.fire({ icon: 'error', title: 'Error', text: m2 });
+                                            } else {
+                                                window.alert(m2);
+                                            }
+                                        }
+                                    })
+                                    .fail(function(xhr) {
+                                        var msg = 'Arancel could not be saved.';
+                                        var d = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                                        if (d && d.message) {
+                                            msg = d.message;
+                                        }
+                                        if (typeof Swal !== 'undefined') {
+                                            Swal.fire({ icon: 'error', title: 'Error', text: msg });
+                                        } else {
+                                            window.alert(msg);
+                                        }
+                                    })
+                                    .always(function() {
+                                        $s.prop('disabled', false);
+                                    });
+                            })
+                            .fail(function(xhr) {
+                                var msg = 'Application could not be saved.';
+                                var d = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                                if (d && d.message) {
+                                    msg = d.message;
+                                }
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({ icon: 'error', title: 'Error', text: msg });
+                                } else {
+                                    window.alert(msg);
+                                }
+                                $s.prop('disabled', false);
+                            });
+                    });
+                }
+            })();
 
             var $scheduleForm = $('#confirmationScheduleRequestForm');
             var $scheduleBtn = $('#confirmationScheduleRequestBtn');

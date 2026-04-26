@@ -361,6 +361,132 @@ class ConfirmationController extends Controller
         ]);
     }
 
+    public function confirmationApplicationDetails(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'confirmation_id' => ['required', 'integer', 'min:1'],
+        ]);
+        $id = (int) $validated['confirmation_id'];
+        $row = DB::table('confirmation')->where('confirmationId', $id)->first();
+        if ($row === null) {
+            return response()->json(['message' => 'Confirmation record not found.'], 404);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'data' => $this->decodeConfirmationJsonColumn($row, 'confirmationApplication'),
+        ]);
+    }
+
+    public function confirmationApplicationSave(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'confirmation_id' => ['required', 'integer', 'min:1'],
+        ]);
+        $id = (int) $validated['confirmation_id'];
+        $existing = DB::table('confirmation')->where('confirmationId', $id)->first();
+        if ($existing === null) {
+            return response()->json(['message' => 'Confirmation record not found.'], 404);
+        }
+
+        $data = $request->json() ? $request->json()->all() : $request->all();
+        if (! is_array($data)) {
+            $data = [];
+        }
+        unset($data['confirmation_id'], $data['_token']);
+        $encoded = json_encode($data, JSON_UNESCAPED_UNICODE);
+        if ($encoded === false) {
+            return response()->json(['ok' => false, 'message' => 'Could not encode the application.'], 422);
+        }
+
+        try {
+            DB::table('confirmation')->where('confirmationId', $id)->update([
+                'confirmationApplication' => $encoded,
+            ]);
+        } catch (QueryException $e) {
+            report($e);
+
+            return response()->json([
+                'ok' => false,
+                'message' => 'Could not save. Run database migrations and try again.',
+            ], 422);
+        }
+
+        return response()->json(['ok' => true, 'message' => 'Confirmation application saved.']);
+    }
+
+    public function confirmationArancelDetails(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'confirmation_id' => ['required', 'integer', 'min:1'],
+        ]);
+        $id = (int) $validated['confirmation_id'];
+        $row = DB::table('confirmation')->where('confirmationId', $id)->first();
+        if ($row === null) {
+            return response()->json(['message' => 'Confirmation record not found.'], 404);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'data' => $this->decodeConfirmationJsonColumn($row, 'confirmationArancel'),
+        ]);
+    }
+
+    public function confirmationArancelSave(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'confirmation_id' => ['required', 'integer', 'min:1'],
+        ]);
+        $id = (int) $validated['confirmation_id'];
+        $existing = DB::table('confirmation')->where('confirmationId', $id)->first();
+        if ($existing === null) {
+            return response()->json(['message' => 'Confirmation record not found.'], 404);
+        }
+
+        $data = $request->json() ? $request->json()->all() : $request->all();
+        if (! is_array($data)) {
+            $data = [];
+        }
+        unset($data['confirmation_id'], $data['_token']);
+        $encoded = json_encode($data, JSON_UNESCAPED_UNICODE);
+        if ($encoded === false) {
+            return response()->json(['ok' => false, 'message' => 'Could not encode the arancel.'], 422);
+        }
+
+        try {
+            DB::table('confirmation')->where('confirmationId', $id)->update([
+                'confirmationArancel' => $encoded,
+            ]);
+        } catch (QueryException $e) {
+            report($e);
+
+            return response()->json([
+                'ok' => false,
+                'message' => 'Could not save. Run database migrations and try again.',
+            ], 422);
+        }
+
+        return response()->json(['ok' => true, 'message' => 'Arancel record saved.']);
+    }
+
+    private function decodeConfirmationJsonColumn(object $row, string $column): array
+    {
+        $raw = $row->{$column} ?? null;
+        if ($raw === null || $raw === '') {
+            return [];
+        }
+        if (is_string($raw)) {
+            $decoded = json_decode($raw, true);
+
+            return is_array($decoded) ? $decoded : [];
+        }
+        if (is_array($raw)) {
+            return $raw;
+        }
+
+        return [];
+    }
+
     private function defaultConfirmationPaymentFeeRows(): array
     {
         return [

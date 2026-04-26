@@ -4,9 +4,11 @@
 
 @push('styles')
     <link rel="stylesheet" href="{{ asset('css/christening/applicationOfChristening.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/wedding/marriageApplicationKasal.css') }}">
 @endpush
 
 @section('content')
+    <div class="sappc-registry-page">
     <h1 class="sappc-page-title">
         <i class="fa-solid fa-file-lines" aria-hidden="true"></i>
         WEDDING
@@ -46,7 +48,11 @@
                 <i class="fa-solid fa-money-bill-wave" aria-hidden="true"></i>
                 Payment Fee
             </button>
-            <button type="button" class="sappc-registry-toolbar_btn sappc-registry-toolbar_btn--outline">
+            <button type="button" class="sappc-registry-toolbar_btn sappc-registry-toolbar_btn--outline"
+                id="weddingApplicationFormBtn" title="Marriage application form" aria-label="Open marriage application form"
+                aria-expanded="false" aria-controls="weddingMarriageApplicationModal"
+                data-marriage-application-details-url="{{ route('admin.wedding.marriage-application-details') }}"
+                data-marriage-application-save-url="{{ route('admin.wedding.marriage-application-save') }}">
                 <i class="fa-solid fa-file-lines" aria-hidden="true"></i>
                 Application Form
             </button>
@@ -185,6 +191,8 @@
         </div>
     </div>
 
+    @include('wedding.partials.marriageApplicationModal')
+
     <section
         class="sappc-table-panel"
         id="weddingRecordsPanel"
@@ -192,6 +200,8 @@
         data-registry-type="wedding"
         data-payment-details-url="{{ route('admin.wedding.payment-details') }}"
         data-payment-save-url="{{ route('admin.wedding.payment-save') }}"
+        data-marriage-application-details-url="{{ route('admin.wedding.marriage-application-details') }}"
+        data-marriage-application-save-url="{{ route('admin.wedding.marriage-application-save') }}"
         aria-label="Wedding records"
     >
         <div class="sappc-table-toolbar">
@@ -230,7 +240,7 @@
             </div>
         </div>
 
-        <div class="table-responsive">
+        <div class="table-responsive sappc-table-panel_scroll">
             <table class="table table-bordered mb-0 sappc-data-table">
                 <thead>
                     <tr>
@@ -555,6 +565,7 @@
                 </div>
             </div>
         </div>
+    </div>
     </div>
 @endsection
 

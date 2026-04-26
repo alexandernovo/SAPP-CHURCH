@@ -361,6 +361,85 @@ class WeddingController extends Controller
         ]);
     }
 
+    public function weddingMarriageApplicationDetails(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'wedding_id' => ['required', 'integer', 'min:1'],
+        ]);
+        $weddingId = (int) $validated['wedding_id'];
+        $row = DB::table('wedding')->where('weddingId', $weddingId)->first();
+        if ($row === null) {
+            return response()->json(['message' => 'Wedding record not found.'], 404);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'data' => $this->decodeMarriageApplication($row),
+        ]);
+    }
+
+    public function weddingMarriageApplicationSave(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'wedding_id' => ['required', 'integer', 'min:1'],
+        ]);
+        $weddingId = (int) $validated['wedding_id'];
+        $existing = DB::table('wedding')->where('weddingId', $weddingId)->first();
+        if ($existing === null) {
+            return response()->json(['message' => 'Wedding record not found.'], 404);
+        }
+
+        $data = $request->json() ? $request->json()->all() : $request->all();
+        if (! is_array($data)) {
+            $data = [];
+        }
+        unset($data['wedding_id'], $data['_token']);
+
+        $encoded = json_encode($data, JSON_UNESCAPED_UNICODE);
+        if ($encoded === false) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Could not encode the marriage application data.',
+            ], 422);
+        }
+
+        try {
+            DB::table('wedding')->where('weddingId', $weddingId)->update([
+                'marriageApplication' => $encoded,
+            ]);
+        } catch (QueryException $e) {
+            report($e);
+
+            return response()->json([
+                'ok' => false,
+                'message' => 'Could not save. If the problem persists, run database migrations and try again.',
+            ], 422);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Marriage application saved.',
+        ]);
+    }
+
+    private function decodeMarriageApplication(object $row): array
+    {
+        $raw = $row->marriageApplication ?? null;
+        if ($raw === null || $raw === '') {
+            return [];
+        }
+        if (is_string($raw)) {
+            $decoded = json_decode($raw, true);
+
+            return is_array($decoded) ? $decoded : [];
+        }
+        if (is_array($raw)) {
+            return $raw;
+        }
+
+        return [];
+    }
+
     private function defaultWeddingPaymentFeeRows(): array
     {
         return [

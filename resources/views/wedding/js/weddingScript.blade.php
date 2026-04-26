@@ -134,9 +134,6 @@
             var $panel = $('#weddingRecordsPanel');
             if (!$panel.length) return;
 
-            var url = $panel.attr('data-records-url');
-            if (!url) return;
-
             var csrf = getMetaCsrf();
             var jsonHeaders = {
                 Accept: 'application/json',
@@ -144,6 +141,18 @@
                 'X-CSRF-TOKEN': csrf,
             };
 
+            var recordsUrl = ($panel.attr('data-records-url') || '').trim();
+            var paymentDetailsUrl = ($panel.attr('data-payment-details-url') || '').trim();
+            var paymentSaveUrlPanel = ($panel.attr('data-payment-save-url') || '').trim();
+            var $weddingAppFormBtn = $('#weddingApplicationFormBtn');
+            var marriageAppDetailsUrl = ($panel.attr('data-marriage-application-details-url') || $weddingAppFormBtn.attr(
+                'data-marriage-application-details-url') || '').trim();
+            var marriageAppSaveUrl = ($panel.attr('data-marriage-application-save-url') || $weddingAppFormBtn.attr(
+                'data-marriage-application-save-url') || '').trim();
+
+            var fetchRecords = function() {};
+
+            if (recordsUrl) {
             var state = {
                 page: 1,
                 per_page: 10,
@@ -201,11 +210,11 @@
                 );
             }
 
-            function fetchRecords() {
+            fetchRecords = function() {
                 $body.html(
                     '<tr class="sappc-table-loading"><td colspan="9" class="text-center text-muted py-4">Loading...</td></tr>'
                 );
-                var reqUrl = buildQueryUrl(url, {
+                var reqUrl = buildQueryUrl(recordsUrl, {
                     page: state.page,
                     per_page: state.per_page,
                     search: state.search,
@@ -237,7 +246,7 @@
                             ').</td></tr>'
                         );
                     });
-            }
+            };
 
             var searchDebounceTimer;
             $searchInput.on('input', function() {
@@ -302,8 +311,9 @@
                 $reloadBtn.on('click', fetchRecords);
             }
 
-            var paymentDetailsUrl = ($panel.attr('data-payment-details-url') || '').trim();
-            var paymentSaveUrlPanel = ($panel.attr('data-payment-save-url') || '').trim();
+            fetchRecords();
+
+            } /* end if (recordsUrl) — payment / marriage / schedule do not require data-records-url */
 
             var $paymentModal = $('#weddingPaymentFeeModal');
             var $paymentBtn = $('#weddingPaymentFeeBtn');
@@ -565,6 +575,246 @@
                         });
                 });
             }
+
+            (function initMarriageApplicationModal() {
+                var $marriageAppModal = $('#weddingMarriageApplicationModal');
+                var $marriageAppForm = $('#weddingMarriageApplicationForm');
+                var $marriageAppBtn = $('#weddingApplicationFormBtn');
+                if (!$marriageAppModal.length || !$marriageAppForm.length || !$marriageAppBtn.length) {
+                    return;
+                }
+
+                function fieldByName($f, n) {
+                    if (!$f.length) return $();
+                    return $f.find('[name="' + String(n).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"]');
+                }
+
+                function applyMarriageApplicationData(data) {
+                    if (!data || typeof data !== 'object') {
+                        return;
+                    }
+                    var $f = $marriageAppForm;
+                    $f.find('input[type="checkbox"]').each(function() {
+                        var n = this.name;
+                        if (!n) {
+                            return;
+                        }
+                        var v = data[n];
+                        $(this).prop('checked', v === 1 || v === '1' || v === true || v === 'on');
+                    });
+                    $f.find('input:not([type=checkbox]), textarea, select').each(function() {
+                        var n = this.name;
+                        if (!n || n === '_token' || n.indexOf('precana[') === 0) {
+                            return;
+                        }
+                        if (n.indexOf('marriage_sponsors[') === 0) {
+                            return;
+                        }
+                        if (data[n] == null) {
+                            return;
+                        }
+                        if (this.getAttribute('readonly') != null) {
+                            return;
+                        }
+                        $(this).val(String(data[n]));
+                    });
+                    if (Array.isArray(data.precana)) {
+                        data.precana.forEach(function(row, i) {
+                            if (i < 0 || i > 6 || !row || typeof row !== 'object') {
+                                return;
+                            }
+                            if (row.date) {
+                                fieldByName($f, 'precana[' + i + '][date]').val(String(row.date));
+                            }
+                            if (row.topic) {
+                                fieldByName($f, 'precana[' + i + '][topic]').val(String(row.topic));
+                            }
+                            if (row.signature) {
+                                fieldByName($f, 'precana[' + i + '][signature]').val(String(row.signature));
+                            }
+                        });
+                    }
+                    if (data.sponsors && !data.sponsors_line1) {
+                        var lines = String(data.sponsors).split(/\r?\n/);
+                        fieldByName($f, 'sponsors_line1').val((lines[0] || '').trim());
+                        if (lines[1]) {
+                            fieldByName($f, 'sponsors_line2').val(String(lines[1]).trim());
+                        }
+                        if (lines[2]) {
+                            fieldByName($f, 'sponsors_line3').val(String(lines[2]).trim());
+                        }
+                    }
+                    if (data.marriage_sponsors && typeof data.marriage_sponsors === 'object') {
+                        for (var g = 1; g <= 40; g++) {
+                            var v = data.marriage_sponsors[String(g)];
+                            if (v == null) {
+                                v = data.marriage_sponsors[g];
+                            }
+                            if (v != null) {
+                                fieldByName($f, 'marriage_sponsors[' + g + ']').val(String(v));
+                            }
+                        }
+                    }
+                }
+
+                function collectMarriageApplicationPayload() {
+                    var $f = $marriageAppForm;
+                    var out = {};
+                    $f.find('input, textarea, select').each(function() {
+                        var $el = $(this);
+                        var n = this.name;
+                        if (!n || n === '_token' || n.indexOf('precana[') === 0 || n.indexOf('marriage_sponsors[') ===
+                            0) {
+                            return;
+                        }
+                        if (this.type === 'checkbox') {
+                            if ($el.is(':checked')) {
+                                out[n] = this.value;
+                            }
+                            return;
+                        }
+                        if (this.getAttribute('readonly') != null) {
+                            return;
+                        }
+                        out[n] = $el.val() == null ? '' : String($el.val());
+                    });
+                    out.precana = [];
+                    for (var i = 0; i < 7; i++) {
+                        out.precana.push({
+                            date: (fieldByName($f, 'precana[' + i + '][date]').val() || '').trim(),
+                            topic: (fieldByName($f, 'precana[' + i + '][topic]').val() || '').trim(),
+                            signature: (fieldByName($f, 'precana[' + i + '][signature]').val() || '').trim()
+                        });
+                    }
+                    out.marriage_sponsors = {};
+                    for (var g = 1; g <= 40; g++) {
+                        out.marriage_sponsors[String(g)] = (fieldByName($f, 'marriage_sponsors[' + g + ']').val() ||
+                            '').trim();
+                    }
+                    return out;
+                }
+
+                $marriageAppModal.on('shown.bs.modal', function() {
+                    $marriageAppBtn.attr('aria-expanded', 'true');
+                });
+                $marriageAppModal.on('hidden.bs.modal', function() {
+                    $marriageAppBtn.attr('aria-expanded', 'false');
+                });
+
+                $marriageAppBtn.on('click', function(e) {
+                    e.preventDefault();
+                    if (typeof bootstrap === 'undefined') {
+                        window.alert('Bootstrap is required for this dialog.');
+                        return;
+                    }
+                    var cid = ($('#wdScheduleWeddingId').val() || '').trim();
+                    if (!cid) {
+                        sappcSwalSelectWeddingRowFirst();
+                        return;
+                    }
+                    if (!marriageAppDetailsUrl) {
+                        window.alert('Marriage application is not configured.');
+                        return;
+                    }
+                    var marriageBsModal = bootstrap.Modal.getOrCreateInstance($marriageAppModal[0]);
+                    fetchJson(buildQueryUrl(marriageAppDetailsUrl, {
+                        wedding_id: cid
+                    }), jsonHeaders)
+                        .done(function(res) {
+                            if (res && res.ok) {
+                                if ($marriageAppForm[0]) {
+                                    $marriageAppForm[0].reset();
+                                }
+                                $marriageAppForm.find('input[type=checkbox]').prop('checked', false);
+                                $('#wdMarriageAppWeddingId').val(cid);
+                                applyMarriageApplicationData(res.data || {});
+                                marriageBsModal.show();
+                            }
+                        })
+                        .fail(function(xhr) {
+                            var msg = 'Could not load marriage application.';
+                            var d = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                            if (d && d.message) {
+                                msg = d.message;
+                            }
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: msg
+                                });
+                            } else {
+                                window.alert(msg);
+                            }
+                        });
+                });
+
+                $('#weddingMarriageAppSaveBtn').on('click', function() {
+                    if (!marriageAppSaveUrl) {
+                        return;
+                    }
+                    if (typeof bootstrap === 'undefined') {
+                        return;
+                    }
+                    var wid = ($('#wdMarriageAppWeddingId').val() || '').trim() || ($('#wdScheduleWeddingId').val() ||
+                        '').trim();
+                    if (!wid) {
+                        sappcSwalSelectWeddingRowFirst();
+                        return;
+                    }
+                    var wn = parseInt(wid, 10);
+                    if (isNaN(wn) || wn < 1) {
+                        window.alert('Invalid record.');
+                        return;
+                    }
+                    var payload = collectMarriageApplicationPayload();
+                    payload.wedding_id = wn;
+                    var $saveBtn = $('#weddingMarriageAppSaveBtn');
+                    var marriageBsModal = bootstrap.Modal.getOrCreateInstance($marriageAppModal[0]);
+                    $saveBtn.prop('disabled', true);
+                    fetchPostJson(marriageAppSaveUrl, payload, csrf)
+                        .done(function(res) {
+                            if (res && res.ok) {
+                                marriageBsModal.hide();
+                                var msg = (res && res.message) ? res.message : 'Marriage application saved.';
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Saved',
+                                        text: msg,
+                                        confirmButtonText: 'OK',
+                                    });
+                                } else {
+                                    window.alert(msg);
+                                }
+                            }
+                        })
+                        .fail(function(xhr) {
+                            var msg = 'Could not save marriage application.';
+                            var d = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                            if (d && d.errors) {
+                                var vals = Object.values(d.errors);
+                                if (vals.length && Array.isArray(vals[0]) && vals[0][0]) {
+                                    msg = vals[0][0];
+                                }
+                            } else if (d && d.message) {
+                                msg = d.message;
+                            }
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: msg
+                                });
+                            } else {
+                                window.alert(msg);
+                            }
+                        })
+                        .always(function() {
+                            $saveBtn.prop('disabled', false);
+                        });
+                });
+            })();
 
             var $scheduleForm = $('#weddingScheduleRequestForm');
             var $scheduleBtn = $('#weddingScheduleRequestBtn');
@@ -884,8 +1134,6 @@
                     $scheduleBtn.attr('aria-expanded', 'false');
                 });
             }
-
-            fetchRecords();
         });
     })();
 </script>

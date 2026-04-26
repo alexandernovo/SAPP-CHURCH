@@ -152,12 +152,21 @@
     }
 }
 
-/* ——— Top bar (dark) ——— */
+
 .sappc-dash_main {
     flex: 1 1 auto;
     min-width: 0;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
+}
+
+/* Lock main column to one viewport height so registry UIs scroll inside the table only. */
+.sappc-dash_main:has(.sappc-registry-page) {
+    height: 100vh;
+    max-height: 100vh;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .sappc-topbar {
@@ -279,6 +288,114 @@
 .sappc-content {
     flex: 1 1 auto;
     padding: 1.25rem 1.25rem 2rem;
+    min-width: 0;
+}
+
+/* Registry module pages: fill viewport; only the data grid scrolls (not the whole page). */
+.sappc-content:has(.sappc-registry-page) {
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 1.25rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.sappc-content:has(.sappc-registry-page)::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+.sappc-registry-page {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.sappc-registry-page > .sappc-page-title,
+.sappc-registry-page > .sappc-page-breadcrumb,
+.sappc-registry-page > .sappc-registry-toolbar {
+    flex-shrink: 0;
+}
+
+.sappc-registry-page > .sappc-table-panel {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    margin-bottom: 0;
+}
+
+.sappc-registry-page .sappc-table-panel .sappc-table-toolbar,
+.sappc-registry-page .sappc-table-panel .sappc-table-footer {
+    flex-shrink: 0;
+}
+
+.sappc-registry-page .sappc-table-panel .sappc-table-panel_scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    /* Keep scroll; hide the visible scrollbar (Firefox / IE legacy / WebKit) */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.sappc-registry-page .sappc-table-panel .sappc-table-panel_scroll::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+/* No outer/page scrollbar on registry pages — only the data grid (above) may scroll, invisibly. */
+html:has(.sappc-registry-page) {
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+html:has(.sappc-registry-page)::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+body.sappc-dash:has(.sappc-registry-page) {
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+body.sappc-dash:has(.sappc-registry-page)::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+.sappc-dash:has(.sappc-registry-page) {
+    min-height: 0;
+    max-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.sappc-dash:has(.sappc-registry-page) .sappc-dash_layout {
+    min-height: 0;
+    max-height: 100vh;
+    height: 100%;
+    flex: 1 1 auto;
+    overflow: hidden;
 }
 
 .sappc-page-title {
@@ -723,6 +840,21 @@ button.sappc-doc-stat_clickable:focus-visible {
     overflow: hidden;
     margin-bottom: 1.5rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+/* Only the data grid scrolls; toolbar and pagination stay fixed above/below. */
+.sappc-table-panel .sappc-table-panel_scroll {
+    max-height: min(38rem, calc(100vh - 11.5rem));
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+}
+
+.sappc-table-panel .sappc-table-panel_scroll .sappc-data-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
 }
 
 .sappc-table-panel--below-overview {
@@ -1180,10 +1312,15 @@ button.sappc-doc-stat_clickable:focus-visible {
 }
 
 .sappc-site-footer {
+    flex-shrink: 0;
     margin-top: auto;
     padding: 0.85rem 1rem;
     background: #424242;
     text-align: center;
+    position: sticky;
+    bottom: 0;
+    z-index: 1025;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .sappc-site-footer_text {
