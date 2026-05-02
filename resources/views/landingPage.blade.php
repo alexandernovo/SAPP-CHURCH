@@ -1,5 +1,17 @@
 @extends('layouts.app')
 
+@push('styles')
+    <style>
+        body.landing-page {
+            background-image: url("{{ asset('assets/landingPage/BACKGROUND.jpg') }}");
+        }
+
+        .landing-ribbon {
+            background-image: url("{{ asset('assets/landingPage/RIBBON.png') }}");
+        }
+    </style>
+@endpush
+
 @section('title', config('app.name', 'SAPP Church'))
 
 @section('body-class', 'landing-page')

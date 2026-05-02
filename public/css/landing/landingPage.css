@@ -18,7 +18,7 @@ body.landing-page {
     min-height: 0;
     overflow: hidden;
     background-color: #0a0f14;
-    background-image: url('../../assets/landingPage/BACKGROUND.jpg');
+    /* background-image set in landingPage.blade.php via asset() */
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -34,7 +34,7 @@ body.landing-page {
     width: min(95vw, 1000px);
     height: min(95vh, 1000px);
     background-color: transparent;
-    background-image: url('../../assets/landingPage/RIBBON.png');
+    /* background-image set in landingPage.blade.php via asset() */
     background-size: contain;
     background-position: right bottom;
     background-repeat: no-repeat;
