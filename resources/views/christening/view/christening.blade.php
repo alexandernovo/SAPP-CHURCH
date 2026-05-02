@@ -27,7 +27,8 @@
             </button>
             <button type="button" class="sappc-registry-toolbar_btn sappc-registry-toolbar_btn--cta"
                 id="christeningScheduleRequestBtn"
-                data-schedule-save-url="{{ route('admin.christening.schedule-request') }}" title="Schedule request"
+                data-schedule-save-url="{{ route('admin.christening.schedule-request') }}"
+                data-schedule-reserved-url="{{ route('admin.christening.schedule-reserved-dates') }}" title="Schedule request"
                 aria-label="Open schedule request" aria-expanded="false" aria-controls="christeningScheduleRequestModal"
                 data-bs-toggle="modal" data-bs-target="#christeningScheduleRequestModal">
                 <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
@@ -304,27 +305,27 @@
                     <form class="sappcChristeningAppForm sappcChOfficial" id="christeningApplicationForm"
                         action="{{ route('admin.christening.application-form') }}" method="post" autocomplete="off"
                         data-save-url="{{ route('admin.christening.application-form') }}">
-                        <header class="sappcChOfficialHeader">
-                            <div class="sappcChOfficialLogo sappcChOfficialLogoLeft">
-                                <img src="{{ asset('assets/logos/DSA.jpg') }}" width="88" height="88"
-                                    alt="Diocese of San Jose de Antique" class="sappcChOfficialLogoImg">
-                            </div>
-                            <div class="sappcChOfficialMasthead">
-                                <p class="sappcChOfficialMastheadLine sappcChOfficialMastheadLineStrong">The Roman Catholic
-                                    Parish of St. Anthony of Padua</p>
-                                <p class="sappcChOfficialMastheadLine">Diocese of San Jose de Antique</p>
-                                <p class="sappcChOfficialMastheadLine">Barbaza, 5706, Antique, Philippines</p>
-                                <p class="sappcChOfficialDocTitle">APLIKASYON SA BUNYAG</p>
-                            </div>
-                            <div class="sappcChOfficialLogo sappcChOfficialLogoRight sappcChOfficialLogoParishSeal">
-                                <img src="{{ asset('assets/logos/SAPPC.png') }}" width="88" height="88"
-                                    alt="Parish of St. Anthony of Padua, Barbaza"
-                                    class="sappcChOfficialLogoImg sappcChOfficialLogoImgParishSeal">
-                            </div>
-                        </header>
+                        <div class="sappcChOfficialBondStack">
+                            <section class="sappcChOfficialBondPage" aria-label="Baptism application page 1">
+                                <header class="sappcChOfficialHeader">
+                                    <div class="sappcChOfficialLogo sappcChOfficialLogoLeft">
+                                        <img src="{{ asset('assets/logos/DSA.jpg') }}" width="88" height="88"
+                                            alt="Diocese of San Jose de Antique" class="sappcChOfficialLogoImg">
+                                    </div>
+                                    <div class="sappcChOfficialMasthead">
+                                        <p class="sappcChOfficialMastheadLine sappcChOfficialMastheadLineStrong">The Roman Catholic
+                                            Parish of St. Anthony of Padua</p>
+                                        <p class="sappcChOfficialMastheadLine">Diocese of San Jose de Antique</p>
+                                        <p class="sappcChOfficialMastheadLine">Barbaza, 5706, Antique, Philippines</p>
+                                        <p class="sappcChOfficialDocTitle">APLIKASYON SA BUNYAG</p>
+                                    </div>
+                                    <div class="sappcChOfficialLogo sappcChOfficialLogoRight sappcChOfficialLogoParishSeal">
+                                        <img src="{{ asset('assets/logos/SAPPC.png') }}" width="88" height="88"
+                                            alt="Parish of St. Anthony of Padua, Barbaza"
+                                            class="sappcChOfficialLogoImg sappcChOfficialLogoImgParishSeal">
+                                    </div>
+                                </header>
 
-                        <div class="sappcChOfficialColumns">
-                            <div class="sappcChOfficialColumn sappcChOfficialColumnLeft">
                                 <div class="sappcChOfficialNameBlock">
                                     <div class="sappcChOfficialNameRow">
                                         <div class="sappcChOfficialNameStrip">
@@ -487,9 +488,10 @@
                                         Wara ti bunyag nga pagahiwaton sa ikap-at nga Domingo kang bulan bangud dya
                                         gintalana para sa meeting kang Parish Pastoral Council (PPC).</li>
                                 </ol>
-                            </div>
+                            </section>
 
-                            <div class="sappcChOfficialColumn sappcChOfficialColumnRight">
+                            <section class="sappcChOfficialBondPage sappcChOfficialBondPage--2"
+                                aria-label="Baptism application page 2">
                                 <div class="sappcChristeningAppFormPage2 sappcChOfficialPage2">
                                     <h2 class="sappcChOfficialPage2Title">Arancel kang bunyag</h2>
 
@@ -577,7 +579,7 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </section>
                         </div>
                     </form>
                 </div>
@@ -875,5 +877,5 @@
 
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    @include('christening.js.christeningScript', ['initialTablePayload' => $initialTablePayload])
+    @include('christening.js.christeningScript', ['initialTablePayload' => $initialTablePayload]);
 @endpush

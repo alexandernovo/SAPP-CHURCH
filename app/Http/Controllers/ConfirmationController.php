@@ -361,6 +361,41 @@ class ConfirmationController extends Controller
         ]);
     }
 
+    public function deleteConfirmationRecord(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'confirmation_id' => ['required', 'integer', 'min:1'],
+        ]);
+
+        $confirmationId = (int) $validated['confirmation_id'];
+
+        $row = DB::table('confirmation')->where('confirmationId', $confirmationId)->first();
+        if ($row === null) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Confirmation record not found.',
+            ], 404);
+        }
+
+        try {
+            DB::transaction(function () use ($confirmationId) {
+                app(DashboardController::class)->deleteConfirmationRegistryRow($confirmationId);
+            });
+        } catch (QueryException $e) {
+            report($e);
+
+            return response()->json([
+                'ok' => false,
+                'message' => 'Could not delete this confirmation record. If this persists, run database migrations and try again.',
+            ], 422);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Confirmation record deleted.',
+        ]);
+    }
+
     public function confirmationApplicationDetails(Request $request): JsonResponse
     {
         $validated = $request->validate([

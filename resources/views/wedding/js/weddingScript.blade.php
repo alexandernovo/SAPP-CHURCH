@@ -48,6 +48,42 @@
             });
         }
 
+        function sappcWdSwal(cfg) {
+            if (typeof Swal !== 'undefined') {
+                return Swal.fire(cfg);
+            }
+            var msg = '';
+            if (cfg && cfg.text != null && String(cfg.text) !== '') {
+                msg = String(cfg.text);
+            } else if (cfg && cfg.title != null && String(cfg.title) !== '') {
+                msg = String(cfg.title);
+            }
+            window.alert(msg);
+            return Promise.resolve({
+                isConfirmed: true,
+            });
+        }
+
+        function sappcWdConfirm(cfg) {
+            cfg = cfg || {};
+            if (typeof Swal !== 'undefined') {
+                return Swal.fire({
+                    icon: cfg.icon || 'warning',
+                    title: cfg.title || '',
+                    text: cfg.text || '',
+                    showCancelButton: true,
+                    confirmButtonColor: cfg.confirmButtonColor || '#950d16',
+                    cancelButtonColor: cfg.cancelButtonColor || '#6c757d',
+                    confirmButtonText: cfg.confirmButtonText || 'OK',
+                    cancelButtonText: cfg.cancelButtonText || 'Cancel',
+                });
+            }
+            var ok = window.confirm(String(cfg.text || cfg.title || ''));
+            return Promise.resolve({
+                isConfirmed: ok,
+            });
+        }
+
         function paymentStatusCell(raw) {
             var s = String(raw == null ? '' : raw).trim();
             var lower = s.toLowerCase();
@@ -89,9 +125,15 @@
                 '<td class="text-center align-middle">' + paymentStatusCell(row.paymentStatus) + '</td>' +
                 '<td>' + esc(row.dateCreated) + '</td>' +
                 '<td class="text-center"><div class="sappc-icon-action_group">' +
-                '<a href="#" class="sappc-icon-action sappc-icon-action--view" title="View" aria-label="View record"><i class="fa-solid fa-eye" aria-hidden="true"></i></a>' +
-                '<a href="#" class="sappc-icon-action sappc-icon-action--edit" title="Edit" aria-label="Edit record"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>' +
-                '<button type="button" class="sappc-icon-action sappc-icon-action--delete" title="Delete" aria-label="Delete record"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>' +
+                '<a href="#" class="sappc-icon-action sappc-icon-action--view" title="View" aria-label="View record" data-record-id="' +
+                esc(row.recordId) +
+                '"><i class="fa-solid fa-eye" aria-hidden="true"></i></a>' +
+                '<a href="#" class="sappc-icon-action sappc-icon-action--edit" title="Edit" aria-label="Edit record" data-record-id="' +
+                esc(row.recordId) +
+                '"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>' +
+                '<button type="button" class="sappc-icon-action sappc-icon-action--delete" title="Delete" aria-label="Delete record" data-record-id="' +
+                esc(row.recordId) +
+                '"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>' +
                 '</div></td></tr>'
             );
         }
@@ -149,6 +191,7 @@
                 'data-marriage-application-details-url') || '').trim();
             var marriageAppSaveUrl = ($panel.attr('data-marriage-application-save-url') || $weddingAppFormBtn.attr(
                 'data-marriage-application-save-url') || '').trim();
+            var weddingDeleteUrl = ($panel.attr('data-wedding-delete-url') || '').trim();
 
             var fetchRecords = function() {};
 
@@ -311,9 +354,60 @@
                 $reloadBtn.on('click', fetchRecords);
             }
 
+            $('#weddingTableBody').on('click', '.sappc-icon-action--delete', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var id = ($(this).attr('data-record-id') || '').trim();
+                if (!id || !weddingDeleteUrl) return;
+
+                function runDelete() {
+                    fetchPostJson(
+                            weddingDeleteUrl, {
+                                wedding_id: parseInt(id, 10),
+                            },
+                            csrf
+                        )
+                        .done(function(res) {
+                            if (res && res.ok) {
+                                if (($('#wdScheduleWeddingId').val() || '').trim() === id) {
+                                    $('#wdScheduleWeddingId').val('');
+                                }
+                                if (($('#wdMarriageAppWeddingId').val() || '').trim() === id) {
+                                    $('#wdMarriageAppWeddingId').val('');
+                                }
+                                var msg = res && res.message ? res.message : 'Removed.';
+                                sappcWdSwal({
+                                    icon: 'success',
+                                    title: 'Deleted',
+                                    text: msg,
+                                });
+                                fetchRecords();
+                            }
+                        })
+                        .fail(function(xhr) {
+                            var msg = 'Could not delete.';
+                            var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                            if (data && data.message) msg = data.message;
+                            sappcWdSwal({
+                                icon: 'error',
+                                title: 'Error',
+                                text: msg,
+                            });
+                        });
+                }
+
+                sappcWdConfirm({
+                    title: 'Delete wedding record?',
+                    text: 'This permanently deletes this wedding row from the registry (including schedule and marriage application data).',
+                    confirmButtonText: 'Yes, delete',
+                }).then(function(r) {
+                    if (r.isConfirmed) runDelete();
+                });
+            });
+
             fetchRecords();
 
-            } /* end if (recordsUrl) — payment / marriage / schedule do not require data-records-url */
+            }
 
             var $paymentModal = $('#weddingPaymentFeeModal');
             var $paymentBtn = $('#weddingPaymentFeeBtn');

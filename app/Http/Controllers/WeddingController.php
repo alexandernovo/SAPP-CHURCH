@@ -422,6 +422,41 @@ class WeddingController extends Controller
         ]);
     }
 
+    public function deleteWeddingRecord(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'wedding_id' => ['required', 'integer', 'min:1'],
+        ]);
+
+        $weddingId = (int) $validated['wedding_id'];
+
+        $row = DB::table('wedding')->where('weddingId', $weddingId)->first();
+        if ($row === null) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Wedding record not found.',
+            ], 404);
+        }
+
+        try {
+            DB::transaction(function () use ($weddingId) {
+                app(DashboardController::class)->deleteWeddingRegistryRow($weddingId);
+            });
+        } catch (QueryException $e) {
+            report($e);
+
+            return response()->json([
+                'ok' => false,
+                'message' => 'Could not delete this wedding record. If this persists, run database migrations and try again.',
+            ], 422);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Wedding record deleted.',
+        ]);
+    }
+
     private function decodeMarriageApplication(object $row): array
     {
         $raw = $row->marriageApplication ?? null;

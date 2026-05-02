@@ -39,6 +39,42 @@
             });
         }
 
+        function sappcBrSwal(cfg) {
+            if (typeof Swal !== 'undefined') {
+                return Swal.fire(cfg);
+            }
+            var msg = '';
+            if (cfg && cfg.text != null && String(cfg.text) !== '') {
+                msg = String(cfg.text);
+            } else if (cfg && cfg.title != null && String(cfg.title) !== '') {
+                msg = String(cfg.title);
+            }
+            window.alert(msg);
+            return Promise.resolve({
+                isConfirmed: true,
+            });
+        }
+
+        function sappcBrConfirm(cfg) {
+            cfg = cfg || {};
+            if (typeof Swal !== 'undefined') {
+                return Swal.fire({
+                    icon: cfg.icon || 'warning',
+                    title: cfg.title || '',
+                    text: cfg.text || '',
+                    showCancelButton: true,
+                    confirmButtonColor: cfg.confirmButtonColor || '#950d16',
+                    cancelButtonColor: cfg.cancelButtonColor || '#6c757d',
+                    confirmButtonText: cfg.confirmButtonText || 'OK',
+                    cancelButtonText: cfg.cancelButtonText || 'Cancel',
+                });
+            }
+            var ok = window.confirm(String(cfg.text || cfg.title || ''));
+            return Promise.resolve({
+                isConfirmed: ok,
+            });
+        }
+
         function fetchJson(url, headers) {
             return $.ajax({
                 url: url,
@@ -89,9 +125,15 @@
                 '<td class="text-center align-middle">' + paymentStatusCell(row.paymentStatus) + '</td>' +
                 '<td>' + esc(row.dateCreated) + '</td>' +
                 '<td class="text-center"><div class="sappc-icon-action_group">' +
-                '<a href="#" class="sappc-icon-action sappc-icon-action--view" title="View" aria-label="View record"><i class="fa-solid fa-eye" aria-hidden="true"></i></a>' +
-                '<a href="#" class="sappc-icon-action sappc-icon-action--edit" title="Edit" aria-label="Edit record"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>' +
-                '<button type="button" class="sappc-icon-action sappc-icon-action--delete" title="Delete" aria-label="Delete record"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>' +
+                '<a href="#" class="sappc-icon-action sappc-icon-action--view" title="View" aria-label="View record" data-record-id="' +
+                esc(row.recordId) +
+                '"><i class="fa-solid fa-eye" aria-hidden="true"></i></a>' +
+                '<a href="#" class="sappc-icon-action sappc-icon-action--edit" title="Edit" aria-label="Edit record" data-record-id="' +
+                esc(row.recordId) +
+                '"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>' +
+                '<button type="button" class="sappc-icon-action sappc-icon-action--delete" title="Delete" aria-label="Delete record" data-record-id="' +
+                esc(row.recordId) +
+                '"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>' +
                 '</div></td></tr>'
             );
         }
@@ -138,6 +180,7 @@
             if (!url) return;
 
             var csrf = getMetaCsrf();
+            var burialDeleteUrl = ($panel.attr('data-burial-delete-url') || '').trim();
             var jsonHeaders = {
                 Accept: 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
@@ -884,6 +927,54 @@
                     $scheduleBtn.attr('aria-expanded', 'false');
                 });
             }
+
+            $('#burialTableBody').on('click', '.sappc-icon-action--delete', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var id = ($(this).attr('data-record-id') || '').trim();
+                if (!id || !burialDeleteUrl) return;
+
+                function runDelete() {
+                    fetchPostJson(
+                            burialDeleteUrl, {
+                                burial_id: parseInt(id, 10),
+                            },
+                            csrf
+                        )
+                        .done(function(res) {
+                            if (res && res.ok) {
+                                if (($('#brScheduleBurialId').val() || '').trim() === id) {
+                                    $('#brScheduleBurialId').val('');
+                                }
+                                var msg = res && res.message ? res.message : 'Removed.';
+                                sappcBrSwal({
+                                    icon: 'success',
+                                    title: 'Deleted',
+                                    text: msg,
+                                });
+                                fetchRecords();
+                            }
+                        })
+                        .fail(function(xhr) {
+                            var msg = 'Could not delete.';
+                            var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                            if (data && data.message) msg = data.message;
+                            sappcBrSwal({
+                                icon: 'error',
+                                title: 'Error',
+                                text: msg,
+                            });
+                        });
+                }
+
+                sappcBrConfirm({
+                    title: 'Delete burial record?',
+                    text: 'This permanently deletes this burial row from the registry (including schedule and payment data).',
+                    confirmButtonText: 'Yes, delete',
+                }).then(function(r) {
+                    if (r.isConfirmed) runDelete();
+                });
+            });
 
             fetchRecords();
         });

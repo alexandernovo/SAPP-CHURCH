@@ -361,6 +361,41 @@ class BurialController extends Controller
         ]);
     }
 
+    public function deleteBurialRecord(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'burial_id' => ['required', 'integer', 'min:1'],
+        ]);
+
+        $burialId = (int) $validated['burial_id'];
+
+        $row = DB::table('burial')->where('burialId', $burialId)->first();
+        if ($row === null) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Burial record not found.',
+            ], 404);
+        }
+
+        try {
+            DB::transaction(function () use ($burialId) {
+                app(DashboardController::class)->deleteBurialRegistryRow($burialId);
+            });
+        } catch (QueryException $e) {
+            report($e);
+
+            return response()->json([
+                'ok' => false,
+                'message' => 'Could not delete this burial record. If this persists, run database migrations and try again.',
+            ], 422);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Burial record deleted.',
+        ]);
+    }
+
     private function defaultBurialPaymentFeeRows(): array
     {
         return [

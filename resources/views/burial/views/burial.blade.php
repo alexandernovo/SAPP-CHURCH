@@ -193,6 +193,7 @@
         data-registry-type="burial"
         data-payment-details-url="{{ route('admin.burial.payment-details') }}"
         data-payment-save-url="{{ route('admin.burial.payment-save') }}"
+        data-burial-delete-url="{{ route('admin.burial.record-delete') }}"
         aria-label="Burial records"
     >
         <div class="sappc-table-toolbar">
@@ -561,5 +562,6 @@
 @endsection
 
 @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @include('burial.js.burialScript');
 @endpush

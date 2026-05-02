@@ -495,20 +495,28 @@ class ChristeningController extends Controller
 
         $row = DB::table('christening')->where('christeningId', $christeningId)->first();
         if ($row === null) {
-            return response()->json(['message' => 'Christening record not found.'], 404);
+            return response()->json([
+                'ok' => false,
+                'message' => 'Christening record not found.',
+            ], 404);
         }
 
-        DB::transaction(function () use ($christeningId) {
-            DB::table('christening_certification')->where('christeningId', $christeningId)->delete();
-            DB::table('christening_details')->where('christeningId', $christeningId)->delete();
-            DB::table('christening')->where('christeningId', $christeningId)->update([
-                'scheduleRequested' => null,
-            ]);
-        });
+        try {
+            DB::transaction(function () use ($christeningId) {
+                app(DashboardController::class)->deleteChristeningRegistryRow($christeningId);
+            });
+        } catch (QueryException $e) {
+            report($e);
+
+            return response()->json([
+                'ok' => false,
+                'message' => 'Could not delete this christening record. If this persists, run database migrations and try again.',
+            ], 422);
+        }
 
         return response()->json([
             'ok' => true,
-            'message' => 'Application details and schedule reservation were removed.',
+            'message' => 'Christening record deleted.',
         ]);
     }
 
@@ -522,12 +530,15 @@ class ChristeningController extends Controller
         $year = (int) $validated['year'];
         $month = (int) $validated['month'];
 
+        $start = Carbon::create($year, $month, 1)->startOfDay();
+        $end = (clone $start)->endOfMonth()->endOfDay();
+
         $dates = DB::table('christening')
             ->whereNotNull('scheduleRequested')
-            ->whereYear('scheduleRequested', $year)
-            ->whereMonth('scheduleRequested', $month)
+            ->whereBetween('scheduleRequested', [$start->format('Y-m-d H:i:s'), $end->format('Y-m-d H:i:s')])
             ->selectRaw('DATE(scheduleRequested) as d')
             ->distinct()
+            ->orderBy('d')
             ->pluck('d')
             ->map(fn ($d) => Carbon::parse($d)->format('Y-m-d'))
             ->values()

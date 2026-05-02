@@ -368,7 +368,7 @@ class DashboardController extends Controller
         ]);
     }
 
-    private function deleteChristeningRegistryRow(int $christeningId): void
+    public function deleteChristeningRegistryRow(int $christeningId): void
     {
         $row = DB::table('christening')->where('christeningId', $christeningId)->first();
         if ($row === null) {
@@ -382,17 +382,20 @@ class DashboardController extends Controller
         $this->deleteCustomerIfOrphaned($row->customerId ?? null);
     }
 
-    private function deleteConfirmationRegistryRow(int $confirmationId): void
+    public function deleteConfirmationRegistryRow(int $confirmationId): void
     {
         $row = DB::table('confirmation')->where('confirmationId', $confirmationId)->first();
         if ($row === null) {
             return;
         }
+        if (DB::getSchemaBuilder()->hasTable('confirmation_details')) {
+            DB::table('confirmation_details')->where('confirmationId', $confirmationId)->delete();
+        }
         DB::table('confirmation')->where('confirmationId', $confirmationId)->delete();
         $this->deleteCustomerIfOrphaned($row->customerId ?? null);
     }
 
-    private function deleteWeddingRegistryRow(int $weddingId): void
+    public function deleteWeddingRegistryRow(int $weddingId): void
     {
         $row = DB::table('wedding')->where('weddingId', $weddingId)->first();
         if ($row === null) {
@@ -402,7 +405,7 @@ class DashboardController extends Controller
         $this->deleteCustomerIfOrphaned($row->customerId ?? null);
     }
 
-    private function deleteBurialRegistryRow(int $burialId): void
+    public function deleteBurialRegistryRow(int $burialId): void
     {
         $row = DB::table('burial')->where('burialId', $burialId)->first();
         if ($row === null) {

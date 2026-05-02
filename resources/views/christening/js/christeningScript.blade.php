@@ -59,6 +59,42 @@
             });
         }
 
+        function sappcChSwal(cfg) {
+            if (typeof Swal !== 'undefined') {
+                return Swal.fire(cfg);
+            }
+            var msg = '';
+            if (cfg && cfg.text != null && String(cfg.text) !== '') {
+                msg = String(cfg.text);
+            } else if (cfg && cfg.title != null && String(cfg.title) !== '') {
+                msg = String(cfg.title);
+            }
+            window.alert(msg);
+            return Promise.resolve({
+                isConfirmed: true,
+            });
+        }
+
+        function sappcChConfirm(cfg) {
+            cfg = cfg || {};
+            if (typeof Swal !== 'undefined') {
+                return Swal.fire({
+                    icon: cfg.icon || 'warning',
+                    title: cfg.title || '',
+                    text: cfg.text || '',
+                    showCancelButton: true,
+                    confirmButtonColor: cfg.confirmButtonColor || '#950d16',
+                    cancelButtonColor: cfg.cancelButtonColor || '#6c757d',
+                    confirmButtonText: cfg.confirmButtonText || 'OK',
+                    cancelButtonText: cfg.cancelButtonText || 'Cancel',
+                });
+            }
+            var ok = window.confirm(String(cfg.text || cfg.title || ''));
+            return Promise.resolve({
+                isConfirmed: ok,
+            });
+        }
+
         function sappcSwalSelectChristeningRowFirst() {
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
@@ -851,13 +887,12 @@
         }
 
         var $searchInput = $('#christeningSearch');
-        if (!$searchInput.length) return;
 
         var meta0 = initialTablePayload.meta || {};
         var state = {
             page: meta0.current_page || 1,
             per_page: normalizePerPage(meta0.per_page || 10),
-            search: ($searchInput.val() || '').trim(),
+            search: ($searchInput.length ? ($searchInput.val() || '').trim() : ''),
             letter: @json(request('letter', '')),
             date_from: @json(request('date_from', '')),
             date_to: @json(request('date_to', '')),
@@ -977,15 +1012,11 @@
                                 $('#chScheduleChristeningId').val('');
                             }
                             var msg = (res && res.message) ? res.message : 'Removed.';
-                            if (typeof Swal !== 'undefined') {
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Deleted',
-                                    text: msg
-                                });
-                            } else {
-                                window.alert(msg);
-                            }
+                            sappcChSwal({
+                                icon: 'success',
+                                title: 'Deleted',
+                                text: msg,
+                            });
                             fetchRecords();
                         }
                     })
@@ -993,33 +1024,21 @@
                         var msg = 'Could not delete.';
                         var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
                         if (data && data.message) msg = data.message;
-                        if (typeof Swal !== 'undefined') {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error',
-                                text: msg
-                            });
-                        } else {
-                            window.alert(msg);
-                        }
+                        sappcChSwal({
+                            icon: 'error',
+                            title: 'Error',
+                            text: msg,
+                        });
                     });
             }
 
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    title: 'Delete application & schedule?',
-                    text: 'This removes saved application details and clears the reserved schedule for this record.',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#950d16',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Yes, delete',
-                }).then(function(r) {
-                    if (r.isConfirmed) runDelete();
-                });
-            } else if (window.confirm('Remove application details and schedule reservation for this record?')) {
-                runDelete();
-            }
+            sappcChConfirm({
+                title: 'Delete christening record?',
+                text: 'This permanently deletes this christening row from the registry and removes related certification and application detail rows.',
+                confirmButtonText: 'Yes, delete',
+            }).then(function(r) {
+                if (r.isConfirmed) runDelete();
+            });
         });
 
         function fetchQueryParams() {
@@ -1047,6 +1066,7 @@
         }
 
         function applySearchFromInput() {
+            if (!$searchInput.length) return;
             state.search = ($searchInput.val() || '').trim();
             state.page = 1;
             fetchRecords();
@@ -1079,13 +1099,15 @@
             fetchRecords();
         });
 
-        $searchInput.on('input', scheduleSearchFromInput).on('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                clearTimeout(searchDebounceTimer);
-                applySearchFromInput();
-            }
-        });
+        if ($searchInput.length) {
+            $searchInput.on('input', scheduleSearchFromInput).on('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    clearTimeout(searchDebounceTimer);
+                    applySearchFromInput();
+                }
+            });
+        }
 
         $panel.find('.sappc-letter-filter_btn').on('click', function() {
             var $btn = $(this);
@@ -1107,7 +1129,11 @@
         var $scheduleForm = $('#christeningScheduleRequestForm');
         var $scheduleBtn = $('#christeningScheduleRequestBtn');
         var scheduleSaveUrl = $scheduleForm.attr('data-schedule-save-url') || $scheduleBtn.attr('data-schedule-save-url') || '';
-        var scheduleReservedUrl = ($scheduleForm.attr('data-schedule-reserved-url') || '').trim();
+        var scheduleReservedUrl = (
+            $scheduleForm.attr('data-schedule-reserved-url') ||
+            $scheduleBtn.attr('data-schedule-reserved-url') ||
+            ''
+        ).trim();
         /** ISO date (Y-m-d) -> true for current calendar month view */
         var calendarReservedLookup = {};
         var $scheduleModal = $('#christeningScheduleRequestModal');
@@ -1251,12 +1277,15 @@
             $('#chScheduleContact').val('');
             $('#chScheduleClient').val('');
             $('#chScheduleAddress').val('');
-            $scheduleDateInput.val(new Date().toISOString().slice(0, 10));
+            $scheduleDateInput.val('');
             $scheduleTimeInput.val('10:00');
             $('#christeningTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
             var sel = parseIsoDate($scheduleDateInput.val());
             if (sel) {
                 calendarViewDate = new Date(sel.getFullYear(), sel.getMonth(), 1);
+            } else {
+                var todayMonth = new Date();
+                calendarViewDate = new Date(todayMonth.getFullYear(), todayMonth.getMonth(), 1);
             }
             syncCalendarHeader();
             renderCalendarDayGrid();
@@ -1314,6 +1343,12 @@
         }
 
         initScheduleCalendar();
+
+        if ($scheduleModal.length && typeof bootstrap !== 'undefined') {
+            $scheduleModal.on('shown.bs.modal', function() {
+                renderCalendarDayGrid();
+            });
+        }
 
         $('#christeningTableBody').on('click', 'tr', function(e) {
             if ($(e.target).closest('a,button').length) return;
@@ -1403,11 +1438,13 @@
         if ($scheduleBtn.length && $scheduleModal.length) {
             $scheduleModal.on('shown.bs.modal', function() {
                 $scheduleBtn.attr('aria-expanded', 'true');
-                if (!$scheduleDateInput.val()) $scheduleDateInput.val(new Date().toISOString().slice(0, 10));
                 if (!$scheduleTimeInput.val()) $scheduleTimeInput.val('10:00');
                 var selectedDate = parseIsoDate($scheduleDateInput.val());
                 if (selectedDate) {
                     calendarViewDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+                } else {
+                    var nowHeader = new Date();
+                    calendarViewDate = new Date(nowHeader.getFullYear(), nowHeader.getMonth(), 1);
                 }
                 syncCalendarHeader();
                 renderCalendarDayGrid();

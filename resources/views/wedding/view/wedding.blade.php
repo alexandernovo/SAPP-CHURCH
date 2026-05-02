@@ -202,6 +202,7 @@
         data-payment-save-url="{{ route('admin.wedding.payment-save') }}"
         data-marriage-application-details-url="{{ route('admin.wedding.marriage-application-details') }}"
         data-marriage-application-save-url="{{ route('admin.wedding.marriage-application-save') }}"
+        data-wedding-delete-url="{{ route('admin.wedding.record-delete') }}"
         aria-label="Wedding records"
     >
         <div class="sappc-table-toolbar">
@@ -570,5 +571,6 @@
 @endsection
 
 @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @include('wedding.js.weddingScript');
 @endpush

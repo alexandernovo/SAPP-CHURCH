@@ -193,8 +193,6 @@
             </div>
         </div>
     </div>
-
-    {{-- Aplikasyon sa Kompirma + Arancel kang Kompirma (single scrollable modal) --}}
     <div class="modal fade" id="confirmationApplicationModal" tabindex="-1" aria-labelledby="confirmationApplicationModalTitle" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered sappcCnAppModal sappcCnKompirmaDialog">
             <div class="modal-content sappcChristeningAppModal">
@@ -393,7 +391,9 @@
                     </form>
                 </div>
                 <div class="modal-footer sappcChristeningAppModalFooter">
-                    <button type="button" class="sappcChristeningAppModalBtn sappcChristeningAppModalBtnSave" id="confirmationApplicationSaveBtn">Save</button>
+                    <button type="submit" form="confirmationApplicationForm"
+                        class="sappcChristeningAppModalBtn sappcChristeningAppModalBtnSave"
+                        id="confirmationApplicationSaveBtn">Save</button>
                     <button type="button" class="sappcChristeningAppModalBtn sappcChristeningAppModalBtnCancel" data-bs-dismiss="modal">Cancel</button>
                 </div>
             </div>
@@ -411,6 +411,7 @@
         data-confirmation-application-save-url="{{ route('admin.confirmation.application-save') }}"
         data-confirmation-arancel-details-url="{{ route('admin.confirmation.arancel-details') }}"
         data-confirmation-arancel-save-url="{{ route('admin.confirmation.arancel-save') }}"
+        data-confirmation-delete-url="{{ route('admin.confirmation.record-delete') }}"
         aria-label="Confirmation records"
     >
         <div class="sappc-table-toolbar">
@@ -779,5 +780,6 @@
 @endsection
 
 @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @include('confirmation.js.confirmationScript');
 @endpush

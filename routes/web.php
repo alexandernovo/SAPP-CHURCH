@@ -32,6 +32,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/confirmation/confirmation-application', [ConfirmationController::class, 'confirmationApplicationSave'])->name('admin.confirmation.application-save');
     Route::get('/confirmation/confirmation-arancel', [ConfirmationController::class, 'confirmationArancelDetails'])->name('admin.confirmation.arancel-details');
     Route::post('/confirmation/confirmation-arancel', [ConfirmationController::class, 'confirmationArancelSave'])->name('admin.confirmation.arancel-save');
+    Route::post('/confirmation/record/delete', [ConfirmationController::class, 'deleteConfirmationRecord'])->name('admin.confirmation.record-delete');
     Route::get('/wedding', [WeddingController::class, 'index'])->name('admin.wedding');
     Route::post('/wedding/schedule-request', [WeddingController::class, 'scheduleWedding'])->name('admin.wedding.schedule-request');
     Route::get('/wedding/schedule-reserved-dates', [WeddingController::class, 'weddingReservedDates'])->name('admin.wedding.schedule-reserved-dates');
@@ -39,11 +40,13 @@ Route::middleware('auth')->group(function () {
     Route::post('/wedding/payment-save', [WeddingController::class, 'weddingPaymentSave'])->name('admin.wedding.payment-save');
     Route::get('/wedding/marriage-application', [WeddingController::class, 'weddingMarriageApplicationDetails'])->name('admin.wedding.marriage-application-details');
     Route::post('/wedding/marriage-application', [WeddingController::class, 'weddingMarriageApplicationSave'])->name('admin.wedding.marriage-application-save');
+    Route::post('/wedding/record/delete', [WeddingController::class, 'deleteWeddingRecord'])->name('admin.wedding.record-delete');
     Route::get('/burial', [BurialController::class, 'index'])->name('admin.burial');
     Route::post('/burial/schedule-request', [BurialController::class, 'scheduleBurial'])->name('admin.burial.schedule-request');
     Route::get('/burial/schedule-reserved-dates', [BurialController::class, 'burialReservedDates'])->name('admin.burial.schedule-reserved-dates');
     Route::get('/burial/payment-details', [BurialController::class, 'burialPaymentDetails'])->name('admin.burial.payment-details');
     Route::post('/burial/payment-save', [BurialController::class, 'burialPaymentSave'])->name('admin.burial.payment-save');
+    Route::post('/burial/record/delete', [BurialController::class, 'deleteBurialRecord'])->name('admin.burial.record-delete');
     Route::get('/document', [DocumentationController::class, 'document'])->name('admin.document');
     Route::get('/document/burial-report', [DocumentationController::class, 'burialReport'])->name('admin.document.burial-report');
     Route::get('/certification', [ChristeningController::class, 'certificationPage'])->name('admin.certification');

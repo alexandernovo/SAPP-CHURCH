@@ -11,7 +11,7 @@
         function getMetaCsrf() {
             return $('meta[name="csrf-token"]').attr('content') || '';
         }
-
+        
         function buildQueryUrl(base, params) {
             var q = {};
             Object.keys(params).forEach(function(k) {
@@ -48,17 +48,49 @@
             });
         }
 
-        function sappcSwalSelectConfirmationRowFirst() {
+        function sappcCnSwal(cfg) {
             if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Select a record',
-                    text: 'Select a confirmation row in the table first.',
-                    confirmButtonText: 'OK',
-                });
-            } else {
-                window.alert('Select a confirmation row in the table first.');
+                return Swal.fire(cfg);
             }
+            var msg = '';
+            if (cfg && cfg.text != null && String(cfg.text) !== '') {
+                msg = String(cfg.text);
+            } else if (cfg && cfg.title != null && String(cfg.title) !== '') {
+                msg = String(cfg.title);
+            }
+            window.alert(msg);
+            return Promise.resolve({
+                isConfirmed: true,
+            });
+        }
+
+        function sappcCnConfirm(cfg) {
+            cfg = cfg || {};
+            if (typeof Swal !== 'undefined') {
+                return Swal.fire({
+                    icon: cfg.icon || 'warning',
+                    title: cfg.title || '',
+                    text: cfg.text || '',
+                    showCancelButton: true,
+                    confirmButtonColor: cfg.confirmButtonColor || '#950d16',
+                    cancelButtonColor: cfg.cancelButtonColor || '#6c757d',
+                    confirmButtonText: cfg.confirmButtonText || 'OK',
+                    cancelButtonText: cfg.cancelButtonText || 'Cancel',
+                });
+            }
+            var ok = window.confirm(String(cfg.text || cfg.title || ''));
+            return Promise.resolve({
+                isConfirmed: ok,
+            });
+        }
+
+        function sappcSwalSelectConfirmationRowFirst() {
+            sappcCnSwal({
+                icon: 'warning',
+                title: 'Select a record',
+                text: 'Select a confirmation row in the table first.',
+                confirmButtonText: 'OK',
+            });
         }
 
         function rowHtml(row) {
@@ -73,9 +105,15 @@
                 '<td>' + esc(row.contactNum) + '</td>' +
                 '<td>' + esc(row.dateCreated) + '</td>' +
                 '<td class="text-center"><div class="sappc-icon-action_group">' +
-                '<a href="#" class="sappc-icon-action sappc-icon-action--view" title="View" aria-label="View record"><i class="fa-solid fa-eye" aria-hidden="true"></i></a>' +
-                '<a href="#" class="sappc-icon-action sappc-icon-action--edit" title="Edit" aria-label="Edit record"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>' +
-                '<button type="button" class="sappc-icon-action sappc-icon-action--delete" title="Delete" aria-label="Delete record"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>' +
+                '<a href="#" class="sappc-icon-action sappc-icon-action--view" title="View" aria-label="View record" data-record-id="' +
+                esc(row.recordId) +
+                '"><i class="fa-solid fa-eye" aria-hidden="true"></i></a>' +
+                '<a href="#" class="sappc-icon-action sappc-icon-action--edit" title="Edit" aria-label="Edit record" data-record-id="' +
+                esc(row.recordId) +
+                '"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>' +
+                '<button type="button" class="sappc-icon-action sappc-icon-action--delete" title="Delete" aria-label="Delete record" data-record-id="' +
+                esc(row.recordId) +
+                '"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>' +
                 '</div></td></tr>'
             );
         }
@@ -293,6 +331,9 @@
             var confirmationAppSaveUrl = ($panel.attr('data-confirmation-application-save-url') || $appFormBtn.attr('data-confirmation-application-save-url') || '').trim();
             var confirmationArancelDetailsUrl = ($panel.attr('data-confirmation-arancel-details-url') || $appFormBtn.attr('data-confirmation-arancel-details-url') || '').trim();
             var confirmationArancelSaveUrl = ($panel.attr('data-confirmation-arancel-save-url') || $appFormBtn.attr('data-confirmation-arancel-save-url') || '').trim();
+            var confirmationDeleteUrl = ($panel.attr('data-confirmation-delete-url') || '').trim();
+
+            var cnApplicationDraftsByConfirmationId = {};
 
             var $paymentModal = $('#confirmationPaymentFeeModal');
             var $paymentBtn = $('#confirmationPaymentFeeBtn');
@@ -464,7 +505,11 @@
                         return;
                     }
                     if (!paymentDetailsUrl) {
-                        window.alert('Payment load is not configured.');
+                        sappcCnSwal({
+                            icon: 'warning',
+                            title: 'Not configured',
+                            text: 'Payment load is not configured.',
+                        });
                         return;
                     }
                     fetchJson(buildQueryUrl(paymentDetailsUrl, {
@@ -480,15 +525,11 @@
                             var msg = 'Could not load payment details.';
                             var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
                             if (data && data.message) msg = data.message;
-                            if (typeof Swal !== 'undefined') {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Error',
-                                    text: msg
-                                });
-                            } else {
-                                window.alert(msg);
-                            }
+                            sappcCnSwal({
+                                icon: 'error',
+                                title: 'Error',
+                                text: msg,
+                            });
                         });
                 });
 
@@ -504,7 +545,11 @@
                     var payload = serializeConfirmationPaymentFeeToObject();
                     payload.confirmation_id = parseInt(cid, 10);
                     if (isNaN(payload.confirmation_id)) {
-                        window.alert('Invalid record.');
+                        sappcCnSwal({
+                            icon: 'warning',
+                            title: 'Invalid record',
+                            text: 'Invalid record.',
+                        });
                         return;
                     }
                     var $saveBtn = $('#confirmationPaymentFeeSaveBtn');
@@ -517,16 +562,12 @@
                                     if (inst) inst.hide();
                                 }
                                 var msg = (res && res.message) ? res.message : 'Payment record saved.';
-                                if (typeof Swal !== 'undefined') {
-                                    Swal.fire({
-                                        icon: 'success',
-                                        title: 'Saved',
-                                        text: msg,
-                                        confirmButtonText: 'OK',
-                                    });
-                                } else {
-                                    window.alert(msg);
-                                }
+                                sappcCnSwal({
+                                    icon: 'success',
+                                    title: 'Saved',
+                                    text: msg,
+                                    confirmButtonText: 'OK',
+                                });
                                 fetchRecords();
                             }
                         })
@@ -539,15 +580,11 @@
                             } else if (data && data.message) {
                                 msg = data.message;
                             }
-                            if (typeof Swal !== 'undefined') {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Error',
-                                    text: msg
-                                });
-                            } else {
-                                window.alert(msg);
-                            }
+                            sappcCnSwal({
+                                icon: 'error',
+                                title: 'Error',
+                                text: msg,
+                            });
                         })
                         .always(function() {
                             $saveBtn.prop('disabled', false);
@@ -557,57 +594,43 @@
 
             (function initConfirmationKompirmaModals() {
                 var applicationFieldNames = {
-                    'first_name': 1, 'middle_name': 1, 'family_name': 1, 'date_of_birth': 1, 'place_of_birth': 1,
-                    'father_name': 1, 'mother_maiden': 1, 'address': 1, 'baptism_date': 1, 'baptism_place': 1,
-                    'minister_baptism': 1, 'book_no': 1, 'page_no': 1, 'registry_no': 1, 'confirmation_date': 1,
-                    'confirmation_minister': 1, 'godparent_1': 1, 'godparent_2': 1, 'godparent_3': 1, 'godparent_4': 1,
+                    first_name: 1,
+                    middle_name: 1,
+                    family_name: 1,
+                    date_of_birth: 1,
+                    place_of_birth: 1,
+                    father_name: 1,
+                    mother_maiden: 1,
+                    address: 1,
+                    baptism_date: 1,
+                    baptism_place: 1,
+                    minister_baptism: 1,
+                    book_no: 1,
+                    page_no: 1,
+                    registry_no: 1,
+                    confirmation_date: 1,
+                    confirmation_minister: 1,
+                    godparent_1: 1,
+                    godparent_2: 1,
+                    godparent_3: 1,
+                    godparent_4: 1,
                 };
                 var arancelFieldNames = {
-                    'amt_arancel': 1, 'amt_candle': 1, 'amt_godparents': 1, 'other_label_1': 1, 'other_label_2': 1,
-                    'other_label_3': 1, 'amt_other_1': 1, 'amt_other_2': 1, 'amt_other_3': 1, 'total_payment': 1,
-                    'sig_bpc_chairman': 1, 'sig_parish_secretary': 1, 'sig_presacramental_instructor': 1, 'sig_parish_priest': 1,
+                    amt_arancel: 1,
+                    amt_candle: 1,
+                    amt_godparents: 1,
+                    other_label_1: 1,
+                    other_label_2: 1,
+                    other_label_3: 1,
+                    amt_other_1: 1,
+                    amt_other_2: 1,
+                    amt_other_3: 1,
+                    total_payment: 1,
+                    sig_bpc_chairman: 1,
+                    sig_parish_secretary: 1,
+                    sig_presacramental_instructor: 1,
+                    sig_parish_priest: 1,
                 };
-
-                function applyFormObject($f, d) {
-                    if (!$f || !$f.length || !d || typeof d !== 'object') {
-                        return;
-                    }
-                    $f.find('input, textarea, select').each(function() {
-                        var n = this.name;
-                        if (!n) {
-                            return;
-                        }
-                        if (!(n in d) || d[n] == null) {
-                            return;
-                        }
-                        if (this.type === 'checkbox') {
-                            $(this).prop('checked', d[n] == 1 || d[n] === true || d[n] === '1' || d[n] === 'on');
-                        } else {
-                            $(this).val(String(d[n]));
-                        }
-                    });
-                }
-
-                function collectFormObject($f) {
-                    var o = {};
-                    if (!$f || !$f.length) {
-                        return o;
-                    }
-                    $f.find('input, textarea, select').each(function() {
-                        var n = this.name;
-                        if (!n || n === '_token') {
-                            return;
-                        }
-                        if (this.type === 'checkbox') {
-                            if ($(this).is(':checked')) {
-                                o[n] = this.value;
-                            }
-                            return;
-                        }
-                        o[n] = $(this).val() == null ? '' : String($(this).val());
-                    });
-                    return o;
-                }
 
                 function pickFields(src, set) {
                     var o = {};
@@ -622,168 +645,355 @@
                     return o;
                 }
 
+                var cnApplicationDraftSaveTimer = null;
+
+                function serializeConfirmationApplicationFormToObject() {
+                    var $form = $('#confirmationApplicationForm');
+                    if (!$form.length) {
+                        return {};
+                    }
+                    var arr = $form.serializeArray();
+                    var payload = {};
+                    $.each(arr, function(i, field) {
+                        var n = field.name;
+                        if (n.slice(-2) === '[]') {
+                            var base = n.slice(0, -2);
+                            if (!payload[base]) {
+                                payload[base] = [];
+                            }
+                            payload[base].push(field.value);
+                        } else if (payload[n] !== undefined) {
+                            if (!Array.isArray(payload[n])) {
+                                payload[n] = [payload[n]];
+                            }
+                            payload[n].push(field.value);
+                        } else {
+                            payload[n] = field.value;
+                        }
+                    });
+                    return payload;
+                }
+
+                function clearConfirmationApplicationFormFields() {
+                    var $form = $('#confirmationApplicationForm');
+                    if (!$form.length) {
+                        return;
+                    }
+                    $form.find('input[type="text"], input[type="date"], input[type="time"], textarea').val('');
+                    $form.find('input[type="checkbox"]').prop('checked', false);
+                    $form.find('input[type="hidden"]').each(function() {
+                        if (this.name && this.name !== '_token') {
+                            $(this).val('');
+                        }
+                    });
+                }
+
+                function applyConfirmationApplicationFormObject(snap) {
+                    if (!snap || typeof snap !== 'object') {
+                        return;
+                    }
+                    var $form = $('#confirmationApplicationForm');
+                    if (!$form.length) {
+                        return;
+                    }
+                    clearConfirmationApplicationFormFields();
+                    $.each(snap, function(key, val) {
+                        var $fields = $form.find('[name]').filter(function() {
+                            return $(this).attr('name') === key;
+                        });
+                        if (!$fields.length) {
+                            return;
+                        }
+                        if ($fields.first().attr('type') === 'checkbox') {
+                            return;
+                        }
+                        if (Array.isArray(val)) {
+                            $fields.each(function(i) {
+                                if (val[i] !== undefined) {
+                                    $(this).val(val[i]);
+                                }
+                            });
+                        } else {
+                            $fields.val(val != null ? String(val) : '');
+                        }
+                    });
+                }
+
+                function confirmationApplicationDraftKey() {
+                    var cid = ($('#cnScheduleConfirmationId').val() || '').trim();
+                    return cid || '_none';
+                }
+
+                function snapshotConfirmationApplicationDraft() {
+                    var $form = $('#confirmationApplicationForm');
+                    if (!$form.length) {
+                        return;
+                    }
+                    cnApplicationDraftsByConfirmationId[confirmationApplicationDraftKey()] =
+                        serializeConfirmationApplicationFormToObject();
+                }
+
+                function restoreConfirmationApplicationDraftForCurrentRow() {
+                    var key = confirmationApplicationDraftKey();
+                    var snap = cnApplicationDraftsByConfirmationId[key];
+                    if (snap && Object.keys(snap).length) {
+                        applyConfirmationApplicationFormObject(snap);
+                    } else {
+                        clearConfirmationApplicationFormFields();
+                    }
+                }
+
+                function mergeApplicationPayloads(dApp, dAr) {
+                    var o = {};
+                    if (dApp && typeof dApp === 'object') {
+                        Object.keys(dApp).forEach(function(k) {
+                            o[k] = dApp[k];
+                        });
+                    }
+                    if (dAr && typeof dAr === 'object') {
+                        Object.keys(dAr).forEach(function(k) {
+                            o[k] = dAr[k];
+                        });
+                    }
+                    return o;
+                }
+
                 var $mApp = $('#confirmationApplicationModal');
                 var $fApp = $('#confirmationApplicationForm');
 
-                if (typeof bootstrap !== 'undefined' && $mApp.length && $fApp.length && $appFormBtn.length) {
-                    $mApp.on('shown.bs.modal', function() {
-                        $appFormBtn.attr('aria-expanded', 'true');
+                if (!$mApp.length || !$fApp.length || !$appFormBtn.length || typeof bootstrap === 'undefined') {
+                    return;
+                }
+
+                var bsCnAppModal = bootstrap.Modal.getOrCreateInstance($mApp[0]);
+                var pendingFocusSelectorCnApp = null;
+
+                $fApp.on('input change', 'input, textarea', function() {
+                    clearTimeout(cnApplicationDraftSaveTimer);
+                    cnApplicationDraftSaveTimer = setTimeout(function() {
+                        snapshotConfirmationApplicationDraft();
+                    }, 300);
+                });
+
+                $mApp.on('shown.bs.modal', function() {
+                    $appFormBtn.attr('aria-expanded', 'true');
+                    restoreConfirmationApplicationDraftForCurrentRow();
+                    if (pendingFocusSelectorCnApp) {
+                        var $el = $mApp.find(pendingFocusSelectorCnApp).first();
+                        if ($el.length) {
+                            $el.trigger('focus');
+                        }
+                        pendingFocusSelectorCnApp = null;
+                    }
+                });
+
+                $mApp.on('hidden.bs.modal', function() {
+                    $appFormBtn.attr('aria-expanded', 'false');
+                    snapshotConfirmationApplicationDraft();
+                });
+
+                window.sappcConfirmationApplicationFormOpen = function(open, opts) {
+                    opts = opts || {};
+                    if (open !== false) {
+                        pendingFocusSelectorCnApp = opts.focusSelector || null;
+                        bsCnAppModal.show();
+                    } else {
+                        bsCnAppModal.hide();
+                    }
+                };
+
+                $appFormBtn.on('click', function() {
+                    bsCnAppModal.toggle();
+                });
+
+                $('#confirmationTableBody').on('click', '.sappc-icon-action--view, .sappc-icon-action--edit', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var id = ($(this).attr('data-record-id') || '').trim();
+                    if (!id) {
+                        return;
+                    }
+                    if (!confirmationAppDetailsUrl || !confirmationArancelDetailsUrl) {
+                        sappcCnSwal({
+                            icon: 'warning',
+                            title: 'Not configured',
+                            text: 'Application form is not configured.',
+                        });
+                        return;
+                    }
+                    $('#cnScheduleConfirmationId').val(id);
+                    $('#confirmationTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                    $(this).closest('tr').addClass('is-schedule-selected');
+                    $.when(
+                        fetchJson(
+                            buildQueryUrl(confirmationAppDetailsUrl, {
+                                confirmation_id: id,
+                            }),
+                            jsonHeaders
+                        ),
+                        fetchJson(
+                            buildQueryUrl(confirmationArancelDetailsUrl, {
+                                confirmation_id: id,
+                            }),
+                            jsonHeaders
+                        )
+                    )
+                        .done(function(resA, resB) {
+                            var r1 = resA && resA[0] ? resA[0] : resA;
+                            var r2 = resB && resB[0] ? resB[0] : resB;
+                            if (r1 && r1.ok && r2 && r2.ok) {
+                                var merged = mergeApplicationPayloads(r1.data || {}, r2.data || {});
+                                applyConfirmationApplicationFormObject(merged);
+                                $('#cnApplicationConfirmationId').val(id);
+                                cnApplicationDraftsByConfirmationId[String(id)] =
+                                    serializeConfirmationApplicationFormToObject();
+                                if (typeof window.sappcConfirmationApplicationFormOpen === 'function') {
+                                    window.sappcConfirmationApplicationFormOpen(true, {});
+                                }
+                            } else {
+                                var msg = 'Could not load the form data.';
+                                sappcCnSwal({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: msg,
+                                });
+                            }
+                        })
+                        .fail(function() {
+                            var msg = 'Could not load confirmation application and arancel.';
+                            sappcCnSwal({
+                                icon: 'error',
+                                title: 'Error',
+                                text: msg,
+                            });
+                        });
+                });
+
+                $fApp.on('submit', function(ev) {
+                    ev.preventDefault();
+                    if (!confirmationAppSaveUrl || !confirmationArancelSaveUrl) {
+                        sappcCnSwal({
+                            icon: 'warning',
+                            title: 'Not configured',
+                            text: 'Save URLs are not configured.',
+                        });
+                        return;
+                    }
+                    var cid = ($('#cnScheduleConfirmationId').val() || '').trim();
+                    if (!cid) {
+                        sappcSwalSelectConfirmationRowFirst();
+                        return;
+                    }
+                    var wn = parseInt(cid, 10);
+                    if (isNaN(wn) || wn < 1) {
+                        sappcCnSwal({
+                            icon: 'warning',
+                            title: 'Invalid record',
+                            text: 'Invalid record.',
+                        });
+                        return;
+                    }
+                    var arr = $fApp.serializeArray();
+                    var payload = {};
+                    $.each(arr, function(i, field) {
+                        var n = field.name;
+                        if (n.slice(-2) === '[]') {
+                            var base = n.slice(0, -2);
+                            if (!payload[base]) {
+                                payload[base] = [];
+                            }
+                            payload[base].push(field.value);
+                        } else if (payload[n] !== undefined) {
+                            if (!Array.isArray(payload[n])) {
+                                payload[n] = [payload[n]];
+                            }
+                            payload[n].push(field.value);
+                        } else {
+                            payload[n] = field.value;
+                        }
                     });
-                    $mApp.on('hidden.bs.modal', function() {
-                        $appFormBtn.attr('aria-expanded', 'false');
-                    });
-                    $appFormBtn.on('click', function(e) {
-                        e.preventDefault();
-                        var cid = ($('#cnScheduleConfirmationId').val() || '').trim();
-                        if (!cid) {
-                            sappcSwalSelectConfirmationRowFirst();
-                            return;
-                        }
-                        if (!confirmationAppDetailsUrl) {
-                            window.alert('Application form is not configured.');
-                            return;
-                        }
-                        if (!confirmationArancelDetailsUrl) {
-                            window.alert('Arancel is not configured.');
-                            return;
-                        }
-                        var mbs = bootstrap.Modal.getOrCreateInstance($mApp[0]);
-                        var dApp = fetchJson(buildQueryUrl(confirmationAppDetailsUrl, {
-                            confirmation_id: cid
-                        }), jsonHeaders);
-                        var dAr = fetchJson(buildQueryUrl(confirmationArancelDetailsUrl, {
-                            confirmation_id: cid
-                        }), jsonHeaders);
-                        $.when(dApp, dAr)
-                            .done(function(resA, resB) {
-                                var r1 = (resA && resA[0]) ? resA[0] : resA;
-                                var r2 = (resB && resB[0]) ? resB[0] : resB;
-                                if (r1 && r1.ok && r2 && r2.ok) {
-                                    if ($fApp[0]) {
-                                        $fApp[0].reset();
-                                    }
-                                    $('#cnApplicationConfirmationId').val(cid);
-                                    applyFormObject($fApp, r1.data || {});
-                                    applyFormObject($fApp, r2.data || {});
-                                    mbs.show();
-                                } else {
-                                    if (typeof Swal !== 'undefined') {
-                                        Swal.fire({
-                                            icon: 'error',
-                                            title: 'Error',
-                                            text: 'Could not load the form data.'
+                    var pApp = pickFields(payload, applicationFieldNames);
+                    var pAr = pickFields(payload, arancelFieldNames);
+                    pApp.confirmation_id = wn;
+                    pAr.confirmation_id = wn;
+                    var $saveBtn = $('#confirmationApplicationSaveBtn');
+                    $saveBtn.prop('disabled', true);
+                    fetchPostJson(confirmationAppSaveUrl, pApp, csrf)
+                        .done(function(r1) {
+                            if (!r1 || !r1.ok) {
+                                var m1 = r1 && r1.message ? r1.message : 'Application could not be saved.';
+                                sappcCnSwal({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: m1,
+                                });
+                                $saveBtn.prop('disabled', false);
+                                return;
+                            }
+                            fetchPostJson(confirmationArancelSaveUrl, pAr, csrf)
+                                .done(function(r2) {
+                                    if (r2 && r2.ok) {
+                                        cnApplicationDraftsByConfirmationId[String(wn)] =
+                                            serializeConfirmationApplicationFormToObject();
+                                        if (typeof bootstrap !== 'undefined' && $mApp.length) {
+                                            var instM = bootstrap.Modal.getInstance($mApp[0]);
+                                            if (instM) {
+                                                instM.hide();
+                                            }
+                                        }
+                                        var okMsg =
+                                            r2 && r2.message ? r2.message : 'Confirmation application saved.';
+                                        sappcCnSwal({
+                                            icon: 'success',
+                                            title: 'Saved',
+                                            text: okMsg,
+                                            confirmButtonText: 'OK',
                                         });
                                     } else {
-                                        window.alert('Could not load the form data.');
+                                        var m2 =
+                                            r2 && r2.message ? r2.message : 'Arancel could not be saved.';
+                                        sappcCnSwal({
+                                            icon: 'error',
+                                            title: 'Error',
+                                            text: m2,
+                                        });
                                     }
-                                }
-                            })
-                            .fail(function() {
-                                var msg = 'Could not load confirmation application and arancel.';
-                                if (typeof Swal !== 'undefined') {
-                                    Swal.fire({
+                                })
+                                .fail(function(xhr) {
+                                    var msg = 'Arancel could not be saved.';
+                                    var d = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                                    if (d && d.message) {
+                                        msg = d.message;
+                                    }
+                                    sappcCnSwal({
                                         icon: 'error',
                                         title: 'Error',
-                                        text: msg
+                                        text: msg,
                                     });
-                                } else {
-                                    window.alert(msg);
+                                })
+                                .always(function() {
+                                    $saveBtn.prop('disabled', false);
+                                });
+                        })
+                        .fail(function(xhr) {
+                            var msg = 'Application could not be saved.';
+                            var d = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                            if (d && d.errors) {
+                                var vals = Object.values(d.errors);
+                                if (vals.length && Array.isArray(vals[0]) && vals[0][0]) {
+                                    msg = vals[0][0];
                                 }
+                            } else if (d && d.message) {
+                                msg = d.message;
+                            }
+                            sappcCnSwal({
+                                icon: 'error',
+                                title: 'Error',
+                                text: msg,
                             });
-                    });
-                    $('#confirmationApplicationSaveBtn').on('click', function() {
-                        if (!confirmationAppSaveUrl || !confirmationArancelSaveUrl) {
-                            return;
-                        }
-                        var wid = ($('#cnApplicationConfirmationId').val() || '').trim() || ($('#cnScheduleConfirmationId')
-                            .val() || '').trim();
-                        if (!wid) {
-                            sappcSwalSelectConfirmationRowFirst();
-                            return;
-                        }
-                        var wn = parseInt(wid, 10);
-                        if (isNaN(wn) || wn < 1) {
-                            window.alert('Invalid record.');
-                            return;
-                        }
-                        var all = collectFormObject($fApp);
-                        var pApp = pickFields(all, applicationFieldNames);
-                        var pAr = pickFields(all, arancelFieldNames);
-                        pApp.confirmation_id = wn;
-                        pAr.confirmation_id = wn;
-                        var $s = $('#confirmationApplicationSaveBtn');
-                        $s.prop('disabled', true);
-                        fetchPostJson(confirmationAppSaveUrl, pApp, csrf)
-                            .done(function(r1) {
-                                if (!r1 || !r1.ok) {
-                                    var m1 = (r1 && r1.message) ? r1.message : 'Application could not be saved.';
-                                    if (typeof Swal !== 'undefined') {
-                                        Swal.fire({ icon: 'error', title: 'Error', text: m1 });
-                                    } else {
-                                        window.alert(m1);
-                                    }
-                                    $s.prop('disabled', false);
-                                    return;
-                                }
-                                fetchPostJson(confirmationArancelSaveUrl, pAr, csrf)
-                                    .done(function(r2) {
-                                        if (r2 && r2.ok) {
-                                            if (typeof bootstrap !== 'undefined' && $mApp.length) {
-                                                var instM = bootstrap.Modal.getInstance($mApp[0]);
-                                                if (instM) {
-                                                    instM.hide();
-                                                }
-                                            }
-                                            if (typeof Swal !== 'undefined') {
-                                                Swal.fire({
-                                                    icon: 'success',
-                                                    title: 'Saved',
-                                                    text: (r2 && r2.message) ? r2.message : 'Application and arancel saved.',
-                                                    confirmButtonText: 'OK',
-                                                });
-                                            } else {
-                                                window.alert('Saved.');
-                                            }
-                                        } else {
-                                            var m2 = (r2 && r2.message) ? r2.message : 'Arancel could not be saved.';
-                                            if (typeof Swal !== 'undefined') {
-                                                Swal.fire({ icon: 'error', title: 'Error', text: m2 });
-                                            } else {
-                                                window.alert(m2);
-                                            }
-                                        }
-                                    })
-                                    .fail(function(xhr) {
-                                        var msg = 'Arancel could not be saved.';
-                                        var d = xhr && xhr.responseJSON ? xhr.responseJSON : null;
-                                        if (d && d.message) {
-                                            msg = d.message;
-                                        }
-                                        if (typeof Swal !== 'undefined') {
-                                            Swal.fire({ icon: 'error', title: 'Error', text: msg });
-                                        } else {
-                                            window.alert(msg);
-                                        }
-                                    })
-                                    .always(function() {
-                                        $s.prop('disabled', false);
-                                    });
-                            })
-                            .fail(function(xhr) {
-                                var msg = 'Application could not be saved.';
-                                var d = xhr && xhr.responseJSON ? xhr.responseJSON : null;
-                                if (d && d.message) {
-                                    msg = d.message;
-                                }
-                                if (typeof Swal !== 'undefined') {
-                                    Swal.fire({ icon: 'error', title: 'Error', text: msg });
-                                } else {
-                                    window.alert(msg);
-                                }
-                                $s.prop('disabled', false);
-                            });
-                    });
-                }
+                            $saveBtn.prop('disabled', false);
+                        });
+                });
             })();
 
             var $scheduleForm = $('#confirmationScheduleRequestForm');
@@ -933,12 +1143,15 @@
                 $('#cnScheduleClient').val('');
                 $('#cnScheduleAddress').val('');
                 $('#cnScheduleSex').val('');
-                $scheduleDateInput.val(new Date().toISOString().slice(0, 10));
+                $scheduleDateInput.val('');
                 $scheduleTimeInput.val('10:00');
                 $('#confirmationTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
                 var sel = parseIsoDate($scheduleDateInput.val());
                 if (sel) {
                     calendarViewDate = new Date(sel.getFullYear(), sel.getMonth(), 1);
+                } else {
+                    var todayMonth = new Date();
+                    calendarViewDate = new Date(todayMonth.getFullYear(), todayMonth.getMonth(), 1);
                 }
                 syncCalendarHeader();
                 renderCalendarDayGrid();
@@ -1068,15 +1281,11 @@
                             if (lines.length === 0 && data && data.message) {
                                 msg = String(data.message);
                             }
-                            if (typeof Swal !== 'undefined') {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Cannot save schedule',
-                                    text: msg,
-                                });
-                            } else {
-                                window.alert(msg);
-                            }
+                            sappcCnSwal({
+                                icon: 'error',
+                                title: 'Cannot save schedule',
+                                text: msg,
+                            });
                         })
                         .always(function() {
                             $submitBtn.prop('disabled', false);
@@ -1091,11 +1300,13 @@
             if ($scheduleBtn.length && $scheduleModal.length) {
                 $scheduleModal.on('shown.bs.modal', function() {
                     $scheduleBtn.attr('aria-expanded', 'true');
-                    if (!$scheduleDateInput.val()) $scheduleDateInput.val(new Date().toISOString().slice(0, 10));
                     if (!$scheduleTimeInput.val()) $scheduleTimeInput.val('10:00');
                     var selectedDate = parseIsoDate($scheduleDateInput.val());
                     if (selectedDate) {
                         calendarViewDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+                    } else {
+                        var nowHeader = new Date();
+                        calendarViewDate = new Date(nowHeader.getFullYear(), nowHeader.getMonth(), 1);
                     }
                     syncCalendarHeader();
                     renderCalendarDayGrid();
@@ -1104,6 +1315,65 @@
                     $scheduleBtn.attr('aria-expanded', 'false');
                 });
             }
+
+            $('#confirmationTableBody').on('click', '.sappc-icon-action--delete', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var id = ($(this).attr('data-record-id') || '').trim();
+                if (!id || !confirmationDeleteUrl) {
+                    return;
+                }
+
+                function runDelete() {
+                    fetchPostJson(
+                        confirmationDeleteUrl,
+                        {
+                            confirmation_id: parseInt(id, 10),
+                        },
+                        csrf
+                    )
+                        .done(function(res) {
+                            if (res && res.ok) {
+                                delete cnApplicationDraftsByConfirmationId[String(id)];
+                                if (($('#cnScheduleConfirmationId').val() || '').trim() === id) {
+                                    $('#cnScheduleConfirmationId').val('');
+                                }
+                                if (($('#cnApplicationConfirmationId').val() || '').trim() === id) {
+                                    $('#cnApplicationConfirmationId').val('');
+                                }
+                                var msg = res && res.message ? res.message : 'Removed.';
+                                sappcCnSwal({
+                                    icon: 'success',
+                                    title: 'Deleted',
+                                    text: msg,
+                                });
+                                fetchRecords();
+                            }
+                        })
+                        .fail(function(xhr) {
+                            var msg = 'Could not delete.';
+                            var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                            if (data && data.message) {
+                                msg = data.message;
+                            }
+                            sappcCnSwal({
+                                icon: 'error',
+                                title: 'Error',
+                                text: msg,
+                            });
+                        });
+                }
+
+                sappcCnConfirm({
+                    title: 'Delete confirmation record?',
+                    text: 'This permanently deletes this confirmation row from the registry and removes related rows in confirmation details.',
+                    confirmButtonText: 'Yes, delete',
+                }).then(function(r) {
+                    if (r.isConfirmed) {
+                        runDelete();
+                    }
+                });
+            });
 
             fetchRecords();
         });
