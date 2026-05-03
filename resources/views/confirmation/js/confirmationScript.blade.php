@@ -766,6 +766,51 @@
                             $(this).val('');
                         }
                     });
+                    updateConfirmationArancelTotal();
+                }
+
+                function parseConfirmationArancelAmount(raw) {
+                    if (raw == null) {
+                        return 0;
+                    }
+                    var s = String(raw).replace(/,/g, '').trim();
+                    if (s === '') {
+                        return 0;
+                    }
+                    var n = parseFloat(s);
+                    return isFinite(n) ? n : 0;
+                }
+
+                     function updateConfirmationArancelTotal() {
+                    var $form = $('#confirmationApplicationForm');
+                    if (!$form.length) {
+                        return;
+                    }
+                    var $table = $form.find('.sappcCnArTable');
+                    if (!$table.length) {
+                        return;
+                    }
+                    var sum = 0;
+                    var hasLine = false;
+                    $table.find('input.sappcCnArAmt').each(function() {
+                        if ($(this).attr('name') === 'total_payment') {
+                            return;
+                        }
+                        var raw = $(this).val();
+                        if (raw != null && String(raw).trim() !== '') {
+                            hasLine = true;
+                        }
+                        sum += parseConfirmationArancelAmount(raw);
+                    });
+                    var $tot = $form.find('input[name="total_payment"]');
+                    if (!$tot.length) {
+                        return;
+                    }
+                    if (!hasLine && sum === 0) {
+                        $tot.val('');
+                        return;
+                    }
+                    $tot.val(sum.toFixed(2));
                 }
 
                 function applyConfirmationApplicationFormObject(snap) {
@@ -797,6 +842,7 @@
                             $fields.val(val != null ? String(val) : '');
                         }
                     });
+                    updateConfirmationArancelTotal();
                 }
 
                 function confirmationApplicationDraftKey() {
@@ -823,6 +869,7 @@
                     }
                 }
 
+                /** Merges application + arancel payloads. Application JSON is built from confirmation_details + confirmationApplication; arancel from confirmation_details + confirmationArancel (server). */
                 function mergeApplicationPayloads(dApp, dAr) {
                     var o = {};
                     if (dApp && typeof dApp === 'object') {
@@ -858,6 +905,7 @@
                 $mApp.on('shown.bs.modal', function() {
                     $appFormBtn.attr('aria-expanded', 'true');
                     restoreConfirmationApplicationDraftForCurrentRow();
+                    updateConfirmationArancelTotal();
                     if (pendingFocusSelectorCnApp) {
                         var $el = $mApp.find(pendingFocusSelectorCnApp).first();
                         if ($el.length) {
@@ -865,6 +913,10 @@
                         }
                         pendingFocusSelectorCnApp = null;
                     }
+                });
+
+                $fApp.on('input change blur', '.sappcCnArTable input.sappcCnArAmt:not([name="total_payment"])', function() {
+                    updateConfirmationArancelTotal();
                 });
 
                 $mApp.on('hidden.bs.modal', function() {

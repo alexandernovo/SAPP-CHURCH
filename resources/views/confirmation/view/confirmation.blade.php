@@ -256,7 +256,8 @@
     
                         <div class="sappcCnAppRow">
                             <label class="sappcCnAppLabel" for="cnAppBapDate">Petsa kang pagbunyag <span class="sappcCnAppHint">(Date of Baptism)</span></label>
-                            <input type="date" class="sappcCnAppIn" name="baptism_date" id="cnAppBapDate">
+                            <input type="date" class="sappcCnAppIn" name="baptism_date" id="cnAppBapDate"
+                                title="If a christening record matches this client (same first and last name) and has a reserved schedule, this date is filled from that schedule.">
                         </div>
                         <div class="sappcCnAppRow">
                             <label class="sappcCnAppLabel" for="cnAppBapPlace">Lugar kang pagbunyag <span class="sappcCnAppHint">(Place of Baptism)</span></label>
@@ -360,7 +361,7 @@
                                         <tr class="sappcCnArTotal">
                                             <td>TOTAL PAYMENT:</td>
                                             <td class="sappcCnArNum">
-                                                <input type="text" class="sappcCnArAmt" name="total_payment" id="cnArTotal" inputmode="decimal" placeholder="0.00" aria-label="Total payment">
+                                                <input type="text" class="sappcCnArAmt" name="total_payment" id="cnArTotal" inputmode="decimal" placeholder="0.00" aria-label="Total payment" readonly tabindex="-1" title="Sum of amounts above (automatic)">
                                             </td>
                                         </tr>
                                     </tbody>

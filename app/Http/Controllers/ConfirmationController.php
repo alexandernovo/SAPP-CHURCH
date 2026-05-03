@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class ConfirmationController extends Controller
@@ -457,9 +458,15 @@ class ConfirmationController extends Controller
             return response()->json(['message' => 'Confirmation record not found.'], 404);
         }
 
+        $details = $this->latestConfirmationDetailsRow($id);
+        $data = $this->mapConfirmationDetailsRowToApplicationForm($details);
+        $this->overlayNonEmptyJsonFields($data, $this->decodeConfirmationJsonColumn($row, 'confirmationApplication'));
+        $this->applyRegistryClientNamesToConfirmationApplicationData($row, $data);
+        $this->applyChristeningScheduleToConfirmationApplicationData($row, $data);
+
         return response()->json([
             'ok' => true,
-            'data' => $this->decodeConfirmationJsonColumn($row, 'confirmationApplication'),
+            'data' => $data,
         ]);
     }
 
@@ -488,6 +495,7 @@ class ConfirmationController extends Controller
             DB::table('confirmation')->where('confirmationId', $id)->update([
                 'confirmationApplication' => $encoded,
             ]);
+            $this->syncConfirmationDetailsFromApplicationPayload($id, $data);
         } catch (QueryException $e) {
             report($e);
 
@@ -511,9 +519,13 @@ class ConfirmationController extends Controller
             return response()->json(['message' => 'Confirmation record not found.'], 404);
         }
 
+        $details = $this->latestConfirmationDetailsRow($id);
+        $data = $this->mapConfirmationDetailsRowToArancelForm($details);
+        $this->overlayNonEmptyJsonFields($data, $this->decodeConfirmationJsonColumn($row, 'confirmationArancel'));
+
         return response()->json([
             'ok' => true,
-            'data' => $this->decodeConfirmationJsonColumn($row, 'confirmationArancel'),
+            'data' => $data,
         ]);
     }
 
@@ -542,6 +554,7 @@ class ConfirmationController extends Controller
             DB::table('confirmation')->where('confirmationId', $id)->update([
                 'confirmationArancel' => $encoded,
             ]);
+            $this->syncConfirmationDetailsFromArancelPayload($id, $data);
         } catch (QueryException $e) {
             report($e);
 
@@ -570,6 +583,409 @@ class ConfirmationController extends Controller
         }
 
         return [];
+    }
+
+    /**
+     * When a christening registry row exists for the same candidate (first + last name match)
+     * and has scheduleRequested, use that datetime's date as baptism_date (same idea as christening application form).
+     *
+     * @param  array<string, mixed>  $data  Mutated in place.
+     */
+    private function applyChristeningScheduleToConfirmationApplicationData(object $confirmation, array &$data): void
+    {
+        $christening = $this->findChristeningRowMatchingConfirmationClient($confirmation);
+        if ($christening === null || empty($christening->scheduleRequested)) {
+            return;
+        }
+        $data['baptism_date'] = $this->dateForForm($christening->scheduleRequested);
+    }
+
+    private function findChristeningRowMatchingConfirmationClient(object $confirmation): ?object
+    {
+        $fn = mb_strtolower(trim((string) ($confirmation->clientFName ?? '')));
+        $ln = mb_strtolower(trim((string) ($confirmation->clientLName ?? '')));
+        if ($fn === '' || $ln === '') {
+            return null;
+        }
+        $mn = mb_strtolower(trim((string) ($confirmation->clientMName ?? '')));
+
+        $q = DB::table('christening')
+            ->whereRaw('LOWER(TRIM(COALESCE(clientFName, ?))) = ?', ['', $fn])
+            ->whereRaw('LOWER(TRIM(COALESCE(clientLName, ?))) = ?', ['', $ln]);
+
+        if ($mn !== '') {
+            $q->where(function ($sub) use ($mn) {
+                $sub->whereRaw('LOWER(TRIM(COALESCE(clientMName, ?))) = ?', ['', $mn])
+                    ->orWhereRaw('TRIM(COALESCE(clientMName, ?)) = ?', ['', '']);
+            });
+        }
+
+        return $q->whereNotNull('scheduleRequested')
+            ->orderByDesc('christeningId')
+            ->first();
+    }
+
+    private function dateForForm(mixed $value): string
+    {
+        if ($value === null || $value === '') {
+            return '';
+        }
+        try {
+            return Carbon::parse($value)->format('Y-m-d');
+        } catch (\Throwable) {
+            return trim((string) $value);
+        }
+    }
+
+    private function decimalForForm(mixed $value): string
+    {
+        if ($value === null || $value === '') {
+            return '';
+        }
+        if (! is_numeric($value)) {
+            return trim((string) $value);
+        }
+
+        return number_format((float) $value, 2, '.', '');
+    }
+
+    private function confirmationDetailsTableExists(): bool
+    {
+        return Schema::hasTable('confirmation_details');
+    }
+
+    private function latestConfirmationDetailsRow(int $confirmationId): ?object
+    {
+        if (! $this->confirmationDetailsTableExists()) {
+            return null;
+        }
+
+        return DB::table('confirmation_details')
+            ->where('confirmationId', $confirmationId)
+            ->orderByDesc('confirmationDetailsId')
+            ->first();
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function mapConfirmationDetailsRowToApplicationForm(?object $row): array
+    {
+        $defaults = [
+            'first_name' => '',
+            'middle_name' => '',
+            'family_name' => '',
+            'date_of_birth' => '',
+            'place_of_birth' => '',
+            'father_name' => '',
+            'mother_maiden' => '',
+            'address' => '',
+            'baptism_date' => '',
+            'baptism_place' => '',
+            'minister_baptism' => '',
+            'book_no' => '',
+            'page_no' => '',
+            'registry_no' => '',
+            'confirmation_date' => '',
+            'confirmation_minister' => '',
+            'godparent_1' => '',
+            'godparent_2' => '',
+            'godparent_3' => '',
+            'godparent_4' => '',
+        ];
+        if ($row === null) {
+            return $defaults;
+        }
+
+        $defaults['first_name'] = (string) ($row->firstName ?? '');
+        $defaults['middle_name'] = (string) ($row->middleName ?? '');
+        $defaults['family_name'] = (string) ($row->familyName ?? '');
+        $defaults['date_of_birth'] = $this->dateForForm($row->dateOfBirth ?? null);
+        $defaults['place_of_birth'] = (string) ($row->placeOfBirth ?? '');
+        $defaults['father_name'] = (string) ($row->fatherName ?? '');
+        $defaults['mother_maiden'] = (string) ($row->motherMaiden ?? '');
+        $defaults['address'] = (string) ($row->address ?? '');
+        $defaults['baptism_date'] = $this->dateForForm($row->baptismDate ?? null);
+        $defaults['baptism_place'] = (string) ($row->baptismPlace ?? '');
+        $defaults['minister_baptism'] = (string) ($row->ministerBaptism ?? '');
+        $defaults['book_no'] = (string) ($row->bookNo ?? '');
+        $defaults['page_no'] = (string) ($row->pageNo ?? '');
+        $defaults['registry_no'] = (string) ($row->registryNo ?? '');
+        $defaults['confirmation_date'] = $this->dateForForm($row->confirmationDate ?? null);
+        $defaults['confirmation_minister'] = (string) ($row->confirmationMinister ?? '');
+        $defaults['godparent_1'] = (string) ($row->godparent1 ?? '');
+        $defaults['godparent_2'] = (string) ($row->godparent2 ?? '');
+        $defaults['godparent_3'] = (string) ($row->godparent3 ?? '');
+        $defaults['godparent_4'] = (string) ($row->godparent4 ?? '');
+
+        return $defaults;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function mapConfirmationDetailsRowToArancelForm(?object $row): array
+    {
+        $defaults = [
+            'amt_arancel' => '',
+            'amt_candle' => '',
+            'amt_godparents' => '',
+            'other_label_1' => '',
+            'other_label_2' => '',
+            'other_label_3' => '',
+            'amt_other_1' => '',
+            'amt_other_2' => '',
+            'amt_other_3' => '',
+            'total_payment' => '',
+            'sig_bpc_chairman' => '',
+            'sig_parish_secretary' => '',
+            'sig_presacramental_instructor' => '',
+            'sig_parish_priest' => '',
+        ];
+        if ($row === null) {
+            return $defaults;
+        }
+
+        $defaults['amt_arancel'] = $this->decimalForForm($row->feeArancel ?? null);
+        $defaults['amt_candle'] = $this->decimalForForm($row->feeCandle ?? null);
+        $defaults['amt_godparents'] = $this->decimalForForm($row->feeGodparents ?? null);
+        $defaults['other_label_1'] = (string) ($row->otherFeeLabel1 ?? '');
+        $defaults['other_label_2'] = (string) ($row->otherFeeLabel2 ?? '');
+        $defaults['other_label_3'] = (string) ($row->otherFeeLabel3 ?? '');
+        $defaults['amt_other_1'] = $this->decimalForForm($row->otherFeeAmount1 ?? null);
+        $defaults['amt_other_2'] = $this->decimalForForm($row->otherFeeAmount2 ?? null);
+        $defaults['amt_other_3'] = $this->decimalForForm($row->otherFeeAmount3 ?? null);
+        $defaults['total_payment'] = $this->decimalForForm($row->feeTotal ?? null);
+        $defaults['sig_bpc_chairman'] = (string) ($row->approvedByBpcChairman ?? '');
+        $defaults['sig_parish_secretary'] = (string) ($row->approvedByParishSecretary ?? '');
+        $defaults['sig_presacramental_instructor'] = (string) ($row->approvedByPresacramentalInstructor ?? '');
+        $defaults['sig_parish_priest'] = (string) ($row->approvedByParishPriest ?? '');
+
+        return $defaults;
+    }
+
+    /**
+     * @param  array<string, mixed>  $target
+     * @param  array<string, mixed>  $json
+     */
+    private function overlayNonEmptyJsonFields(array &$target, array $json): void
+    {
+        foreach ($json as $k => $v) {
+            if ($v === null) {
+                continue;
+            }
+            if (is_string($v) && trim($v) === '') {
+                continue;
+            }
+            if (is_array($v)) {
+                continue;
+            }
+            $target[$k] = $v;
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function applyRegistryClientNamesToConfirmationApplicationData(object $confirmation, array &$data): void
+    {
+        if (trim((string) ($data['first_name'] ?? '')) === '') {
+            $data['first_name'] = trim((string) ($confirmation->clientFName ?? ''));
+        }
+        if (trim((string) ($data['middle_name'] ?? '')) === '') {
+            $data['middle_name'] = trim((string) ($confirmation->clientMName ?? ''));
+        }
+        if (trim((string) ($data['family_name'] ?? '')) === '') {
+            $data['family_name'] = trim((string) ($confirmation->clientLName ?? ''));
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload  Request body (application slice).
+     */
+    private function syncConfirmationDetailsFromApplicationPayload(int $confirmationId, array $payload): void
+    {
+        if (! $this->confirmationDetailsTableExists()) {
+            return;
+        }
+
+        $row = [];
+        if (array_key_exists('first_name', $payload)) {
+            $row['firstName'] = $this->nullableText($payload['first_name']);
+        }
+        if (array_key_exists('middle_name', $payload)) {
+            $row['middleName'] = $this->nullableText($payload['middle_name']);
+        }
+        if (array_key_exists('family_name', $payload)) {
+            $row['familyName'] = $this->nullableText($payload['family_name']);
+        }
+        if (array_key_exists('date_of_birth', $payload)) {
+            $row['dateOfBirth'] = $this->nullableDateFromForm($payload['date_of_birth']);
+        }
+        if (array_key_exists('place_of_birth', $payload)) {
+            $row['placeOfBirth'] = $this->nullableText($payload['place_of_birth']);
+        }
+        if (array_key_exists('father_name', $payload)) {
+            $row['fatherName'] = $this->nullableText($payload['father_name']);
+        }
+        if (array_key_exists('mother_maiden', $payload)) {
+            $row['motherMaiden'] = $this->nullableText($payload['mother_maiden']);
+        }
+        if (array_key_exists('address', $payload)) {
+            $row['address'] = $this->nullableText($payload['address']);
+        }
+        if (array_key_exists('baptism_date', $payload)) {
+            $row['baptismDate'] = $this->nullableDateFromForm($payload['baptism_date']);
+        }
+        if (array_key_exists('baptism_place', $payload)) {
+            $row['baptismPlace'] = $this->nullableText($payload['baptism_place']);
+        }
+        if (array_key_exists('minister_baptism', $payload)) {
+            $row['ministerBaptism'] = $this->nullableText($payload['minister_baptism']);
+        }
+        if (array_key_exists('book_no', $payload)) {
+            $row['bookNo'] = $this->nullableText($payload['book_no']);
+        }
+        if (array_key_exists('page_no', $payload)) {
+            $row['pageNo'] = $this->nullableText($payload['page_no']);
+        }
+        if (array_key_exists('registry_no', $payload)) {
+            $row['registryNo'] = $this->nullableText($payload['registry_no']);
+        }
+        if (array_key_exists('confirmation_date', $payload)) {
+            $row['confirmationDate'] = $this->nullableDateFromForm($payload['confirmation_date']);
+        }
+        if (array_key_exists('confirmation_minister', $payload)) {
+            $row['confirmationMinister'] = $this->nullableText($payload['confirmation_minister']);
+        }
+        if (array_key_exists('godparent_1', $payload)) {
+            $row['godparent1'] = $this->nullableText($payload['godparent_1']);
+        }
+        if (array_key_exists('godparent_2', $payload)) {
+            $row['godparent2'] = $this->nullableText($payload['godparent_2']);
+        }
+        if (array_key_exists('godparent_3', $payload)) {
+            $row['godparent3'] = $this->nullableText($payload['godparent_3']);
+        }
+        if (array_key_exists('godparent_4', $payload)) {
+            $row['godparent4'] = $this->nullableText($payload['godparent_4']);
+        }
+
+        if ($row === []) {
+            return;
+        }
+
+        $row['updated_at'] = now();
+        $existing = DB::table('confirmation_details')->where('confirmationId', $confirmationId)->first();
+        if ($existing !== null) {
+            DB::table('confirmation_details')
+                ->where('confirmationDetailsId', $existing->confirmationDetailsId)
+                ->update($row);
+
+            return;
+        }
+
+        $row['confirmationId'] = $confirmationId;
+        $row['created_at'] = now();
+        DB::table('confirmation_details')->insert($row);
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload  Request body (arancel slice).
+     */
+    private function syncConfirmationDetailsFromArancelPayload(int $confirmationId, array $payload): void
+    {
+        if (! $this->confirmationDetailsTableExists()) {
+            return;
+        }
+
+        $row = [];
+        if (array_key_exists('amt_arancel', $payload)) {
+            $row['feeArancel'] = $this->nullableDecimalFromForm($payload['amt_arancel']);
+        }
+        if (array_key_exists('amt_candle', $payload)) {
+            $row['feeCandle'] = $this->nullableDecimalFromForm($payload['amt_candle']);
+        }
+        if (array_key_exists('amt_godparents', $payload)) {
+            $row['feeGodparents'] = $this->nullableDecimalFromForm($payload['amt_godparents']);
+        }
+        if (array_key_exists('other_label_1', $payload)) {
+            $row['otherFeeLabel1'] = $this->nullableText($payload['other_label_1']);
+        }
+        if (array_key_exists('other_label_2', $payload)) {
+            $row['otherFeeLabel2'] = $this->nullableText($payload['other_label_2']);
+        }
+        if (array_key_exists('other_label_3', $payload)) {
+            $row['otherFeeLabel3'] = $this->nullableText($payload['other_label_3']);
+        }
+        if (array_key_exists('amt_other_1', $payload)) {
+            $row['otherFeeAmount1'] = $this->nullableDecimalFromForm($payload['amt_other_1']);
+        }
+        if (array_key_exists('amt_other_2', $payload)) {
+            $row['otherFeeAmount2'] = $this->nullableDecimalFromForm($payload['amt_other_2']);
+        }
+        if (array_key_exists('amt_other_3', $payload)) {
+            $row['otherFeeAmount3'] = $this->nullableDecimalFromForm($payload['amt_other_3']);
+        }
+        if (array_key_exists('total_payment', $payload)) {
+            $row['feeTotal'] = $this->nullableDecimalFromForm($payload['total_payment']);
+        }
+        if (array_key_exists('sig_bpc_chairman', $payload)) {
+            $row['approvedByBpcChairman'] = $this->nullableText($payload['sig_bpc_chairman']);
+        }
+        if (array_key_exists('sig_parish_secretary', $payload)) {
+            $row['approvedByParishSecretary'] = $this->nullableText($payload['sig_parish_secretary']);
+        }
+        if (array_key_exists('sig_presacramental_instructor', $payload)) {
+            $row['approvedByPresacramentalInstructor'] = $this->nullableText($payload['sig_presacramental_instructor']);
+        }
+        if (array_key_exists('sig_parish_priest', $payload)) {
+            $row['approvedByParishPriest'] = $this->nullableText($payload['sig_parish_priest']);
+        }
+
+        if ($row === []) {
+            return;
+        }
+
+        $row['updated_at'] = now();
+        $existing = DB::table('confirmation_details')->where('confirmationId', $confirmationId)->first();
+        if ($existing !== null) {
+            DB::table('confirmation_details')
+                ->where('confirmationDetailsId', $existing->confirmationDetailsId)
+                ->update($row);
+
+            return;
+        }
+
+        $row['confirmationId'] = $confirmationId;
+        $row['created_at'] = now();
+        DB::table('confirmation_details')->insert($row);
+    }
+
+    private function nullableDateFromForm(mixed $value): ?string
+    {
+        $s = trim((string) ($value ?? ''));
+        if ($s === '') {
+            return null;
+        }
+        try {
+            return Carbon::parse($s)->format('Y-m-d');
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    private function nullableDecimalFromForm(mixed $value): ?float
+    {
+        $s = str_replace(',', '', trim((string) ($value ?? '')));
+        if ($s === '') {
+            return null;
+        }
+        if (! is_numeric($s)) {
+            return null;
+        }
+
+        return round((float) $s, 2);
     }
 
     private function defaultConfirmationPaymentFeeRows(): array

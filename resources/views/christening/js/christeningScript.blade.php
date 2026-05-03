@@ -410,8 +410,6 @@
             }
         });
 
-        var christeningApplicationFeeLineNames = ['fee_arancel', 'fee_symbols', 'fee_godparents', 'fee_seminar', 'fee_others'];
-
         function parseChristeningApplicationFeeAmount(raw) {
             if (raw == null) {
                 return 0;
@@ -429,14 +427,18 @@
             if (!$form.length) {
                 return;
             }
+            var $table = $form.find('.sappcChOfficialFeeTable');
+            if (!$table.length) {
+                return;
+            }
             var sum = 0;
             var hasLine = false;
-            christeningApplicationFeeLineNames.forEach(function(name) {
-                var $el = $form.find('input[name="' + name + '"]');
-                if (!$el.length) {
+            $table.find('input.sappcChOfficialFeeInput').each(function() {
+                var name = $(this).attr('name');
+                if (name === 'fee_total') {
                     return;
                 }
-                var raw = $el.val();
+                var raw = $(this).val();
                 if (raw != null && String(raw).trim() !== '') {
                     hasLine = true;
                 }
@@ -453,7 +455,11 @@
             $total.val(sum.toFixed(2));
         }
 
-        $('#christeningApplicationForm').on('input change', 'input[name="fee_arancel"], input[name="fee_symbols"], input[name="fee_godparents"], input[name="fee_seminar"], input[name="fee_others"]', function() {
+        $('#christeningApplicationForm').on('input change blur', '.sappcChOfficialFeeTable input.sappcChOfficialFeeInput:not([name="fee_total"])', function() {
+            updateChristeningApplicationFeeTotal();
+        });
+
+        $('#christeningApplicationFormModal').on('shown.bs.modal', function() {
             updateChristeningApplicationFeeTotal();
         });
 
