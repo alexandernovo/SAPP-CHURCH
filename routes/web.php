@@ -47,6 +47,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/burial/payment-details', [BurialController::class, 'burialPaymentDetails'])->name('admin.burial.payment-details');
     Route::post('/burial/payment-save', [BurialController::class, 'burialPaymentSave'])->name('admin.burial.payment-save');
     Route::post('/burial/record/delete', [BurialController::class, 'deleteBurialRecord'])->name('admin.burial.record-delete');
+    Route::get('/burial/application', [BurialController::class, 'burialApplicationDetails'])->name('admin.burial.application-details');
+    Route::post('/burial/application', [BurialController::class, 'burialApplicationSave'])->name('admin.burial.application-save');
     Route::get('/document', [DocumentationController::class, 'document'])->name('admin.document');
     Route::get('/document/burial-report', [DocumentationController::class, 'burialReport'])->name('admin.document.burial-report');
     Route::get('/certification', [ChristeningController::class, 'certificationPage'])->name('admin.certification');

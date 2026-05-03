@@ -173,6 +173,33 @@
                 });
             })();
 
+            (function applyBurialFieldFormatGuides() {
+                function ph(sel, val) {
+                    var $el = $(sel);
+                    if ($el.length) {
+                        $el.attr('placeholder', val);
+                    }
+                }
+                ph('#brCertChildFirst', 'Juan');
+                ph('#brCertChildMiddle', 'D.');
+                ph('#brCertChildLast', 'Cruz');
+                ph('#brCertBirthplace', 'Barbaza, Antique');
+                ph('#brCertFatherFirst', 'Juan');
+                ph('#brCertFatherMiddle', 'D.');
+                ph('#brCertFatherLast', 'Cruz');
+                ph('#brCertMotherFirst', 'Maria');
+                ph('#brCertMotherMiddle', 'D.');
+                ph('#brCertMotherLast', 'Cruz');
+                ph('#brCertPriest', 'Rev. name');
+                ph('#brCertSponsors', 'Juan D. Cruz; Maria D. Cruz');
+                ph('#brCertPurpose', 'e.g. funeral service, estate');
+                ph('#brAppDeceasedName', 'Cruz, Juan D.');
+                ph('#brAppSpouseName', 'Cruz, Juan D.');
+                ph('#brAppClaimantName', 'Cruz, Juan D.');
+                ph('#brAppMinorFather', 'Cruz, Juan D.');
+                ph('#brAppMinorMother', 'Cruz, Juan D.');
+            })();
+
             var $panel = $('#burialRecordsPanel');
             if (!$panel.length) return;
 
@@ -186,6 +213,9 @@
                 'X-Requested-With': 'XMLHttpRequest',
                 'X-CSRF-TOKEN': csrf,
             };
+
+            var burialAppDetailsUrl = ($panel.attr('data-burial-application-details-url') || '').trim();
+            var burialAppSaveUrl = ($panel.attr('data-burial-application-save-url') || '').trim();
 
             var state = {
                 page: 1,
@@ -975,6 +1005,177 @@
                     if (r.isConfirmed) runDelete();
                 });
             });
+
+            (function initBurialApplicationModal() {
+                var $burialAppModal = $('#burialApplicationFormModal');
+                var $burialAppForm = $('#burialApplicationForm');
+                var $burialAppBtn = $('#burialApplicationFormBtn');
+                if (!$burialAppModal.length || !$burialAppForm.length || !$burialAppBtn.length) {
+                    return;
+                }
+
+                function applyBurialApplicationData(data) {
+                    if (!data || typeof data !== 'object') {
+                        return;
+                    }
+                    var $f = $burialAppForm;
+                    if ($f[0]) {
+                        $f[0].reset();
+                    }
+                    $f.find('input[type=radio]').prop('checked', false);
+                    Object.keys(data).forEach(function(key) {
+                        if (key === '_token') {
+                            return;
+                        }
+                        var val = data[key];
+                        if (val === undefined || val === null) {
+                            return;
+                        }
+                        var escName = String(key).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+                        var $fields = $f.find('[name="' + escName + '"]');
+                        if (!$fields.length) {
+                            return;
+                        }
+                        var el0 = $fields[0];
+                        if (el0.type === 'radio') {
+                            var s = String(val);
+                            $fields.each(function() {
+                                if (this.value === s) {
+                                    $(this).prop('checked', true);
+                                }
+                            });
+                        } else if (!el0.readOnly) {
+                            $fields.val(String(val));
+                        }
+                    });
+                }
+
+                function collectBurialApplicationPayload() {
+                    var $f = $burialAppForm;
+                    var out = {};
+                    $f.find('input, select, textarea').each(function() {
+                        var n = this.name;
+                        if (!n || n === '_token') {
+                            return;
+                        }
+                        if (this.type === 'radio') {
+                            if ($(this).is(':checked')) {
+                                out[n] = this.value;
+                            }
+                            return;
+                        }
+                        out[n] = $(this).val() == null ? '' : String($(this).val());
+                    });
+                    return out;
+                }
+
+                $burialAppModal.on('shown.bs.modal', function() {
+                    $burialAppBtn.attr('aria-expanded', 'true');
+                });
+                $burialAppModal.on('hidden.bs.modal', function() {
+                    $burialAppBtn.attr('aria-expanded', 'false');
+                });
+
+                $burialAppBtn.on('click', function(e) {
+                    e.preventDefault();
+                    if (typeof bootstrap === 'undefined') {
+                        window.alert('Bootstrap is required for this dialog.');
+                        return;
+                    }
+                    var cid = ($('#brScheduleBurialId').val() || '').trim();
+                    if (!cid) {
+                        sappcSwalSelectBurialRowFirst();
+                        return;
+                    }
+                    if (!burialAppDetailsUrl) {
+                        window.alert('Burial application is not configured.');
+                        return;
+                    }
+                    var bsModal = bootstrap.Modal.getOrCreateInstance($burialAppModal[0]);
+                    fetchJson(buildQueryUrl(burialAppDetailsUrl, {
+                        burial_id: cid,
+                    }), jsonHeaders)
+                        .done(function(res) {
+                            if (res && res.ok) {
+                                if ($burialAppForm[0]) {
+                                    $burialAppForm[0].reset();
+                                }
+                                $burialAppForm.find('input[type=radio]').prop('checked', false);
+                                $('#brAppBurialId').val(cid);
+                                applyBurialApplicationData(res.data || {});
+                                bsModal.show();
+                            }
+                        })
+                        .fail(function(xhr) {
+                            var msg = 'Could not load burial application.';
+                            var d = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                            if (d && d.message) {
+                                msg = d.message;
+                            }
+                            sappcBrSwal({
+                                icon: 'error',
+                                title: 'Error',
+                                text: msg,
+                            });
+                        });
+                });
+
+                $('#burialApplicationFormSaveBtn').on('click', function() {
+                    if (!burialAppSaveUrl) {
+                        return;
+                    }
+                    if (typeof bootstrap === 'undefined') {
+                        return;
+                    }
+                    var bid = ($('#brAppBurialId').val() || '').trim() || ($('#brScheduleBurialId').val() || '').trim();
+                    if (!bid) {
+                        sappcSwalSelectBurialRowFirst();
+                        return;
+                    }
+                    var n = parseInt(bid, 10);
+                    if (isNaN(n) || n < 1) {
+                        window.alert('Invalid record.');
+                        return;
+                    }
+                    var payload = collectBurialApplicationPayload();
+                    payload.burial_id = n;
+                    var $saveBtn = $('#burialApplicationFormSaveBtn');
+                    var bsModal = bootstrap.Modal.getOrCreateInstance($burialAppModal[0]);
+                    $saveBtn.prop('disabled', true);
+                    fetchPostJson(burialAppSaveUrl, payload, csrf)
+                        .done(function(res) {
+                            if (res && res.ok) {
+                                bsModal.hide();
+                                var msg = res && res.message ? res.message : 'Burial application saved.';
+                                sappcBrSwal({
+                                    icon: 'success',
+                                    title: 'Saved',
+                                    text: msg,
+                                });
+                            }
+                        })
+                        .fail(function(xhr) {
+                            var msg = 'Could not save burial application.';
+                            var d = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                            if (d && d.errors) {
+                                var vals = Object.values(d.errors);
+                                if (vals.length && Array.isArray(vals[0]) && vals[0][0]) {
+                                    msg = vals[0][0];
+                                }
+                            } else if (d && d.message) {
+                                msg = d.message;
+                            }
+                            sappcBrSwal({
+                                icon: 'error',
+                                title: 'Error',
+                                text: msg,
+                            });
+                        })
+                        .always(function() {
+                            $saveBtn.prop('disabled', false);
+                        });
+                });
+            })();
 
             fetchRecords();
         });

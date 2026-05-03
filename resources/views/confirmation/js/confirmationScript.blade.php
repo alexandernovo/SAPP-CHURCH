@@ -153,6 +153,45 @@
                 });
             })();
 
+            (function applyConfirmationFieldFormatGuides() {
+                function ph(sel, val) {
+                    var $el = $(sel);
+                    if ($el.length) {
+                        $el.attr('placeholder', val);
+                    }
+                }
+                ph('#cnAppFirstName', 'Juan');
+                ph('#cnAppMiddleName', 'D.');
+                ph('#cnAppFamilyName', 'Cruz');
+                ph('#cnAppPob', 'Barbaza, Antique');
+                ph('#cnAppFather', 'Juan D. Cruz');
+                ph('#cnAppMother', 'Maria D. Cruz');
+                ph('#cnAppAddress', 'Street, Barangay, Municipality');
+                ph('#cnAppBapPlace', 'Parish church name');
+                ph('#cnAppMinisterBap', 'Rev. name (optional)');
+                ph('#cnAppBookNo', 'e.g. 1');
+                ph('#cnAppPageNo', 'e.g. 12');
+                ph('#cnAppRegistryNo', 'e.g. 45');
+                ph('#cnAppConfMinister', 'Rev. name (optional)');
+                ph('#cnAppGp1', 'Juan D. Cruz');
+                ph('#cnAppGp2', 'Juan D. Cruz');
+                ph('#cnAppGp3', 'Juan D. Cruz');
+                ph('#cnAppGp4', 'Juan D. Cruz');
+                ph('#cnCertChildFirst', 'Juan');
+                ph('#cnCertChildMiddle', 'D.');
+                ph('#cnCertChildLast', 'Cruz');
+                ph('#cnCertBirthplace', 'Barbaza, Antique');
+                ph('#cnCertFatherFirst', 'Juan');
+                ph('#cnCertFatherMiddle', 'D.');
+                ph('#cnCertFatherLast', 'Cruz');
+                ph('#cnCertMotherFirst', 'Maria');
+                ph('#cnCertMotherMiddle', 'D.');
+                ph('#cnCertMotherLast', 'Cruz');
+                ph('#cnCertPriest', 'Rev. name');
+                ph('#cnCertSponsors', 'Juan D. Cruz; Maria D. Cruz');
+                ph('#cnCertPurpose', 'e.g. school enrollment, passport');
+            })();
+
             var $panel = $('#confirmationRecordsPanel');
             if (!$panel.length) return;
 

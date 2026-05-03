@@ -173,6 +173,44 @@
                 });
             })();
 
+            (function applyWeddingFieldFormatGuides() {
+                function ph(sel, val) {
+                    var $el = $(sel);
+                    if ($el.length) {
+                        $el.attr('placeholder', val);
+                    }
+                }
+                ['Groom', 'Bride'].forEach(function(p) {
+                    ph('#wdApp' + p + 'Name', 'Cruz, Juan D.');
+                    ph('#wdApp' + p + 'Pob', 'Barbaza, Antique');
+                    ph('#wdApp' + p + 'Address', 'Street, Barangay, Municipality');
+                    ph('#wdApp' + p + 'Father', 'Juan D. Cruz');
+                    ph('#wdApp' + p + 'Mother', 'Maria D. Cruz');
+                    ph('#wdApp' + p + 'Religion', 'Roman Catholic');
+                    ph('#wdApp' + p + 'BapPlace', 'Parish church name');
+                    ph('#wdApp' + p + 'Contact', '09XX XXX XXXX');
+                });
+                ph('#wdAppCivilMarriagePlace', 'Municipality / registry office');
+                ph('#wdAppChurchWeddingPlace', 'St. Anthony of Padua Parish, Barbaza');
+                ph('#wdAppOfficiatingPriest', 'Rev. name');
+                ph('#wdAppSponsorLine1', 'Juan D. Cruz');
+                ph('#wdAppSponsorLine2', 'Maria D. Cruz');
+                ph('#wdAppSponsorLine3', 'Juan D. Cruz');
+                ph('#wdCertChildFirst', 'Juan');
+                ph('#wdCertChildMiddle', 'D.');
+                ph('#wdCertChildLast', 'Cruz');
+                ph('#wdCertBirthplace', 'Barbaza, Antique');
+                ph('#wdCertFatherFirst', 'Juan');
+                ph('#wdCertFatherMiddle', 'D.');
+                ph('#wdCertFatherLast', 'Cruz');
+                ph('#wdCertMotherFirst', 'Maria');
+                ph('#wdCertMotherMiddle', 'D.');
+                ph('#wdCertMotherLast', 'Cruz');
+                ph('#wdCertPriest', 'Rev. name');
+                ph('#wdCertSponsors', 'Juan D. Cruz; Maria D. Cruz');
+                ph('#wdCertPurpose', 'e.g. civil registry, visa');
+            })();
+
             var $panel = $('#weddingRecordsPanel');
             if (!$panel.length) return;
 

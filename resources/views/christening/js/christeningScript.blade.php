@@ -1,7 +1,7 @@
 @php
     $chApplicationFormConfig = array_merge(
         [
-            'letterSlots' => 25,
+            'letterSlots' => 22,
             'nameGroupEndIndices' => [7, 15],
             'contactSlots' => 11,
             'godparentLines' => 10,
@@ -126,7 +126,7 @@
 
         function initChristeningApplicationFormGrids() {
             var cfg = chApplicationFormConfig || {};
-            var letterSlots = parseInt(cfg.letterSlots, 10) || 25;
+            var letterSlots = parseInt(cfg.letterSlots, 10) || 22;
             var groupEnds = Array.isArray(cfg.nameGroupEndIndices) ? cfg.nameGroupEndIndices : [7, 15];
             var contactSlots = parseInt(cfg.contactSlots, 10) || 11;
             var godparentLines = parseInt(cfg.godparentLines, 10) || 10;
@@ -156,14 +156,20 @@
             $('#chAppFirstName').attr({
                 maxlength: letterSlots,
                 'aria-label': 'First name (' + letterSlots + ' letters max)',
+                placeholder: 'JUAN',
+                title: 'Format: one letter per box (e.g. JUAN for Juan)',
             });
             $('#chAppMiddleName').attr({
                 maxlength: letterSlots,
                 'aria-label': 'Middle name (' + letterSlots + ' letters max)',
+                placeholder: 'D.',
+                title: 'Format: e.g. D. for middle initial',
             });
             $('#chAppFamilyName').attr({
                 maxlength: letterSlots,
                 'aria-label': 'Family name (' + letterSlots + ' letters max)',
+                placeholder: 'CRUZ',
+                title: 'Format: one letter per box (e.g. CRUZ)',
             });
 
             var $contactWrap = $('#chAppCellsContact');
@@ -190,6 +196,7 @@
                         class: 'sappcChOfficialGpLine',
                         name: 'godparent_' + g + 'a',
                         'aria-label': 'Godparent line ' + g + ' (left)',
+                        placeholder: 'Juan D. Cruz',
                     }).appendTo($colA);
 
                     $('<input/>', {
@@ -197,12 +204,101 @@
                         class: 'sappcChOfficialGpLine',
                         name: 'godparent_' + g + 'b',
                         'aria-label': 'Godparent line ' + g + ' (right)',
+                        placeholder: 'Juan D. Cruz',
                     }).appendTo($colB);
                 }
             }
         }
 
+        function applyChristeningFieldFormatGuides() {
+            function ph(sel, val) {
+                var $el = $(sel);
+                if ($el.length) {
+                    $el.attr('placeholder', val);
+                }
+            }
+
+            ph('#chAppDob', 'mm/dd/yyyy');
+            ph('#chAppPob', 'Barbaza, Antique');
+            ph('#chAppFather', 'Juan D. Cruz');
+            ph('#chAppMother', 'Maria D. Cruz');
+            ph('#chAppParentAddress', 'Street, Barangay, Municipality');
+            ph('#chAppBaptismPlace', 'Parish church name');
+            ph('#chAppMinister', 'Rev. name (optional)');
+
+            ph('#chCertChildFirst', 'Juan');
+            ph('#chCertChildMiddle', 'D.');
+            ph('#chCertChildLast', 'Cruz');
+            ph('#chCertBirthplace', 'Barbaza, Antique');
+            ph('#chCertFatherFirst', 'Juan');
+            ph('#chCertFatherMiddle', 'D.');
+            ph('#chCertFatherLast', 'Cruz');
+            ph('#chCertMotherFirst', 'Maria');
+            ph('#chCertMotherMiddle', 'D.');
+            ph('#chCertMotherLast', 'Cruz');
+            ph('#chCertPriest', 'Rev. name');
+            ph('#chCertSponsors', 'Juan D. Cruz; Maria D. Cruz');
+            ph('#chCertPurpose', 'e.g. school enrollment, passport');
+        }
+
+        function syncChristeningApplicationNameGridMetrics() {
+            ['chAppCellsFirst', 'chAppCellsMiddle', 'chAppCellsFamily'].forEach(function(wrapId) {
+                var wrap = document.getElementById(wrapId);
+                if (!wrap) {
+                    return;
+                }
+                var cell = wrap.querySelector('.sappcChOfficialCell');
+                if (!cell) {
+                    return;
+                }
+                var w = cell.getBoundingClientRect().width;
+                if (!(w > 0)) {
+                    return;
+                }
+                wrap.style.setProperty('--ch-name-cell-w', w.toFixed(3) + 'px');
+                wrap.style.setProperty('--ch-name-pitch', (w + 1).toFixed(3) + 'px');
+            });
+        }
+
         initChristeningApplicationFormGrids();
+        applyChristeningFieldFormatGuides();
+        requestAnimationFrame(function() {
+            requestAnimationFrame(syncChristeningApplicationNameGridMetrics);
+        });
+
+        var chNameGridMetricsResizeTimer = null;
+        $(window).on('resize', function() {
+            clearTimeout(chNameGridMetricsResizeTimer);
+            chNameGridMetricsResizeTimer = setTimeout(syncChristeningApplicationNameGridMetrics, 120);
+        });
+        if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(syncChristeningApplicationNameGridMetrics);
+        }
+
+        function christeningApplicationNameSlotLimit() {
+            var cfg = chApplicationFormConfig || {};
+            return parseInt(cfg.letterSlots, 10) || 22;
+        }
+
+        function clampChristeningApplicationNameInputs() {
+            var max = christeningApplicationNameSlotLimit();
+            ['chAppFirstName', 'chAppMiddleName', 'chAppFamilyName'].forEach(function(id) {
+                var $el = $('#' + id);
+                if (!$el.length) return;
+                var v = String($el.val() || '');
+                if (v.length > max) {
+                    $el.val(v.slice(0, max));
+                }
+            });
+        }
+
+        $('#christeningApplicationForm').on('input', '#chAppFirstName, #chAppMiddleName, #chAppFamilyName', function() {
+            var max = christeningApplicationNameSlotLimit();
+            var v = String($(this).val() || '');
+            if (v.length > max) {
+                $(this).val(v.slice(0, max));
+            }
+        });
 
         var chApplicationDraftsByChristeningId = {};
         var chApplicationDraftSaveTimer = null;
@@ -264,6 +360,7 @@
                     $fields.val(val);
                 }
             });
+            clampChristeningApplicationNameInputs();
         }
 
         function christeningApplicationDraftKey() {
@@ -309,6 +406,9 @@
                     if ($el.length) $el.trigger('focus');
                     pendingFocusSelector = null;
                 }
+                requestAnimationFrame(function() {
+                    requestAnimationFrame(syncChristeningApplicationNameGridMetrics);
+                });
             });
 
             $appModal.on('hidden.bs.modal', function() {

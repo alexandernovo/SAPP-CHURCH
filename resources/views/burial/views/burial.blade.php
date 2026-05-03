@@ -4,6 +4,7 @@
 
 @push('styles')
     <link rel="stylesheet" href="{{ asset('css/christening/applicationOfChristening.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/burial/burialApplication.css') }}">
 @endpush
 
 @section('content')
@@ -47,12 +48,18 @@
                 <i class="fa-solid fa-money-bill-wave" aria-hidden="true"></i>
                 Payment Fee
             </button>
-            <button type="button" class="sappc-registry-toolbar_btn sappc-registry-toolbar_btn--outline">
+            <button type="button" class="sappc-registry-toolbar_btn sappc-registry-toolbar_btn--outline"
+                id="burialApplicationFormBtn" title="Burial application form"
+                aria-label="Open burial application form" aria-expanded="false"
+                aria-controls="burialApplicationFormModal">
                 <i class="fa-solid fa-file-lines" aria-hidden="true"></i>
                 Application Form
             </button>
         </div>
     </div>
+
+    {{-- Parish burial application (modal markup + public/css/burial/burialApplication.css) --}}
+    @include('burial.partials.burialApplicationModal')
 
     <div class="sappcPaymentFeeModal">
         <div class="modal fade" id="burialPaymentFeeModal" tabindex="-1"
@@ -194,6 +201,8 @@
         data-payment-details-url="{{ route('admin.burial.payment-details') }}"
         data-payment-save-url="{{ route('admin.burial.payment-save') }}"
         data-burial-delete-url="{{ route('admin.burial.record-delete') }}"
+        data-burial-application-details-url="{{ route('admin.burial.application-details') }}"
+        data-burial-application-save-url="{{ route('admin.burial.application-save') }}"
         aria-label="Burial records"
     >
         <div class="sappc-table-toolbar">
@@ -415,13 +424,13 @@
                                 <span class="sappcCertModalLabel sappcCertModalLabel--block">Complete Name</span>
                                 <div class="sappcCertModalTriple">
                                     <input type="text" class="sappcCertModalInput sappcCertModalInput--center"
-                                        id="brCertChildFirst" name="child_first_name" placeholder="First Name"
+                                        id="brCertChildFirst" name="child_first_name" placeholder="Juan"
                                         aria-label="First name">
                                     <input type="text" class="sappcCertModalInput sappcCertModalInput--center"
-                                        id="brCertChildMiddle" name="child_middle_name" placeholder="Middle Name"
+                                        id="brCertChildMiddle" name="child_middle_name" placeholder="D."
                                         aria-label="Middle name">
                                     <input type="text" class="sappcCertModalInput sappcCertModalInput--center"
-                                        id="brCertChildLast" name="child_last_name" placeholder="Last Name"
+                                        id="brCertChildLast" name="child_last_name" placeholder="Cruz"
                                         aria-label="Last name">
                                 </div>
                             </div>
@@ -437,7 +446,7 @@
                                     <label class="sappcCertModalLabel sappcCertModalLabel--block"
                                         for="brCertBirthplace">Birthplace</label>
                                     <input type="text" class="sappcCertModalInput sappcCertModalInput--center"
-                                        id="brCertBirthplace" name="birthplace" placeholder="">
+                                        id="brCertBirthplace" name="birthplace" placeholder="Barbaza, Antique">
                                 </div>
                             </div>
 
@@ -445,13 +454,13 @@
                                 <span class="sappcCertModalLabel sappcCertModalLabel--block">Father's Name</span>
                                 <div class="sappcCertModalTriple">
                                     <input type="text" class="sappcCertModalInput sappcCertModalInput--center"
-                                        id="brCertFatherFirst" name="father_first_name" placeholder="First Name"
+                                        id="brCertFatherFirst" name="father_first_name" placeholder="Juan"
                                         aria-label="Father first name">
                                     <input type="text" class="sappcCertModalInput sappcCertModalInput--center"
-                                        id="brCertFatherMiddle" name="father_middle_name" placeholder="Middle Name"
+                                        id="brCertFatherMiddle" name="father_middle_name" placeholder="D."
                                         aria-label="Father middle name">
                                     <input type="text" class="sappcCertModalInput sappcCertModalInput--center"
-                                        id="brCertFatherLast" name="father_last_name" placeholder="Last Name"
+                                        id="brCertFatherLast" name="father_last_name" placeholder="Cruz"
                                         aria-label="Father last name">
                                 </div>
                             </div>

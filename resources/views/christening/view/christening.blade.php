@@ -305,8 +305,7 @@
                     <form class="sappcChristeningAppForm sappcChOfficial" id="christeningApplicationForm"
                         action="{{ route('admin.christening.application-form') }}" method="post" autocomplete="off"
                         data-save-url="{{ route('admin.christening.application-form') }}">
-                        <div class="sappcChOfficialBondStack">
-                            <section class="sappcChOfficialBondPage" aria-label="Baptism application page 1">
+                        <section aria-label="Baptism application page 1">
                                 <header class="sappcChOfficialHeader">
                                     <div class="sappcChOfficialLogo sappcChOfficialLogoLeft">
                                         <img src="{{ asset('assets/logos/DSA.jpg') }}" width="88" height="88"
@@ -367,7 +366,7 @@
                                         <label class="sappcChOfficialLabel" for="chAppDob">Date of birth <span
                                                 class="sappcChOfficialLabelSub">(if registered)</span></label>
                                         <input type="text" class="sappcChOfficialInput sappcChOfficialInputRounded"
-                                            id="chAppDob" name="date_of_birth" placeholder="">
+                                            id="chAppDob" name="date_of_birth">
                                     </div>
                                     <div class="sappcChOfficialField sappcChOfficialFieldNarrow">
                                         <label class="sappcChOfficialLabel" for="chAppRegistryNo">Registry number</label>
@@ -378,7 +377,7 @@
 
                                 <div class="sappcChOfficialField">
                                     <label class="sappcChOfficialLabel" for="chAppPob">Place of birth</label>
-                                    <input type="text" class="sappcChOfficialInput sappcChOfficialInputRounded"
+                                        <input type="text" class="sappcChOfficialInput sappcChOfficialInputRounded"
                                         id="chAppPob" name="place_of_birth">
                                 </div>
                                 <div class="sappcChOfficialField">
@@ -488,10 +487,9 @@
                                         Wara ti bunyag nga pagahiwaton sa ikap-at nga Domingo kang bulan bangud dya
                                         gintalana para sa meeting kang Parish Pastoral Council (PPC).</li>
                                 </ol>
-                            </section>
+                        </section>
 
-                            <section class="sappcChOfficialBondPage sappcChOfficialBondPage--2"
-                                aria-label="Baptism application page 2">
+                        <section aria-label="Baptism application page 2">
                                 <div class="sappcChristeningAppFormPage2 sappcChOfficialPage2">
                                     <h2 class="sappcChOfficialPage2Title">Arancel kang bunyag</h2>
 
@@ -579,8 +577,7 @@
                                         </div>
                                     </div>
                                 </div>
-                            </section>
-                        </div>
+                        </section>
                     </form>
                 </div>
                 <div class="modal-footer sappcChristeningAppModalFooter">

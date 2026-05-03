@@ -361,6 +361,67 @@ class BurialController extends Controller
         ]);
     }
 
+    public function burialApplicationDetails(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'burial_id' => ['required', 'integer', 'min:1'],
+        ]);
+        $burialId = (int) $validated['burial_id'];
+        $row = DB::table('burial')->where('burialId', $burialId)->first();
+        if ($row === null) {
+            return response()->json(['message' => 'Burial record not found.'], 404);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'data' => $this->decodeBurialApplication($row),
+        ]);
+    }
+
+    public function burialApplicationSave(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'burial_id' => ['required', 'integer', 'min:1'],
+        ]);
+        $burialId = (int) $validated['burial_id'];
+        $existing = DB::table('burial')->where('burialId', $burialId)->first();
+        if ($existing === null) {
+            return response()->json(['message' => 'Burial record not found.'], 404);
+        }
+
+        $data = $request->json() ? $request->json()->all() : $request->all();
+        if (! is_array($data)) {
+            $data = [];
+        }
+        unset($data['burial_id'], $data['_token']);
+
+        $encoded = json_encode($data, JSON_UNESCAPED_UNICODE);
+        if ($encoded === false) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Could not encode the burial application data.',
+            ], 422);
+        }
+
+        try {
+            DB::table('burial')->where('burialId', $burialId)->update([
+                'burialApplication' => $encoded,
+            ]);
+        } catch (QueryException $e) {
+            report($e);
+
+            return response()->json([
+                'ok' => false,
+                'message' => 'Could not save. If the problem persists, run database migrations and try again.',
+            ], 422);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Burial application saved.',
+        ]);
+    }
+
     public function deleteBurialRecord(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -394,6 +455,24 @@ class BurialController extends Controller
             'ok' => true,
             'message' => 'Burial record deleted.',
         ]);
+    }
+
+    private function decodeBurialApplication(object $row): array
+    {
+        $raw = $row->burialApplication ?? null;
+        if ($raw === null || $raw === '') {
+            return [];
+        }
+        if (is_string($raw)) {
+            $decoded = json_decode($raw, true);
+
+            return is_array($decoded) ? $decoded : [];
+        }
+        if (is_array($raw)) {
+            return $raw;
+        }
+
+        return [];
     }
 
     private function defaultBurialPaymentFeeRows(): array
