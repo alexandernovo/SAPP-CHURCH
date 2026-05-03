@@ -203,6 +203,7 @@
         data-burial-delete-url="{{ route('admin.burial.record-delete') }}"
         data-burial-application-details-url="{{ route('admin.burial.application-details') }}"
         data-burial-application-save-url="{{ route('admin.burial.application-save') }}"
+        data-schedule-details-url="{{ route('admin.burial.schedule-details') }}"
         aria-label="Burial records"
     >
         <div class="sappc-table-toolbar">
@@ -501,7 +502,6 @@
                                     <div class="sappcCertModalDateWrap">
                                         <input type="date" class="sappcCertModalInput sappcCertModalInput--center"
                                             id="brCertDateReceived" name="date_received">
-                                        <i class="fa-regular fa-calendar sappcCertModalDateIcon" aria-hidden="true"></i>
                                     </div>
                                 </div>
                                 <div class="sappcCertModalField sappcCertModalField--stack">
@@ -547,7 +547,6 @@
                                     <div class="sappcCertModalDateWrap">
                                         <input type="date" class="sappcCertModalInput sappcCertModalInput--center"
                                             id="brCertDateIssued" name="date_issued">
-                                        <i class="fa-regular fa-calendar sappcCertModalDateIcon" aria-hidden="true"></i>
                                     </div>
                                 </div>
                             </div>

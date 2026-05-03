@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\ClientNameDisplay;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -207,6 +208,55 @@ class ConfirmationController extends Controller
                 'confirmation_id' => $existing->confirmationId ?? null,
                 'reference_code' => $existing->referenceCode ?? $ref,
                 'schedule_requested' => $scheduleAt,
+            ],
+        ]);
+    }
+
+    public function confirmationScheduleDetails(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'confirmation_id' => ['required', 'integer', 'min:1'],
+        ]);
+        $confirmationId = (int) $validated['confirmation_id'];
+
+        $row = DB::table('confirmation')->where('confirmationId', $confirmationId)->first();
+        if ($row === null) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Confirmation record not found.',
+            ], 404);
+        }
+
+        $client = ClientNameDisplay::fullDisplayName(
+            $row->clientFName ?? null,
+            $row->clientMName ?? null,
+            $row->clientLName ?? null,
+        );
+
+        $scheduleDate = null;
+        $scheduleTime = null;
+        if (! empty($row->scheduleRequested)) {
+            try {
+                $dt = Carbon::parse($row->scheduleRequested);
+                $scheduleDate = $dt->format('Y-m-d');
+                $scheduleTime = $dt->format('H:i');
+            } catch (\Throwable) {
+                $scheduleDate = null;
+                $scheduleTime = null;
+            }
+        }
+
+        return response()->json([
+            'ok' => true,
+            'data' => [
+                'confirmation_id' => $confirmationId,
+                'reference_code' => (string) ($row->referenceCode ?? ''),
+                'client' => $client,
+                'address' => (string) ($row->address ?? ''),
+                'sex' => (string) ($row->sex ?? ''),
+                'contact_number' => (string) ($row->contactNum ?? ''),
+                'schedule_date' => $scheduleDate,
+                'schedule_time' => $scheduleTime,
             ],
         ]);
     }

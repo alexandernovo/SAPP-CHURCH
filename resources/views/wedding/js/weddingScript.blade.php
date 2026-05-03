@@ -112,6 +112,44 @@
             }
         }
 
+        function sappcPhMobileDigitsOnly(value) {
+            return String(value == null ? '' : value).replace(/\D/g, '');
+        }
+
+        function formatPhMobileDisplay(value) {
+            var d = sappcPhMobileDigitsOnly(value);
+            if (!d) return '';
+            if (d.slice(0, 2) === '63') {
+                d = '0' + d.slice(2);
+            } else if (d.charAt(0) === '9' && d.length <= 10) {
+                d = '0' + d;
+            }
+            if (d.length > 11) {
+                d = d.slice(0, 11);
+            }
+            if (d.length >= 2 && d.charAt(0) === '0' && d.charAt(1) === '9') {
+                var a = d.slice(0, 4);
+                var b = d.slice(4, 7);
+                var c = d.slice(7, 11);
+                if (!b) return a;
+                if (!c) return a + ' ' + b;
+                return a + ' ' + b + ' ' + c;
+            }
+            if (d.charAt(0) === '0') {
+                return d;
+            }
+            return d.slice(0, 15);
+        }
+
+        $(document).on('input', '#wdScheduleContact, #wdPaymentContact', function() {
+            var $el = $(this);
+            var before = $el.val();
+            var formatted = formatPhMobileDisplay(before);
+            if (formatted !== before) {
+                $el.val(formatted);
+            }
+        });
+
         function rowHtml(row) {
             return (
                 '<tr data-record-id="' + esc(row.recordId) + '" data-document-type="' + esc(row.documentType) +
@@ -230,6 +268,7 @@
             var marriageAppSaveUrl = ($panel.attr('data-marriage-application-save-url') || $weddingAppFormBtn.attr(
                 'data-marriage-application-save-url') || '').trim();
             var weddingDeleteUrl = ($panel.attr('data-wedding-delete-url') || '').trim();
+            var scheduleDetailsUrl = ($panel.attr('data-schedule-details-url') || '').trim();
 
             var fetchRecords = function() {};
 
@@ -542,7 +581,7 @@
                 return {
                     reference_code: ($('#wdPaymentRefCode').val() || '').trim(),
                     client: ($('#wdPaymentClient').val() || '').trim(),
-                    contact_number: ($('#wdPaymentContact').val() || '').trim(),
+                    contact_number: sappcPhMobileDigitsOnly($('#wdPaymentContact').val()),
                     address: ($('#wdPaymentAddress').val() || '').trim(),
                     fee_rows: collectConfirmationPaymentFeeRowsFromDom(),
                 };
@@ -552,7 +591,9 @@
                 if (!data || typeof data !== 'object') return;
                 $('#wdPaymentRefCode').val(data.reference_code != null ? String(data.reference_code) : '');
                 $('#wdPaymentClient').val(data.client != null ? String(data.client) : '');
-                $('#wdPaymentContact').val(data.contact_number != null ? String(data.contact_number) : '');
+                $('#wdPaymentContact').val(
+                    data.contact_number != null ? formatPhMobileDisplay(String(data.contact_number)) : ''
+                );
                 $('#wdPaymentAddress').val(data.address != null ? String(data.address) : '');
                 var feeRows = data.fee_rows;
                 if (!Array.isArray(feeRows) || !feeRows.length) {
@@ -1182,7 +1223,9 @@
                     $('#wdScheduleSex').val(rawSex);
                 }
                 var rawContact = ($tds.eq(5).text() || '').trim();
-                $('#wdScheduleContact').val((rawContact === '\u2014' || rawContact === '-' || rawContact === '') ? '' : rawContact);
+                $('#wdScheduleContact').val(
+                    (rawContact === '\u2014' || rawContact === '-' || rawContact === '') ? '' : formatPhMobileDisplay(rawContact)
+                );
             });
 
             if ($scheduleForm.length && scheduleSaveUrl) {
@@ -1194,7 +1237,7 @@
                         schedule_time: $('#wdScheduleTime24').val(),
                         client: ($('#wdScheduleClient').val() || '').trim(),
                         sex: ($('#wdScheduleSex').val() || '').trim(),
-                        contact_number: ($('#wdScheduleContact').val() || '').trim(),
+                        contact_number: sappcPhMobileDigitsOnly($('#wdScheduleContact').val()),
                         address: ($('#wdScheduleAddress').val() || '').trim(),
                         reference_code: ($('#wdScheduleRefCode').val() || '').trim(),
                     };
@@ -1246,21 +1289,97 @@
                 });
             }
 
+            function applyWeddingScheduleDetailsToForm(d) {
+                if (!d || typeof d !== 'object') return;
+                if (d.wedding_id != null && String(d.wedding_id).trim() !== '') {
+                    $('#wdScheduleWeddingId').val(String(d.wedding_id).trim());
+                }
+                $('#wdScheduleRefCode').val(d.reference_code != null ? String(d.reference_code) : '');
+                $('#wdScheduleClient').val(d.client != null ? String(d.client) : '');
+                $('#wdScheduleAddress').val(d.address != null ? String(d.address) : '');
+                $('#wdScheduleSex').val(d.sex != null ? String(d.sex) : '');
+                var cn = d.contact_number != null ? String(d.contact_number).trim() : '';
+                $('#wdScheduleContact').val(cn !== '' ? formatPhMobileDisplay(cn) : '');
+                var sd = d.schedule_date != null ? String(d.schedule_date).trim().slice(0, 10) : '';
+                $('#wdScheduleDate').val(sd);
+                var st = d.schedule_time != null ? String(d.schedule_time).trim() : '';
+                if (st.length >= 5) {
+                    st = st.slice(0, 5);
+                }
+                $('#wdScheduleTime24').val(st || '10:00');
+            }
+
+            function syncWeddingScheduleModalCalendarFromInputs() {
+                if (!$scheduleDateInput.val()) {
+                    $scheduleDateInput.val(new Date().toISOString().slice(0, 10));
+                }
+                if (!$scheduleTimeInput.val()) {
+                    $scheduleTimeInput.val('10:00');
+                }
+                var selectedDate = parseIsoDate($scheduleDateInput.val());
+                if (selectedDate) {
+                    calendarViewDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+                } else {
+                    var nowHeader = new Date();
+                    calendarViewDate = new Date(nowHeader.getFullYear(), nowHeader.getMonth(), 1);
+                }
+                syncCalendarHeader();
+                renderCalendarDayGrid();
+            }
+
             $scheduleBtn.on('click', function() {
-                resetScheduleRequestFormForNewEntry();
+                var cid = ($('#wdScheduleWeddingId').val() || '').trim();
+                var $sel = $('#weddingTableBody tr.is-schedule-selected');
+                if (!cid && $sel.length) {
+                    var doc = ($sel.attr('data-document-type') || '').trim();
+                    if (doc === 'Wedding') {
+                        var rid = ($sel.attr('data-record-id') || '').trim();
+                        if (rid) {
+                            $('#wdScheduleWeddingId').val(rid);
+                            cid = rid;
+                        }
+                    }
+                }
+                if (!cid) {
+                    resetScheduleRequestFormForNewEntry();
+                }
             });
 
             if ($scheduleBtn.length && $scheduleModal.length) {
                 $scheduleModal.on('shown.bs.modal', function() {
                     $scheduleBtn.attr('aria-expanded', 'true');
-                    if (!$scheduleDateInput.val()) $scheduleDateInput.val(new Date().toISOString().slice(0, 10));
-                    if (!$scheduleTimeInput.val()) $scheduleTimeInput.val('10:00');
-                    var selectedDate = parseIsoDate($scheduleDateInput.val());
-                    if (selectedDate) {
-                        calendarViewDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+                    var cid = ($('#wdScheduleWeddingId').val() || '').trim();
+                    if (cid && scheduleDetailsUrl) {
+                        fetchJson(buildQueryUrl(scheduleDetailsUrl, {
+                            wedding_id: cid,
+                        }), jsonHeaders)
+                            .done(function(res) {
+                                if (res && res.ok && res.data) {
+                                    applyWeddingScheduleDetailsToForm(res.data);
+                                }
+                            })
+                            .fail(function(xhr) {
+                                var msg = 'Could not load schedule details.';
+                                var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                                if (data && data.message) {
+                                    msg = String(data.message);
+                                }
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error',
+                                        text: msg,
+                                    });
+                                } else {
+                                    window.alert(msg);
+                                }
+                            })
+                            .always(function() {
+                                syncWeddingScheduleModalCalendarFromInputs();
+                            });
+                    } else {
+                        syncWeddingScheduleModalCalendarFromInputs();
                     }
-                    syncCalendarHeader();
-                    renderCalendarDayGrid();
                 });
                 $scheduleModal.on('hidden.bs.modal', function() {
                     $scheduleBtn.attr('aria-expanded', 'false');

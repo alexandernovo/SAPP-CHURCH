@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\ClientNameDisplay;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -12,6 +13,10 @@ use Illuminate\View\View;
 
 class ChristeningController extends Controller
 {
+    private const CHRISTENING_GODPARENT_FORM_ROWS = 13;
+
+    private const CHRISTENING_FIXED_BAPTISM_PLACE = 'Saint Anthony of Padua Parish Church';
+
     private const CHRISTENING_REFERENCE_SUFFIX = 'B';
 
     private const CHRISTENING_REFERENCE_CHARSET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -217,6 +222,55 @@ class ChristeningController extends Controller
         ]);
     }
 
+    public function christeningScheduleDetails(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'christening_id' => ['required', 'integer', 'min:1'],
+        ]);
+        $christeningId = (int) $validated['christening_id'];
+
+        $row = DB::table('christening')->where('christeningId', $christeningId)->first();
+        if ($row === null) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Christening record not found.',
+            ], 404);
+        }
+
+        $client = ClientNameDisplay::fullDisplayName(
+            $row->clientFName ?? null,
+            $row->clientMName ?? null,
+            $row->clientLName ?? null,
+        );
+
+        $scheduleDate = null;
+        $scheduleTime = null;
+        if (! empty($row->scheduleRequested)) {
+            try {
+                $dt = Carbon::parse($row->scheduleRequested);
+                $scheduleDate = $dt->format('Y-m-d');
+                $scheduleTime = $dt->format('H:i');
+            } catch (\Throwable) {
+                $scheduleDate = null;
+                $scheduleTime = null;
+            }
+        }
+
+        return response()->json([
+            'ok' => true,
+            'data' => [
+                'christening_id' => $christeningId,
+                'reference_code' => (string) ($row->referenceCode ?? ''),
+                'client' => $client,
+                'address' => (string) ($row->address ?? ''),
+                'sex' => (string) ($row->sex ?? ''),
+                'contact_number' => (string) ($row->contactNum ?? ''),
+                'schedule_date' => $scheduleDate,
+                'schedule_time' => $scheduleTime,
+            ],
+        ]);
+    }
+
     public function christeningApplicationForm(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -231,7 +285,10 @@ class ChristeningController extends Controller
 
         $row = $this->mapApplicationRequestToDetailsRow($request);
 
-        $existing = DB::table('christening_details')->where('christeningId', $christeningId)->first();
+        $existing = DB::table('christening_details')
+            ->where('christeningId', $christeningId)
+            ->orderByDesc('christeningDetailsId')
+            ->first();
 
         if ($existing) {
             $row['updated_at'] = now();
@@ -268,11 +325,30 @@ class ChristeningController extends Controller
             return response()->json(['message' => 'Christening record not found.'], 404);
         }
 
-        $details = DB::table('christening_details')->where('christeningId', $christeningId)->first();
+        $christening = DB::table('christening')->where('christeningId', $christeningId)->first();
+
+        $details = DB::table('christening_details')
+            ->where('christeningId', $christeningId)
+            ->orderByDesc('christeningDetailsId')
+            ->first();
+
+        $data = $this->mapChristeningDetailsRowToFormFields($details);
+
+        if ($details === null && $christening !== null) {
+            $data['first_name'] = trim((string) ($christening->clientFName ?? ''));
+            $data['middle_name'] = trim((string) ($christening->clientMName ?? ''));
+            $data['family_name'] = trim((string) ($christening->clientLName ?? ''));
+        }
+
+        if ($christening !== null && ! empty($christening->scheduleRequested)) {
+            $data['baptism_date'] = $this->dateForForm($christening->scheduleRequested);
+        }
+
+        $data['baptism_place'] = self::CHRISTENING_FIXED_BAPTISM_PLACE;
 
         return response()->json([
             'ok' => true,
-            'data' => $this->mapChristeningDetailsRowToFormFields($details),
+            'data' => $data,
         ]);
     }
 
@@ -572,7 +648,7 @@ class ChristeningController extends Controller
             'marriage_contract_no' => '',
             'guardian_contact' => '',
             'baptism_date' => '',
-            'baptism_place' => '',
+            'baptism_place' => self::CHRISTENING_FIXED_BAPTISM_PLACE,
             'minister' => '',
             'fee_arancel' => '',
             'fee_symbols' => '',
@@ -586,12 +662,14 @@ class ChristeningController extends Controller
             'approval_parish_priest' => '',
         ];
 
-        for ($g = 1; $g <= 20; $g++) {
+        for ($g = 1; $g <= self::CHRISTENING_GODPARENT_FORM_ROWS; $g++) {
             $out['godparent_'.$g.'a'] = '';
             $out['godparent_'.$g.'b'] = '';
         }
 
         if ($row === null) {
+            $out['baptism_place'] = self::CHRISTENING_FIXED_BAPTISM_PLACE;
+
             return $out;
         }
 
@@ -613,7 +691,7 @@ class ChristeningController extends Controller
         $out['marriage_contract_no'] = (string) ($row->marriageContractNumber ?? '');
         $out['guardian_contact'] = (string) ($row->parentGuardianContact ?? '');
         $out['baptism_date'] = $this->dateForForm($row->dateOfBaptism ?? null);
-        $out['baptism_place'] = (string) ($row->placeOfBaptism ?? '');
+        $out['baptism_place'] = self::CHRISTENING_FIXED_BAPTISM_PLACE;
         $out['minister'] = (string) ($row->ministerOfSacrament ?? '');
 
         $out['fee_arancel'] = $this->decimalForForm($row->feeArancel ?? null);
@@ -641,7 +719,7 @@ class ChristeningController extends Controller
             if (is_array($decoded)) {
                 $i = 1;
                 foreach ($decoded as $pair) {
-                    if ($i > 20) {
+                    if ($i > self::CHRISTENING_GODPARENT_FORM_ROWS) {
                         break;
                     }
                     if (! is_array($pair)) {
@@ -693,7 +771,7 @@ class ChristeningController extends Controller
         $parentStatusText = implode(', ', array_filter(array_map('strval', $parentStatus)));
 
         $godparents = [];
-        for ($i = 1; $i <= 20; $i++) {
+        for ($i = 1; $i <= self::CHRISTENING_GODPARENT_FORM_ROWS; $i++) {
             $a = $request->input("godparent_{$i}a");
             $b = $request->input("godparent_{$i}b");
             $a = is_string($a) ? trim($a) : '';
@@ -733,7 +811,7 @@ class ChristeningController extends Controller
             'marriageContractNumber' => $this->nullableText($request->input('marriage_contract_no')),
             'parentGuardianContact' => $this->nullableText($request->input('guardian_contact')),
             'dateOfBaptism' => $this->parseFlexibleDate($request->input('baptism_date')),
-            'placeOfBaptism' => $this->nullableText($request->input('baptism_place')),
+            'placeOfBaptism' => self::CHRISTENING_FIXED_BAPTISM_PLACE,
             'ministerOfSacrament' => $this->nullableText($request->input('minister')),
             'age' => $age,
             'feeArancel' => $this->nullableDecimal($request->input('fee_arancel')),
@@ -880,20 +958,107 @@ class ChristeningController extends Controller
             return response()->json(['message' => 'Christening record not found.'], 404);
         }
 
-        $row = DB::table('christening_certification')->where('christeningId', $christeningId)->first();
+        $christening = DB::table('christening')->where('christeningId', $christeningId)->first();
+
+        $details = DB::table('christening_details')
+            ->where('christeningId', $christeningId)
+            ->orderByDesc('christeningDetailsId')
+            ->first();
+
+        $overlay = $this->mapChristeningDetailsRowToCertificationOverlay($details);
+
+        if ($details === null && $christening !== null) {
+            $overlay['first_name'] = trim((string) ($christening->clientFName ?? ''));
+            $overlay['middle_name'] = trim((string) ($christening->clientMName ?? ''));
+            $overlay['family_name'] = trim((string) ($christening->clientLName ?? ''));
+        }
+
+        $certRow = DB::table('christening_certification')->where('christeningId', $christeningId)->first();
+        $certFields = $this->mapChristeningCertificationRowToApplicationStyleFields($certRow);
+        foreach ($certFields as $k => $v) {
+            if ($v === null || $v === '') {
+                continue;
+            }
+            $overlay[$k] = $v;
+        }
 
         return response()->json([
             'ok' => true,
-            'has_saved_cert' => $row !== null,
-            'data' => $this->mapChristeningCertificationRowToApplicationStyleFields($row),
+            'has_saved_cert' => $certRow !== null,
+            'data' => $overlay,
         ]);
     }
 
     /**
-     * Certification modal uses the same field names as application-details AJAX.
-     *
      * @return array<string, string>
      */
+    private function mapChristeningDetailsRowToCertificationOverlay(?object $details): array
+    {
+        $app = $this->mapChristeningDetailsRowToFormFields($details);
+        $sponsors = '';
+        if ($details !== null && ! empty($details->godparents)) {
+            $sponsors = $this->christeningGodparentsJsonToSponsorsString($details->godparents);
+        }
+
+        return [
+            'first_name' => (string) ($app['first_name'] ?? ''),
+            'middle_name' => (string) ($app['middle_name'] ?? ''),
+            'family_name' => (string) ($app['family_name'] ?? ''),
+            'date_of_birth' => (string) ($app['date_of_birth'] ?? ''),
+            'place_of_birth' => (string) ($app['place_of_birth'] ?? ''),
+            'father_first_name' => '',
+            'father_middle_name' => '',
+            'father_last_name' => '',
+            'father_name' => (string) ($app['father_name'] ?? ''),
+            'mother_first_name' => '',
+            'mother_middle_name' => '',
+            'mother_last_name' => '',
+            'mother_maiden_name' => (string) ($app['mother_maiden_name'] ?? ''),
+            'minister' => (string) ($app['minister'] ?? ''),
+            'barangay' => '',
+            'municipality' => '',
+            'province' => '',
+            'parent_address' => (string) ($app['parent_address'] ?? ''),
+            'date_received' => '',
+            'date_issued' => '',
+            'book_no' => '',
+            'register_no' => '',
+            'page_no' => '',
+            'sponsors' => $sponsors,
+            'purpose' => '',
+        ];
+    }
+
+    private function christeningGodparentsJsonToSponsorsString(mixed $godparents): string
+    {
+        if ($godparents === null || $godparents === '') {
+            return '';
+        }
+        $decoded = is_string($godparents) ? json_decode($godparents, true) : (is_array($godparents) ? $godparents : null);
+        if (! is_array($decoded)) {
+            return '';
+        }
+        $parts = [];
+        foreach ($decoded as $pair) {
+            if (! is_array($pair)) {
+                continue;
+            }
+            $a = trim((string) ($pair['maninoy'] ?? $pair[0] ?? ''));
+            $b = trim((string) ($pair['maninay'] ?? $pair[1] ?? ''));
+            $line = $a;
+            if ($a !== '' && $b !== '') {
+                $line .= '; '.$b;
+            } elseif ($b !== '') {
+                $line = $b;
+            }
+            if ($line !== '') {
+                $parts[] = $line;
+            }
+        }
+
+        return implode('; ', $parts);
+    }
+
     private function mapChristeningCertificationRowToApplicationStyleFields(?object $row): array
     {
         if ($row === null) {

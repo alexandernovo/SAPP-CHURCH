@@ -992,10 +992,24 @@
 }
 
 .sappcChOfficialCellsWrapContact .sappcChOfficialCellInput {
-    letter-spacing: calc(var(--ch-contact-track) + 1px - 1ch);
-    padding: 0 0 0 0.12rem;
-    line-height: 1.35rem;
+    box-sizing: border-box;
+    font-family: Consolas, "Courier New", Courier, monospace;
+    font-size: 0.72rem;
+    letter-spacing: calc(var(--ch-contact-pitch, calc(var(--ch-contact-track) + 1px)) - 1ch);
+    padding: 0.18rem 0 0;
+    padding-left: calc((var(--ch-contact-cell-w, var(--ch-contact-track)) - 1ch) / 2);
+    line-height: 1.15;
     text-transform: none;
+}
+
+#christeningApplicationFormModal .sappcChOfficialCellsWrapContact .sappcChOfficialCellInput:-webkit-autofill,
+#christeningApplicationFormModal .sappcChOfficialCellsWrapContact .sappcChOfficialCellInput:-webkit-autofill:hover,
+#christeningApplicationFormModal .sappcChOfficialCellsWrapContact .sappcChOfficialCellInput:-webkit-autofill:focus,
+#christeningApplicationFormModal .sappcChOfficialCellsWrapContact .sappcChOfficialCellInput:-webkit-autofill:active {
+    -webkit-text-fill-color: #111;
+    caret-color: #111;
+    transition: background-color 99999s ease-out;
+    -webkit-transition: background-color 99999s ease-out;
 }
 
 .sappcChOfficialRow {
@@ -2181,18 +2195,6 @@
     position: relative;
     display: flex;
     align-items: center;
-}
-
-.sappcCertModalDateWrap .sappcCertModalInput[type='date'] {
-    padding-right: 1.85rem;
-}
-
-.sappcCertModalDateIcon {
-    position: absolute;
-    right: 0.5rem;
-    pointer-events: none;
-    color: #555;
-    font-size: 0.95rem;
 }
 
 .sappcChristeningCertificationModal .modal-footer.sappcChristeningAppModalFooter,

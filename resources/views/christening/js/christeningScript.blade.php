@@ -4,7 +4,7 @@
             'letterSlots' => 22,
             'nameGroupEndIndices' => [7, 15],
             'contactSlots' => 11,
-            'godparentLines' => 10,
+            'godparentLines' => 13,
         ],
         $chApplicationFormConfig ?? [],
     );
@@ -15,9 +15,47 @@
 
         var initialTablePayload = @json($initialTablePayload);
         var chApplicationFormConfig = @json($chApplicationFormConfig);
+        var christeningFixedBaptismPlace = 'Saint Anthony of Padua Parish Church';
 
         function esc(s) {
             return $('<div/>').text(s == null ? '' : String(s)).html();
+        }
+
+        /** First character uppercase, remaining letters lowercase (per name field). */
+        function sappcCapitalizeNamePart(str) {
+            var s = String(str == null ? '' : str).trim();
+            if (!s.length) {
+                return '';
+            }
+            return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+        }
+
+        /** Title-case each whitespace-delimited word (for multi-token first/middle/last). */
+        function sappcTitleCaseEachWord(str) {
+            return String(str == null ? '' : str).trim().split(/\s+/).filter(function(x) {
+                return x.length;
+            }).map(function(w) {
+                return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+            }).join(' ');
+        }
+
+        function sappcSplitFullNameToThreeParts(fullName) {
+            var s = String(fullName == null ? '' : fullName).trim().replace(/\s+/g, ' ');
+            if (!s.length) {
+                return { first: '', middle: '', last: '' };
+            }
+            var parts = s.split(' ');
+            if (parts.length === 1) {
+                return { first: parts[0], middle: '', last: '' };
+            }
+            if (parts.length === 2) {
+                return { first: parts[0], middle: '', last: parts[1] };
+            }
+            return {
+                first: parts[0],
+                middle: parts.slice(1, -1).join(' '),
+                last: parts[parts.length - 1]
+            };
         }
 
         function getMetaCsrf() {
@@ -96,17 +134,51 @@
         }
 
         function sappcSwalSelectChristeningRowFirst() {
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Select a record',
-                    text: 'Select a christening row in the table first.',
-                    confirmButtonText: 'OK',
-                });
-            } else {
-                window.alert('Select a christening row in the table first.');
-            }
+            sappcChSwal({
+                icon: 'warning',
+                title: 'Select a record',
+                text: 'Select a christening row in the table first.',
+                confirmButtonText: 'OK',
+            });
         }
+
+        function sappcPhMobileDigitsOnly(value) {
+            return String(value == null ? '' : value).replace(/\D/g, '');
+        }
+
+        function formatPhMobileDisplay(value) {
+            var d = sappcPhMobileDigitsOnly(value);
+            if (!d) return '';
+            if (d.slice(0, 2) === '63') {
+                d = '0' + d.slice(2);
+            } else if (d.charAt(0) === '9' && d.length <= 10) {
+                d = '0' + d;
+            }
+            if (d.length > 11) {
+                d = d.slice(0, 11);
+            }
+            if (d.length >= 2 && d.charAt(0) === '0' && d.charAt(1) === '9') {
+                var a = d.slice(0, 4);
+                var b = d.slice(4, 7);
+                var c = d.slice(7, 11);
+                if (!b) return a;
+                if (!c) return a + ' ' + b;
+                return a + ' ' + b + ' ' + c;
+            }
+            if (d.charAt(0) === '0') {
+                return d;
+            }
+            return d.slice(0, 15);
+        }
+
+        $(document).on('input', '#chScheduleContact, #chPaymentContact', function() {
+            var $el = $(this);
+            var before = $el.val();
+            var formatted = formatPhMobileDisplay(before);
+            if (formatted !== before) {
+                $el.val(formatted);
+            }
+        });
 
         function normalizePerPage(value) {
             var allowed = [10, 25, 50, 100];
@@ -124,12 +196,11 @@
             return allowed.indexOf(n) !== -1 ? n : allowed[0];
         }
 
-        function initChristeningApplicationFormGrids() {
+        function ensureChristeningApplicationNameAndContactGrids() {
             var cfg = chApplicationFormConfig || {};
             var letterSlots = parseInt(cfg.letterSlots, 10) || 22;
             var groupEnds = Array.isArray(cfg.nameGroupEndIndices) ? cfg.nameGroupEndIndices : [7, 15];
             var contactSlots = parseInt(cfg.contactSlots, 10) || 11;
-            var godparentLines = parseInt(cfg.godparentLines, 10) || 10;
 
             function isGroupEnd(i) {
                 return groupEnds.indexOf(i) !== -1;
@@ -140,6 +211,9 @@
                 if (!$wrap.length) return;
                 var $input = inputId ? $('#' + inputId) : $wrap.find('.sappcChOfficialCellInput').first();
                 if (!$input.length) return;
+                if ($wrap.find('> span.sappcChOfficialCell').length) {
+                    return;
+                }
                 $wrap.css('--ch-name-slots', String(letterSlots));
                 for (var i = 0; i < letterSlots; i++) {
                     $('<span/>', {
@@ -162,8 +236,8 @@
             $('#chAppMiddleName').attr({
                 maxlength: letterSlots,
                 'aria-label': 'Middle name (' + letterSlots + ' letters max)',
-                placeholder: 'D.',
-                title: 'Format: e.g. D. for middle initial',
+                placeholder: 'MARIA',
+                title: 'Format: one letter per box (e.g. MARIA for middle name)',
             });
             $('#chAppFamilyName').attr({
                 maxlength: letterSlots,
@@ -176,15 +250,23 @@
             var $contactInput = $('#chAppGuardianContact');
             if ($contactWrap.length && $contactInput.length && $.contains($contactWrap[0], $contactInput[0])) {
                 $contactWrap.css('--ch-contact-slots', String(contactSlots));
-                for (var j = 0; j < contactSlots; j++) {
-                    $('<span/>', {
-                        class: 'sappcChOfficialCell',
-                        'aria-hidden': 'true',
-                    }).insertBefore($contactInput);
+                var $existingContactCells = $contactWrap.find('> span.sappcChOfficialCell');
+                if ($existingContactCells.length !== contactSlots) {
+                    $existingContactCells.remove();
+                    for (var j = 0; j < contactSlots; j++) {
+                        $('<span/>', {
+                            class: 'sappcChOfficialCell',
+                            'aria-hidden': 'true',
+                        }).insertBefore($contactInput);
+                    }
                 }
                 $contactInput.attr('maxlength', contactSlots);
             }
+        }
 
+        function initChristeningApplicationGodparentGrid() {
+            var cfg = chApplicationFormConfig || {};
+            var godparentLines = parseInt(cfg.godparentLines, 10) || 13;
             var $colA = $('#chAppGpColA');
             var $colB = $('#chAppGpColB');
             if ($colA.length && $colB.length) {
@@ -210,6 +292,11 @@
             }
         }
 
+        function initChristeningApplicationFormGrids() {
+            ensureChristeningApplicationNameAndContactGrids();
+            initChristeningApplicationGodparentGrid();
+        }
+
         function applyChristeningFieldFormatGuides() {
             function ph(sel, val) {
                 var $el = $(sel);
@@ -219,11 +306,12 @@
             }
 
             ph('#chAppDob', 'mm/dd/yyyy');
+            ph('#chAppMiddleName', 'MARIA');
             ph('#chAppPob', 'Barbaza, Antique');
             ph('#chAppFather', 'Juan D. Cruz');
             ph('#chAppMother', 'Maria D. Cruz');
             ph('#chAppParentAddress', 'Street, Barangay, Municipality');
-            ph('#chAppBaptismPlace', 'Parish church name');
+            ph('#chAppBaptismDate', 'mm/dd/yyyy');
             ph('#chAppMinister', 'Rev. name (optional)');
 
             ph('#chCertChildFirst', 'Juan');
@@ -260,19 +348,41 @@
             });
         }
 
+        function syncChristeningContactGridMetrics() {
+            var wrap = document.getElementById('chAppCellsContact');
+            if (!wrap) {
+                return;
+            }
+            var cell = wrap.querySelector('.sappcChOfficialCell');
+            if (!cell) {
+                return;
+            }
+            var w = cell.getBoundingClientRect().width;
+            if (!(w > 0)) {
+                return;
+            }
+            wrap.style.setProperty('--ch-contact-cell-w', w.toFixed(3) + 'px');
+            wrap.style.setProperty('--ch-contact-pitch', (w + 1).toFixed(3) + 'px');
+        }
+
+        function syncChristeningApplicationOfficeGridMetrics() {
+            syncChristeningApplicationNameGridMetrics();
+            syncChristeningContactGridMetrics();
+        }
+
         initChristeningApplicationFormGrids();
         applyChristeningFieldFormatGuides();
         requestAnimationFrame(function() {
-            requestAnimationFrame(syncChristeningApplicationNameGridMetrics);
+            requestAnimationFrame(syncChristeningApplicationOfficeGridMetrics);
         });
 
         var chNameGridMetricsResizeTimer = null;
         $(window).on('resize', function() {
             clearTimeout(chNameGridMetricsResizeTimer);
-            chNameGridMetricsResizeTimer = setTimeout(syncChristeningApplicationNameGridMetrics, 120);
+            chNameGridMetricsResizeTimer = setTimeout(syncChristeningApplicationOfficeGridMetrics, 120);
         });
         if (document.fonts && document.fonts.ready) {
-            document.fonts.ready.then(syncChristeningApplicationNameGridMetrics);
+            document.fonts.ready.then(syncChristeningApplicationOfficeGridMetrics);
         }
 
         function christeningApplicationNameSlotLimit() {
@@ -298,6 +408,53 @@
             if (v.length > max) {
                 $(this).val(v.slice(0, max));
             }
+        });
+
+        var christeningApplicationFeeLineNames = ['fee_arancel', 'fee_symbols', 'fee_godparents', 'fee_seminar', 'fee_others'];
+
+        function parseChristeningApplicationFeeAmount(raw) {
+            if (raw == null) {
+                return 0;
+            }
+            var s = String(raw).replace(/,/g, '').trim();
+            if (s === '') {
+                return 0;
+            }
+            var n = parseFloat(s);
+            return isFinite(n) ? n : 0;
+        }
+
+        function updateChristeningApplicationFeeTotal() {
+            var $form = $('#christeningApplicationForm');
+            if (!$form.length) {
+                return;
+            }
+            var sum = 0;
+            var hasLine = false;
+            christeningApplicationFeeLineNames.forEach(function(name) {
+                var $el = $form.find('input[name="' + name + '"]');
+                if (!$el.length) {
+                    return;
+                }
+                var raw = $el.val();
+                if (raw != null && String(raw).trim() !== '') {
+                    hasLine = true;
+                }
+                sum += parseChristeningApplicationFeeAmount(raw);
+            });
+            var $total = $form.find('input[name="fee_total"]');
+            if (!$total.length) {
+                return;
+            }
+            if (!hasLine && sum === 0) {
+                $total.val('');
+                return;
+            }
+            $total.val(sum.toFixed(2));
+        }
+
+        $('#christeningApplicationForm').on('input change', 'input[name="fee_arancel"], input[name="fee_symbols"], input[name="fee_godparents"], input[name="fee_seminar"], input[name="fee_others"]', function() {
+            updateChristeningApplicationFeeTotal();
         });
 
         var chApplicationDraftsByChristeningId = {};
@@ -331,6 +488,11 @@
             if (!$form.length) return;
             $form.find('input[type="text"], textarea').val('');
             $form.find('input[type="checkbox"]').prop('checked', false);
+            updateChristeningApplicationFeeTotal();
+            var $bp = $('#chAppBaptismPlace');
+            if ($bp.length) {
+                $bp.val(christeningFixedBaptismPlace);
+            }
         }
 
         function applyChristeningApplicationFormObject(snap) {
@@ -361,6 +523,11 @@
                 }
             });
             clampChristeningApplicationNameInputs();
+            updateChristeningApplicationFeeTotal();
+            var $bp2 = $('#chAppBaptismPlace');
+            if ($bp2.length) {
+                $bp2.val(christeningFixedBaptismPlace);
+            }
         }
 
         function christeningApplicationDraftKey() {
@@ -400,6 +567,7 @@
 
             $appModal.on('shown.bs.modal', function() {
                 $appBtn.attr('aria-expanded', 'true');
+                ensureChristeningApplicationNameAndContactGrids();
                 restoreChristeningApplicationDraftForCurrentRow();
                 if (pendingFocusSelector) {
                     var $el = $appModal.find(pendingFocusSelector).first();
@@ -407,7 +575,7 @@
                     pendingFocusSelector = null;
                 }
                 requestAnimationFrame(function() {
-                    requestAnimationFrame(syncChristeningApplicationNameGridMetrics);
+                    requestAnimationFrame(syncChristeningApplicationOfficeGridMetrics);
                 });
             });
 
@@ -426,8 +594,58 @@
                 }
             };
 
-            $appBtn.on('click', function() {
-                bsModal.toggle();
+            $appBtn.on('click', function(e) {
+                e.preventDefault();
+                if ($appModal.hasClass('show')) {
+                    bsModal.hide();
+                    return;
+                }
+                var cid = ($('#chScheduleChristeningId').val() || '').trim();
+                if (!cid) {
+                    sappcSwalSelectChristeningRowFirst();
+                    return;
+                }
+                if (!applicationDetailsUrl) {
+                    window.alert('Application form is not configured.');
+                    return;
+                }
+                $appBtn.prop('disabled', true);
+                fetchJson(buildQueryUrl(applicationDetailsUrl, {
+                    christening_id: cid
+                }), jsonHeaders)
+                    .done(function(res) {
+                        if (res && res.ok && res.data) {
+                            applyChristeningApplicationFormObject(res.data);
+                            snapshotChristeningApplicationDraft();
+                            ensureChristeningApplicationNameAndContactGrids();
+                            bsModal.show();
+                            requestAnimationFrame(function() {
+                                requestAnimationFrame(syncChristeningApplicationOfficeGridMetrics);
+                            });
+                        } else {
+                            var msg = (res && res.message) ? String(res.message) : 'Could not load application data.';
+                            sappcChSwal({
+                                icon: 'error',
+                                title: 'Error',
+                                text: msg,
+                            });
+                        }
+                    })
+                    .fail(function(xhr) {
+                        var msg = 'Could not load application data.';
+                        var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                        if (data && data.message) {
+                            msg = String(data.message);
+                        }
+                        sappcChSwal({
+                            icon: 'error',
+                            title: 'Error',
+                            text: msg,
+                        });
+                    })
+                    .always(function() {
+                        $appBtn.prop('disabled', false);
+                    });
             });
 
             $('#christeningApplicationForm').on('submit', function(e) {
@@ -594,7 +812,7 @@
             return {
                 reference_code: ($('#chPaymentRefCode').val() || '').trim(),
                 client: ($('#chPaymentClient').val() || '').trim(),
-                contact_number: ($('#chPaymentContact').val() || '').trim(),
+                contact_number: sappcPhMobileDigitsOnly($('#chPaymentContact').val()),
                 address: ($('#chPaymentAddress').val() || '').trim(),
                 fee_rows: collectChristeningPaymentFeeRowsFromDom(),
             };
@@ -604,7 +822,9 @@
             if (!data || typeof data !== 'object') return;
             $('#chPaymentRefCode').val(data.reference_code != null ? String(data.reference_code) : '');
             $('#chPaymentClient').val(data.client != null ? String(data.client) : '');
-            $('#chPaymentContact').val(data.contact_number != null ? String(data.contact_number) : '');
+            $('#chPaymentContact').val(
+                data.contact_number != null ? formatPhMobileDisplay(String(data.contact_number)) : ''
+            );
             $('#chPaymentAddress').val(data.address != null ? String(data.address) : '');
             var feeRows = data.fee_rows;
             if (!Array.isArray(feeRows) || !feeRows.length) {
@@ -673,6 +893,7 @@
         var paymentSaveUrl = ($panel.attr('data-payment-save-url') || '').trim();
         var certificationDetailsUrl = ($panel.attr('data-certification-details-url') || '').trim();
         var christeningDeleteUrl = ($panel.attr('data-christening-delete-url') || '').trim();
+        var scheduleDetailsUrl = ($panel.attr('data-schedule-details-url') || '').trim();
         if (!url) return;
 
         if ($paymentModal.length && $paymentBtn.length && typeof bootstrap !== 'undefined') {
@@ -803,30 +1024,38 @@
             if (!data || typeof data !== 'object') return;
             $('#chCertRefCode').val(data.reference_code != null ? String(data.reference_code) : '');
             $('#chCertClient').val(data.client != null ? String(data.client) : '');
-            $('#chCertContact').val(data.contact_number != null ? String(data.contact_number) : '');
+            $('#chCertContact').val(
+                data.contact_number != null ? formatPhMobileDisplay(String(data.contact_number)) : ''
+            );
             $('#chCertTopAddress').val(data.address != null ? String(data.address) : '');
         }
 
         function applyChristeningCertificationFromApplicationDetails(data) {
             if (!data || typeof data !== 'object') return;
-            $('#chCertChildFirst').val(data.first_name != null ? String(data.first_name) : '');
-            $('#chCertChildMiddle').val(data.middle_name != null ? String(data.middle_name) : '');
-            $('#chCertChildLast').val(data.family_name != null ? String(data.family_name) : '');
+            $('#chCertChildFirst').val(sappcCapitalizeNamePart(data.first_name != null ? data.first_name : ''));
+            $('#chCertChildMiddle').val(sappcCapitalizeNamePart(data.middle_name != null ? data.middle_name : ''));
+            $('#chCertChildLast').val(sappcCapitalizeNamePart(data.family_name != null ? data.family_name : ''));
             $('#chCertBirthday').val(data.date_of_birth != null ? String(data.date_of_birth) : '');
             $('#chCertBirthplace').val(data.place_of_birth != null ? String(data.place_of_birth) : '');
-            $('#chCertFatherFirst').val(data.father_first_name != null ? String(data.father_first_name) : '');
-            $('#chCertFatherMiddle').val(data.father_middle_name != null ? String(data.father_middle_name) : '');
-            $('#chCertFatherLast').val(data.father_last_name != null ? String(data.father_last_name) : '');
+            $('#chCertFatherFirst').val(sappcTitleCaseEachWord(data.father_first_name != null ? data.father_first_name : ''));
+            $('#chCertFatherMiddle').val(sappcTitleCaseEachWord(data.father_middle_name != null ? data.father_middle_name : ''));
+            $('#chCertFatherLast').val(sappcTitleCaseEachWord(data.father_last_name != null ? data.father_last_name : ''));
             if (!$('#chCertFatherFirst').val() && !$('#chCertFatherMiddle').val() && !$('#chCertFatherLast').val() &&
                 data.father_name) {
-                $('#chCertFatherFirst').val(String(data.father_name));
+                var fParts = sappcSplitFullNameToThreeParts(data.father_name);
+                $('#chCertFatherFirst').val(sappcTitleCaseEachWord(fParts.first));
+                $('#chCertFatherMiddle').val(sappcTitleCaseEachWord(fParts.middle));
+                $('#chCertFatherLast').val(sappcTitleCaseEachWord(fParts.last));
             }
-            $('#chCertMotherFirst').val(data.mother_first_name != null ? String(data.mother_first_name) : '');
-            $('#chCertMotherMiddle').val(data.mother_middle_name != null ? String(data.mother_middle_name) : '');
-            $('#chCertMotherLast').val(data.mother_last_name != null ? String(data.mother_last_name) : '');
+            $('#chCertMotherFirst').val(sappcTitleCaseEachWord(data.mother_first_name != null ? data.mother_first_name : ''));
+            $('#chCertMotherMiddle').val(sappcTitleCaseEachWord(data.mother_middle_name != null ? data.mother_middle_name : ''));
+            $('#chCertMotherLast').val(sappcTitleCaseEachWord(data.mother_last_name != null ? data.mother_last_name : ''));
             if (!$('#chCertMotherFirst').val() && !$('#chCertMotherMiddle').val() && !$('#chCertMotherLast').val() &&
                 data.mother_maiden_name) {
-                $('#chCertMotherFirst').val(String(data.mother_maiden_name));
+                var mParts = sappcSplitFullNameToThreeParts(data.mother_maiden_name);
+                $('#chCertMotherFirst').val(sappcTitleCaseEachWord(mParts.first));
+                $('#chCertMotherMiddle').val(sappcTitleCaseEachWord(mParts.middle));
+                $('#chCertMotherLast').val(sappcTitleCaseEachWord(mParts.last));
             }
             $('#chCertPriest').val(data.minister != null ? String(data.minister) : '');
             $('#chCertBarangay').val(data.barangay != null ? String(data.barangay) : '');
@@ -855,6 +1084,15 @@
         if ($certModal.length && $certBtn.length && typeof bootstrap !== 'undefined') {
             var certBsModal = bootstrap.Modal.getOrCreateInstance($certModal[0]);
 
+            $('#christeningCertificationForm').on('blur', '#chCertChildFirst, #chCertChildMiddle, #chCertChildLast', function() {
+                var $el = $(this);
+                $el.val(sappcCapitalizeNamePart($el.val()));
+            });
+            $('#christeningCertificationForm').on('blur', '#chCertFatherFirst, #chCertFatherMiddle, #chCertFatherLast, #chCertMotherFirst, #chCertMotherMiddle, #chCertMotherLast', function() {
+                var $el = $(this);
+                $el.val(sappcTitleCaseEachWord($el.val()));
+            });
+
             $certModal.on('shown.bs.modal', function() {
                 $certBtn.attr('aria-expanded', 'true');
             });
@@ -869,7 +1107,7 @@
                     sappcSwalSelectChristeningRowFirst();
                     return;
                 }
-                if (!paymentDetailsUrl || !applicationDetailsUrl || !certificationDetailsUrl) {
+                if (!paymentDetailsUrl || !certificationDetailsUrl) {
                     window.alert('Certification load is not configured.');
                     return;
                 }
@@ -877,19 +1115,14 @@
                     fetchJson(buildQueryUrl(paymentDetailsUrl, {
                         christening_id: cid
                     }), jsonHeaders),
-                    fetchJson(buildQueryUrl(applicationDetailsUrl, {
-                        christening_id: cid
-                    }), jsonHeaders),
                     fetchJson(buildQueryUrl(certificationDetailsUrl, {
                         christening_id: cid
                     }), jsonHeaders)
-                ).done(function(payTuple, appTuple, certTuple) {
+                ).done(function(payTuple, certTuple) {
                     var pay = payTuple && payTuple[0] ? payTuple[0] : null;
-                    var app = appTuple && appTuple[0] ? appTuple[0] : null;
                     var cert = certTuple && certTuple[0] ? certTuple[0] : null;
                     if (pay && pay.ok && pay.data) applyChristeningCertificationTopFromPayment(pay.data);
-                    if (app && app.ok && app.data) applyChristeningCertificationFromApplicationDetails(app.data);
-                    if (cert && cert.ok && cert.has_saved_cert && cert.data) {
+                    if (cert && cert.ok && cert.data && typeof cert.data === 'object') {
                         applyChristeningCertificationFromApplicationDetails(cert.data);
                     }
                     certBsModal.show();
@@ -1444,12 +1677,6 @@
 
         initScheduleCalendar();
 
-        if ($scheduleModal.length && typeof bootstrap !== 'undefined') {
-            $scheduleModal.on('shown.bs.modal', function() {
-                renderCalendarDayGrid();
-            });
-        }
-
         $('#christeningTableBody').on('click', 'tr', function(e) {
             if ($(e.target).closest('a,button').length) return;
             var $tr = $(this);
@@ -1466,8 +1693,16 @@
             $('#chScheduleRefCode').val(($tds.eq(1).text() || '').trim());
             $('#chScheduleClient').val(($tds.eq(2).text() || '').trim());
             $('#chScheduleAddress').val(($tds.eq(3).text() || '').trim());
+            var rawSex = ($tds.eq(4).text() || '').trim();
+            if (rawSex === '\u2014' || rawSex === '-' || rawSex === '') {
+                $('#chScheduleSex').val('');
+            } else {
+                $('#chScheduleSex').val(rawSex);
+            }
             var rawContact = ($tds.eq(5).text() || '').trim();
-            $('#chScheduleContact').val((rawContact === '\u2014' || rawContact === '-' || rawContact === '') ? '' : rawContact);
+            $('#chScheduleContact').val(
+                (rawContact === '\u2014' || rawContact === '-' || rawContact === '') ? '' : formatPhMobileDisplay(rawContact)
+            );
         });
 
         if ($scheduleForm.length && scheduleSaveUrl) {
@@ -1479,7 +1714,7 @@
                     schedule_time: $('#chScheduleTime24').val(),
                     client: ($('#chScheduleClient').val() || '').trim(),
                     sex: ($('#chScheduleSex').val() || '').trim(),
-                    contact_number: ($('#chScheduleContact').val() || '').trim(),
+                    contact_number: sappcPhMobileDigitsOnly($('#chScheduleContact').val()),
                     address: ($('#chScheduleAddress').val() || '').trim(),
                     reference_code: ($('#chScheduleRefCode').val() || '').trim(),
                 };
@@ -1531,23 +1766,94 @@
             });
         }
 
+        function applyChristeningScheduleDetailsToForm(d) {
+            if (!d || typeof d !== 'object') return;
+            if (d.christening_id != null && String(d.christening_id).trim() !== '') {
+                $('#chScheduleChristeningId').val(String(d.christening_id).trim());
+            }
+            $('#chScheduleRefCode').val(d.reference_code != null ? String(d.reference_code) : '');
+            $('#chScheduleClient').val(d.client != null ? String(d.client) : '');
+            $('#chScheduleAddress').val(d.address != null ? String(d.address) : '');
+            $('#chScheduleSex').val(d.sex != null ? String(d.sex) : '');
+            var cn = d.contact_number != null ? String(d.contact_number).trim() : '';
+            $('#chScheduleContact').val(cn !== '' ? formatPhMobileDisplay(cn) : '');
+            var sd = d.schedule_date != null ? String(d.schedule_date).trim().slice(0, 10) : '';
+            $('#chScheduleDate').val(sd);
+            var st = d.schedule_time != null ? String(d.schedule_time).trim() : '';
+            if (st.length >= 5) {
+                st = st.slice(0, 5);
+            }
+            $('#chScheduleTime24').val(st || '10:00');
+        }
+
+        function syncScheduleModalCalendarFromInputs() {
+            if (!$scheduleTimeInput.val()) {
+                $scheduleTimeInput.val('10:00');
+            }
+            var selectedDate = parseIsoDate($scheduleDateInput.val());
+            if (selectedDate) {
+                calendarViewDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+            } else {
+                var nowHeader = new Date();
+                calendarViewDate = new Date(nowHeader.getFullYear(), nowHeader.getMonth(), 1);
+            }
+            syncCalendarHeader();
+            renderCalendarDayGrid();
+        }
+
         $scheduleBtn.on('click', function() {
-            resetScheduleRequestFormForNewEntry();
+            var cid = ($('#chScheduleChristeningId').val() || '').trim();
+            var $sel = $('#christeningTableBody tr.is-schedule-selected');
+            if (!cid && $sel.length) {
+                var doc = ($sel.attr('data-document-type') || '').trim();
+                if (doc === 'Christening') {
+                    var rid = ($sel.attr('data-record-id') || '').trim();
+                    if (rid) {
+                        $('#chScheduleChristeningId').val(rid);
+                        cid = rid;
+                    }
+                }
+            }
+            if (!cid) {
+                resetScheduleRequestFormForNewEntry();
+            }
         });
 
         if ($scheduleBtn.length && $scheduleModal.length) {
             $scheduleModal.on('shown.bs.modal', function() {
                 $scheduleBtn.attr('aria-expanded', 'true');
-                if (!$scheduleTimeInput.val()) $scheduleTimeInput.val('10:00');
-                var selectedDate = parseIsoDate($scheduleDateInput.val());
-                if (selectedDate) {
-                    calendarViewDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+                var cid = ($('#chScheduleChristeningId').val() || '').trim();
+                if (cid && scheduleDetailsUrl) {
+                    fetchJson(buildQueryUrl(scheduleDetailsUrl, {
+                        christening_id: cid,
+                    }), jsonHeaders)
+                        .done(function(res) {
+                            if (res && res.ok && res.data) {
+                                applyChristeningScheduleDetailsToForm(res.data);
+                            }
+                        })
+                        .fail(function(xhr) {
+                            var msg = 'Could not load schedule details.';
+                            var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                            if (data && data.message) {
+                                msg = String(data.message);
+                            }
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: msg,
+                                });
+                            } else {
+                                window.alert(msg);
+                            }
+                        })
+                        .always(function() {
+                            syncScheduleModalCalendarFromInputs();
+                        });
                 } else {
-                    var nowHeader = new Date();
-                    calendarViewDate = new Date(nowHeader.getFullYear(), nowHeader.getMonth(), 1);
+                    syncScheduleModalCalendarFromInputs();
                 }
-                syncCalendarHeader();
-                renderCalendarDayGrid();
             });
             $scheduleModal.on('hidden.bs.modal', function() {
                 $scheduleBtn.attr('aria-expanded', 'false');

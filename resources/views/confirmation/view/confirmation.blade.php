@@ -412,6 +412,7 @@
         data-confirmation-arancel-details-url="{{ route('admin.confirmation.arancel-details') }}"
         data-confirmation-arancel-save-url="{{ route('admin.confirmation.arancel-save') }}"
         data-confirmation-delete-url="{{ route('admin.confirmation.record-delete') }}"
+        data-schedule-details-url="{{ route('admin.confirmation.schedule-details') }}"
         aria-label="Confirmation records"
     >
         <div class="sappc-table-toolbar">
@@ -710,7 +711,6 @@
                                     <div class="sappcCertModalDateWrap">
                                         <input type="date" class="sappcCertModalInput sappcCertModalInput--center"
                                             id="cnCertDateReceived" name="date_received">
-                                        <i class="fa-regular fa-calendar sappcCertModalDateIcon" aria-hidden="true"></i>
                                     </div>
                                 </div>
                                 <div class="sappcCertModalField sappcCertModalField--stack">
@@ -756,7 +756,6 @@
                                     <div class="sappcCertModalDateWrap">
                                         <input type="date" class="sappcCertModalInput sappcCertModalInput--center"
                                             id="cnCertDateIssued" name="date_issued">
-                                        <i class="fa-regular fa-calendar sappcCertModalDateIcon" aria-hidden="true"></i>
                                     </div>
                                 </div>
                             </div>

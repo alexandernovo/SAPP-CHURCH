@@ -26,6 +26,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/confirmation', [ConfirmationController::class, 'index'])->name('admin.confirmation');
     Route::post('/confirmation/schedule-request', [ConfirmationController::class, 'scheduleConfirmation'])->name('admin.confirmation.schedule-request');
     Route::get('/confirmation/schedule-reserved-dates', [ConfirmationController::class, 'confirmationReservedDates'])->name('admin.confirmation.schedule-reserved-dates');
+    Route::get('/confirmation/schedule-details', [ConfirmationController::class, 'confirmationScheduleDetails'])->name('admin.confirmation.schedule-details');
     Route::get('/confirmation/payment-details', [ConfirmationController::class, 'confirmationPaymentDetails'])->name('admin.confirmation.payment-details');
     Route::post('/confirmation/payment-save', [ConfirmationController::class, 'confirmationPaymentSave'])->name('admin.confirmation.payment-save');
     Route::get('/confirmation/confirmation-application', [ConfirmationController::class, 'confirmationApplicationDetails'])->name('admin.confirmation.application-details');
@@ -36,6 +37,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/wedding', [WeddingController::class, 'index'])->name('admin.wedding');
     Route::post('/wedding/schedule-request', [WeddingController::class, 'scheduleWedding'])->name('admin.wedding.schedule-request');
     Route::get('/wedding/schedule-reserved-dates', [WeddingController::class, 'weddingReservedDates'])->name('admin.wedding.schedule-reserved-dates');
+    Route::get('/wedding/schedule-details', [WeddingController::class, 'weddingScheduleDetails'])->name('admin.wedding.schedule-details');
     Route::get('/wedding/payment-details', [WeddingController::class, 'weddingPaymentDetails'])->name('admin.wedding.payment-details');
     Route::post('/wedding/payment-save', [WeddingController::class, 'weddingPaymentSave'])->name('admin.wedding.payment-save');
     Route::get('/wedding/marriage-application', [WeddingController::class, 'weddingMarriageApplicationDetails'])->name('admin.wedding.marriage-application-details');
@@ -44,6 +46,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/burial', [BurialController::class, 'index'])->name('admin.burial');
     Route::post('/burial/schedule-request', [BurialController::class, 'scheduleBurial'])->name('admin.burial.schedule-request');
     Route::get('/burial/schedule-reserved-dates', [BurialController::class, 'burialReservedDates'])->name('admin.burial.schedule-reserved-dates');
+    Route::get('/burial/schedule-details', [BurialController::class, 'burialScheduleDetails'])->name('admin.burial.schedule-details');
     Route::get('/burial/payment-details', [BurialController::class, 'burialPaymentDetails'])->name('admin.burial.payment-details');
     Route::post('/burial/payment-save', [BurialController::class, 'burialPaymentSave'])->name('admin.burial.payment-save');
     Route::post('/burial/record/delete', [BurialController::class, 'deleteBurialRecord'])->name('admin.burial.record-delete');
@@ -53,6 +56,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/document/burial-report', [DocumentationController::class, 'burialReport'])->name('admin.document.burial-report');
     Route::get('/certification', [ChristeningController::class, 'certificationPage'])->name('admin.certification');
     Route::post('/christening/schedule-request', [ChristeningController::class, 'scheduleChristening'])->name('admin.christening.schedule-request');
+    Route::get('/christening/schedule-details', [ChristeningController::class, 'christeningScheduleDetails'])->name('admin.christening.schedule-details');
     Route::post('/christening/application-form', [ChristeningController::class, 'christeningApplicationForm'])->name('admin.christening.application-form');
     Route::get('/christening/application-details', [ChristeningController::class, 'christeningApplicationDetails'])->name('admin.christening.application-details');
     Route::get('/christening/payment-details', [ChristeningController::class, 'christeningPaymentDetails'])->name('admin.christening.payment-details');

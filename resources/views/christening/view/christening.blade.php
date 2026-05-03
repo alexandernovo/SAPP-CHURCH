@@ -464,7 +464,9 @@
                                             class="sappcChOfficialHiligaynon">Lugar kang pagbunyag</span> <span
                                             class="sappcChOfficialLabelNote">(Place of Baptism)</span></label>
                                     <input type="text" class="sappcChOfficialInput sappcChOfficialInputRounded"
-                                        id="chAppBaptismPlace" name="baptism_place">
+                                        id="chAppBaptismPlace" name="baptism_place"
+                                        value="Saint Anthony of Padua Parish Church" readonly tabindex="-1"
+                                        title="Place of baptism (parish fixed)">
                                 </div>
                                 <div class="sappcChOfficialField">
                                     <label class="sappcChOfficialLabel" for="chAppMinister"><span
@@ -533,7 +535,8 @@
                                             <tr class="sappcChOfficialFeeTotalRow">
                                                 <th scope="row">TOTAL</th>
                                                 <td><input class="sappcChOfficialFeeInput" type="text"
-                                                        name="fee_total" inputmode="decimal" aria-label="Total fees">
+                                                        name="fee_total" inputmode="decimal" aria-label="Total fees"
+                                                        readonly tabindex="-1" title="Sum of the amounts above (automatic)">
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -724,7 +727,6 @@
                                     <div class="sappcCertModalDateWrap">
                                         <input type="date" class="sappcCertModalInput sappcCertModalInput--center"
                                             id="chCertDateReceived" name="date_received">
-                                        <i class="fa-regular fa-calendar sappcCertModalDateIcon" aria-hidden="true"></i>
                                     </div>
                                 </div>
                                 <div class="sappcCertModalField sappcCertModalField--stack">
@@ -770,7 +772,6 @@
                                     <div class="sappcCertModalDateWrap">
                                         <input type="date" class="sappcCertModalInput sappcCertModalInput--center"
                                             id="chCertDateIssued" name="date_issued">
-                                        <i class="fa-regular fa-calendar sappcCertModalDateIcon" aria-hidden="true"></i>
                                     </div>
                                 </div>
                             </div>
@@ -799,6 +800,7 @@
         data-certification-save-url="{{ route('admin.christening.certification-form') }}"
         data-certification-details-url="{{ route('admin.christening.certification-details') }}"
         data-christening-delete-url="{{ route('admin.christening.record-delete') }}"
+        data-schedule-details-url="{{ route('admin.christening.schedule-details') }}"
         data-per-page-options="{{ json_encode($perPageOptions) }}" aria-label="Christening records">
         <div class="sappc-table-toolbar">
             <div class="sappc-table-toolbar_row sappc-table-toolbar_row--primary">

@@ -203,6 +203,7 @@
         data-marriage-application-details-url="{{ route('admin.wedding.marriage-application-details') }}"
         data-marriage-application-save-url="{{ route('admin.wedding.marriage-application-save') }}"
         data-wedding-delete-url="{{ route('admin.wedding.record-delete') }}"
+        data-schedule-details-url="{{ route('admin.wedding.schedule-details') }}"
         aria-label="Wedding records"
     >
         <div class="sappc-table-toolbar">
@@ -501,7 +502,6 @@
                                     <div class="sappcCertModalDateWrap">
                                         <input type="date" class="sappcCertModalInput sappcCertModalInput--center"
                                             id="wdCertDateReceived" name="date_received">
-                                        <i class="fa-regular fa-calendar sappcCertModalDateIcon" aria-hidden="true"></i>
                                     </div>
                                 </div>
                                 <div class="sappcCertModalField sappcCertModalField--stack">
@@ -547,7 +547,6 @@
                                     <div class="sappcCertModalDateWrap">
                                         <input type="date" class="sappcCertModalInput sappcCertModalInput--center"
                                             id="wdCertDateIssued" name="date_issued">
-                                        <i class="fa-regular fa-calendar sappcCertModalDateIcon" aria-hidden="true"></i>
                                     </div>
                                 </div>
                             </div>

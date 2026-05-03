@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\ClientNameDisplay;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -207,6 +208,55 @@ class BurialController extends Controller
                 'burial_id' => $existing->burialId ?? null,
                 'reference_code' => $existing->referenceCode ?? $ref,
                 'schedule_requested' => $scheduleAt,
+            ],
+        ]);
+    }
+
+    public function burialScheduleDetails(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'burial_id' => ['required', 'integer', 'min:1'],
+        ]);
+        $burialId = (int) $validated['burial_id'];
+
+        $row = DB::table('burial')->where('burialId', $burialId)->first();
+        if ($row === null) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Burial record not found.',
+            ], 404);
+        }
+
+        $client = ClientNameDisplay::fullDisplayName(
+            $row->clientFName ?? null,
+            $row->clientMName ?? null,
+            $row->clientLName ?? null,
+        );
+
+        $scheduleDate = null;
+        $scheduleTime = null;
+        if (! empty($row->scheduleRequested)) {
+            try {
+                $dt = Carbon::parse($row->scheduleRequested);
+                $scheduleDate = $dt->format('Y-m-d');
+                $scheduleTime = $dt->format('H:i');
+            } catch (\Throwable) {
+                $scheduleDate = null;
+                $scheduleTime = null;
+            }
+        }
+
+        return response()->json([
+            'ok' => true,
+            'data' => [
+                'burial_id' => $burialId,
+                'reference_code' => (string) ($row->referenceCode ?? ''),
+                'client' => $client,
+                'address' => (string) ($row->address ?? ''),
+                'sex' => (string) ($row->sex ?? ''),
+                'contact_number' => (string) ($row->contactNum ?? ''),
+                'schedule_date' => $scheduleDate,
+                'schedule_time' => $scheduleTime,
             ],
         ]);
     }
