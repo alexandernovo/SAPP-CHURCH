@@ -2134,10 +2134,7 @@
     text-align: left;
 }
 
-/*
- * Under the section title (Baptism / Confirmation information): placeholders and values
- * align right inside inputs, matching the paper form.
- */
+
 .sappcCertModalForm h4.sappcCertModalSectionTitle ~ .sappcCertModalField .sappcCertModalInput,
 .sappcCertModalForm h4.sappcCertModalSectionTitle ~ .sappcCertModalField .sappcCertModalSelect,
 .sappcCertModalForm h4.sappcCertModalSectionTitle ~ .sappcCertModalRow2 .sappcCertModalInput,
@@ -2145,6 +2142,14 @@
 .sappcCertModalForm h4.sappcCertModalSectionTitle ~ .sappcCertModalRow2 .sappcCertModalDateWrap .sappcCertModalInput,
 .sappcCertModalForm h4.sappcCertModalSectionTitle ~ .sappcCertModalTrackingGrid .sappcCertModalInput {
     text-align: right;
+}
+
+.sappcBurialCertificationModal .sappcCertModalRow2 .sappcCertModalField--stack:nth-child(2) {
+    padding-left: 0.55rem;
+}
+
+.sappcBurialCertificationModal label[for="brCertBirthplace"] {
+    margin-left: 0;
 }
 
 .sappcCertModalTrackingGrid {

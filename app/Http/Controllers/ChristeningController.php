@@ -1019,7 +1019,7 @@ class ChristeningController extends Controller
             'municipality' => '',
             'province' => '',
             'parent_address' => (string) ($app['parent_address'] ?? ''),
-            'date_received' => '',
+            'date_received' => (string) ($app['baptism_date'] ?? ''),
             'date_issued' => '',
             'book_no' => '',
             'register_no' => '',

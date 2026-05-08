@@ -613,8 +613,7 @@
                     </div>
                     <div class="modal-body pt-0">
                         <form class="sappcCertModalForm" id="christeningCertificationForm" action="#" method="post"
-                            autocomplete="off"
-                            data-save-url="{{ route('admin.christening.certification-form') }}">
+                            autocomplete="off">
                             <div class="sappcCertModalMasthead">
                                 <div class="sappcCertModalLogoWrap">
                                     <img src="{{ asset('assets/logos/SAPPC.png') }}" width="72" height="72"
@@ -778,7 +777,7 @@
                         </form>
                     </div>
                     <div class="modal-footer sappcChristeningAppModalFooter">
-                        <button type="submit" form="christeningCertificationForm"
+                        <button type="button"
                             class="sappcChristeningAppModalBtn sappcChristeningAppModalBtnSave" id="chCertAddRecordBtn">
                             Add Record
                         </button>
@@ -871,6 +870,7 @@
             <nav class="sappc-pagination" id="christeningPagination" aria-label="Table pagination"></nav>
         </div>
     </section>
+    @include('christening.partials.baptismCertificationCertificate')
     </div>
 @endsection
 

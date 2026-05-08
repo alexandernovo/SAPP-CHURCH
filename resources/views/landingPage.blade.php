@@ -51,3 +51,22 @@
 
     @include('layouts.landingPageFooter')
 @endsection
+
+@push('scripts')
+    <script>
+        $(document).on('keydown', 'input[name="username"], #username, .username', function (e) {
+            if (e.key !== 'Enter') {
+                return;
+            }
+
+            e.preventDefault();
+
+            const $form = $(this).closest('form');
+            const $passwordField = $form.find('input[name="password"], #password, .password').first();
+
+            if ($passwordField.length) {
+                $passwordField.trigger('focus');
+            }
+        });
+    </script>
+@endpush

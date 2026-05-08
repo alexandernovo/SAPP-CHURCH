@@ -1024,7 +1024,7 @@
         var $certModal = $('#christeningCertificationModal');
         var $certBtn = $('#christeningCertificationBtn');
         var $certForm = $('#christeningCertificationForm');
-        var certificationSaveUrl = ($panel.attr('data-certification-save-url') || '').trim();
+        var baptismCertBgUrl = @json(asset('assets/certificates/baptismCert.jpg'));
 
         function applyChristeningCertificationTopFromPayment(data) {
             if (!data || typeof data !== 'object') return;
@@ -1087,6 +1087,237 @@
             $('#chCertPurpose').val(data.purpose != null ? String(data.purpose) : '');
         }
 
+        function chCertFieldValue(sel) {
+            return ($(sel).val() || '').toString().trim();
+        }
+
+        function chCertFullName(firstSel, middleSel, lastSel) {
+            return [chCertFieldValue(firstSel), chCertFieldValue(middleSel), chCertFieldValue(lastSel)]
+                .join(' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function splitCertDateParts(iso) {
+            var out = { day: '', month: '', year: '' };
+            if (!iso) return out;
+            var s = String(iso).slice(0, 10);
+            var p = s.split('-');
+            if (p.length !== 3) return out;
+            var mIdx = parseInt(p[1], 10) - 1;
+            var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September',
+                'October', 'November', 'December'
+            ];
+            out.day = String(parseInt(p[2], 10) || p[2]);
+            out.month = (mIdx >= 0 && mIdx < 12) ? months[mIdx] : p[1];
+            out.year = p[0];
+            return out;
+        }
+
+        function ordinalDay(day) {
+            var n = parseInt(day, 10);
+            if (!n) return day || '';
+            var mod100 = n % 100;
+            if (mod100 >= 11 && mod100 <= 13) return n + 'th';
+            var mod10 = n % 10;
+            if (mod10 === 1) return n + 'st';
+            if (mod10 === 2) return n + 'nd';
+            if (mod10 === 3) return n + 'rd';
+            return n + 'th';
+        }
+
+        function formatCertDate(iso) {
+            if (!iso) return '';
+            var parts = splitCertDateParts(iso);
+            if (!parts.month || !parts.day || !parts.year) return String(iso);
+            return parts.month + ' ' + parts.day + ', ' + parts.year;
+        }
+
+        function normalizeBaptismSponsors(value) {
+            return String(value || '')
+                .replace(/\s*[;|]\s*/g, ', ')
+                .replace(/\s*,\s*/g, ', ')
+                .replace(/\s+/g, ' ')
+                .replace(/,\s*,+/g, ', ')
+                .replace(/^,\s*|\s*,\s*$/g, '')
+                .trim();
+        }
+
+        function splitBaptismSponsors(value) {
+            var normalized = normalizeBaptismSponsors(value);
+            var out = { line1: '', line2: '' };
+            if (!normalized) return out;
+
+            var line1Limit = 48;
+            var parts = normalized.split(',').map(function(part) {
+                return part.trim();
+            }).filter(function(part) {
+                return part !== '';
+            });
+
+            parts.forEach(function(part) {
+                var candidate = out.line1 ? out.line1 + ', ' + part : part;
+                if (!out.line2 && candidate.length <= line1Limit) {
+                    out.line1 = candidate;
+                    return;
+                }
+                out.line2 = out.line2 ? out.line2 + ', ' + part : part;
+            });
+
+            if (!out.line1 && out.line2.length > line1Limit) {
+                var cutAt = out.line2.lastIndexOf(' ', line1Limit);
+                if (cutAt < 18) cutAt = line1Limit;
+                out.line1 = out.line2.slice(0, cutAt).replace(/\s*,\s*$/, '').trim();
+                out.line2 = out.line2.slice(cutAt).replace(/^\s*,\s*/, '').trim();
+            }
+
+            return out;
+        }
+
+        var baptismPrintWindow = null;
+        var baptismPrintBlobUrl = '';
+
+        function prepareBaptismPrintWindow() {
+            var printWin = window.open('', 'sappcBaptismCertificatePrint');
+            if (!printWin) return null;
+            baptismPrintWindow = printWin;
+            return printWin;
+        }
+
+        function collectBaptismPrintData() {
+            var birth = splitCertDateParts(chCertFieldValue('#chCertBirthday'));
+            var baptism = splitCertDateParts(chCertFieldValue('#chCertDateReceived'));
+            var sponsors = splitBaptismSponsors(chCertFieldValue('#chCertSponsors'));
+            return {
+                full_name: chCertFullName('#chCertChildFirst', '#chCertChildMiddle', '#chCertChildLast'),
+                birth_day: ordinalDay(birth.day),
+                birth_month: birth.month,
+                birth_year: birth.year,
+                birth_place: chCertFieldValue('#chCertBirthplace'),
+                father: chCertFullName('#chCertFatherFirst', '#chCertFatherMiddle', '#chCertFatherLast'),
+                mother: chCertFullName('#chCertMotherFirst', '#chCertMotherMiddle', '#chCertMotherLast'),
+                address: [chCertFieldValue('#chCertBarangay'), chCertFieldValue('#chCertMunicipality'), chCertFieldValue('#chCertProvince')]
+                    .filter(function(v) { return v !== ''; })
+                    .join(', '),
+                baptism_day: ordinalDay(baptism.day),
+                baptism_month: baptism.month,
+                baptism_year: baptism.year,
+                priest: chCertFieldValue('#chCertPriest'),
+                sponsors: sponsors.line1,
+                sponsors_extra: sponsors.line2,
+                purpose: chCertFieldValue('#chCertPurpose') || 'FOR ALL LEGAL PURPOSES',
+                book_no: chCertFieldValue('#chCertBookNo'),
+                page_no: chCertFieldValue('#chCertPageNo'),
+                register_no: chCertFieldValue('#chCertRegisterNo'),
+                date_issued: formatCertDate(chCertFieldValue('#chCertDateIssued')),
+            };
+        }
+
+        function printBaptismCertificationSheet(printWin, shouldPrint) {
+            var tplNode = document.getElementById('baptismCertificatePrintableTemplate');
+            if (!tplNode || !tplNode.content) {
+                window.alert('Print template not found.');
+                return false;
+            }
+            var tplStyleNode = tplNode.content.querySelector('style');
+            var tplWrapNode = tplNode.content.querySelector('.bap-wrap');
+            if (!tplStyleNode || !tplWrapNode) {
+                window.alert('Print template is incomplete.');
+                return false;
+            }
+
+            var openedHere = false;
+            if (!printWin && baptismPrintWindow && !baptismPrintWindow.closed) {
+                printWin = baptismPrintWindow;
+            }
+            if (!printWin || printWin.closed) {
+                printWin = prepareBaptismPrintWindow();
+                openedHere = true;
+            }
+            if (!printWin) {
+                window.alert('Pop-up blocked. Please allow pop-ups to print the certificate.');
+                return false;
+            }
+            baptismPrintWindow = printWin;
+            shouldPrint = shouldPrint !== false;
+
+            var printData = collectBaptismPrintData();
+            var tplWrapClone = tplWrapNode.cloneNode(true);
+            var bg = tplWrapClone.querySelector('.bap-bg');
+            if (bg) bg.setAttribute('src', baptismCertBgUrl);
+
+            function setCloneVal(id, value) {
+                var el = tplWrapClone.querySelector('#' + id);
+                if (!el) return;
+                el.setAttribute('value', value || '');
+                el.value = value || '';
+            }
+
+            setCloneVal('bapFullName', printData.full_name);
+            setCloneVal('bapBirthDay', printData.birth_day);
+            setCloneVal('bapBirthMonthYear', printData.birth_month);
+            setCloneVal('bapBirthYear', printData.birth_year);
+            setCloneVal('bapBirthplace', printData.birth_place);
+            setCloneVal('bapFatherName', printData.father);
+            setCloneVal('bapMotherName', printData.mother);
+            setCloneVal('bapAddress', printData.address);
+            setCloneVal('bapBaptismDay', printData.baptism_day);
+            setCloneVal('bapBaptismMonthYear', printData.baptism_month);
+            setCloneVal('bapBaptismYear', printData.baptism_year);
+            setCloneVal('bapPriestName', printData.priest);
+            setCloneVal('bapSponsors', printData.sponsors);
+            setCloneVal('bapSponsorsExtra', printData.sponsors_extra);
+            setCloneVal('bapPurpose', printData.purpose);
+            setCloneVal('bapBookNo', printData.book_no);
+            setCloneVal('bapPageNo', printData.page_no);
+            setCloneVal('bapRegisterNo', printData.register_no);
+            setCloneVal('bapDateIssued', printData.date_issued);
+
+            var html = '<!doctype html><html><head><meta charset="utf-8"><title>Baptism Certificate</title><style>' +
+                (tplStyleNode.textContent || '') +
+                '</style></head><body>' + (tplWrapClone.outerHTML || '') + '</body></html>';
+            baptismPrintBlobUrl = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+            var didPrint = false;
+
+            function populateAndPrint() {
+                if (didPrint) {
+                    return;
+                }
+                didPrint = true;
+                printWin.focus();
+                if (shouldPrint) {
+                    setTimeout(function() {
+                        printWin.print();
+                    }, 150);
+                }
+            }
+
+            printWin.onload = populateAndPrint;
+            printWin.location.href = baptismPrintBlobUrl;
+            setTimeout(function() {
+                populateAndPrint();
+            }, openedHere ? 900 : 700);
+            return true;
+        }
+
+        window.sappcReloadBaptismPrintWindow = function(printWin) {
+            return printBaptismCertificationSheet(printWin || baptismPrintWindow, false);
+        };
+
+        $(document)
+            .off('submit.sappcBaptismPrint', '#christeningCertificationForm')
+            .on('submit.sappcBaptismPrint', '#christeningCertificationForm', function(e) {
+                e.preventDefault();
+                printBaptismCertificationSheet();
+            });
+
+        $(document)
+            .off('click.sappcBaptismPrint', '#chCertAddRecordBtn')
+            .on('click.sappcBaptismPrint', '#chCertAddRecordBtn', function(e) {
+                e.preventDefault();
+                printBaptismCertificationSheet();
+            });
+
         if ($certModal.length && $certBtn.length && typeof bootstrap !== 'undefined') {
             var certBsModal = bootstrap.Modal.getOrCreateInstance($certModal[0]);
 
@@ -1148,81 +1379,6 @@
                 });
             });
 
-            $certForm.on('submit', function(e) {
-                e.preventDefault();
-                var saveUrl = ($certForm.attr('data-save-url') || certificationSaveUrl || '').trim();
-                if (!saveUrl) return;
-                var cid = ($('#chScheduleChristeningId').val() || '').trim();
-                if (!cid) {
-                    sappcSwalSelectChristeningRowFirst();
-                    return;
-                }
-                var arr = $certForm.serializeArray();
-                var payload = {};
-                $.each(arr, function(i, field) {
-                    var n = field.name;
-                    if (n.slice(-2) === '[]') {
-                        var base = n.slice(0, -2);
-                        if (!payload[base]) payload[base] = [];
-                        payload[base].push(field.value);
-                    } else if (payload[n] !== undefined) {
-                        if (!Array.isArray(payload[n])) payload[n] = [payload[n]];
-                        payload[n].push(field.value);
-                    } else {
-                        payload[n] = field.value;
-                    }
-                });
-                payload.christening_id = parseInt(cid, 10);
-                if (isNaN(payload.christening_id)) {
-                    window.alert('Invalid record.');
-                    return;
-                }
-                var $saveBtn = $('#chCertAddRecordBtn');
-                $saveBtn.prop('disabled', true);
-                fetchPostJson(saveUrl, payload, csrf)
-                    .done(function(res) {
-                        if (res && res.ok) {
-                            if (typeof bootstrap !== 'undefined' && $certModal.length) {
-                                var inst = bootstrap.Modal.getInstance($certModal[0]);
-                                if (inst) inst.hide();
-                            }
-                            var msg = (res && res.message) ? res.message : 'Certification saved.';
-                            if (typeof Swal !== 'undefined') {
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Saved',
-                                    text: msg,
-                                    confirmButtonText: 'OK',
-                                });
-                            } else {
-                                window.alert(msg);
-                            }
-                            fetchRecords();
-                        }
-                    })
-                    .fail(function(xhr) {
-                        var msg = 'Certification could not be saved.';
-                        var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
-                        if (data && data.errors) {
-                            var vals = Object.values(data.errors);
-                            if (vals.length && Array.isArray(vals[0]) && vals[0][0]) msg = vals[0][0];
-                        } else if (data && data.message) {
-                            msg = data.message;
-                        }
-                        if (typeof Swal !== 'undefined') {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error',
-                                text: msg
-                            });
-                        } else {
-                            window.alert(msg);
-                        }
-                    })
-                    .always(function() {
-                        $saveBtn.prop('disabled', false);
-                    });
-            });
         }
 
         var $searchInput = $('#christeningSearch');
