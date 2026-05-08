@@ -269,6 +269,7 @@
                 'data-marriage-application-save-url') || '').trim();
             var weddingDeleteUrl = ($panel.attr('data-wedding-delete-url') || '').trim();
             var scheduleDetailsUrl = ($panel.attr('data-schedule-details-url') || '').trim();
+            var certificationDetailsUrl = ($panel.attr('data-certification-details-url') || '').trim();
 
             var fetchRecords = function() {};
 
@@ -748,6 +749,104 @@
                         });
                 });
             }
+
+            (function initWeddingCertificationModal() {
+                var $certModal = $('#weddingCertificationModal');
+                var $certBtn = $('#weddingCertificationBtn');
+                var $certForm = $('#weddingCertificationForm');
+                if (!$certModal.length || !$certBtn.length || !$certForm.length || typeof bootstrap === 'undefined') {
+                    return;
+                }
+
+                var certBsModal = bootstrap.Modal.getOrCreateInstance($certModal[0]);
+
+                function applyWeddingCertificationTopFromPayment(data) {
+                    if (!data || typeof data !== 'object') return;
+                    $('#wdCertRefCode').val(data.reference_code != null ? String(data.reference_code) : '');
+                    $('#wdCertClient').val(data.client != null ? String(data.client) : '');
+                    $('#wdCertContact').val(
+                        data.contact_number != null ? formatPhMobileDisplay(String(data.contact_number)) : ''
+                    );
+                    $('#wdCertTopAddress').val(data.address != null ? String(data.address) : '');
+                }
+
+                function applyWeddingCertificationFromDetails(data) {
+                    if (!data || typeof data !== 'object') return;
+                    $('#wdCertChildFirst').val(data.first_name != null ? String(data.first_name) : '');
+                    $('#wdCertChildMiddle').val(data.middle_name != null ? String(data.middle_name) : '');
+                    $('#wdCertChildLast').val(data.family_name != null ? String(data.family_name) : '');
+                    $('#wdCertBirthday').val(data.date_of_birth != null ? String(data.date_of_birth) : '');
+                    $('#wdCertBirthplace').val(data.place_of_birth != null ? String(data.place_of_birth) : '');
+                    $('#wdCertFatherFirst').val(data.father_first_name != null ? String(data.father_first_name) : '');
+                    $('#wdCertFatherMiddle').val(data.father_middle_name != null ? String(data.father_middle_name) : '');
+                    $('#wdCertFatherLast').val(data.father_last_name != null ? String(data.father_last_name) : '');
+                    $('#wdCertMotherFirst').val(data.mother_first_name != null ? String(data.mother_first_name) : '');
+                    $('#wdCertMotherMiddle').val(data.mother_middle_name != null ? String(data.mother_middle_name) : '');
+                    $('#wdCertMotherLast').val(data.mother_last_name != null ? String(data.mother_last_name) : '');
+                    $('#wdCertBarangay').val(data.barangay != null ? String(data.barangay) : '');
+                    $('#wdCertMunicipality').val(data.municipality != null ? String(data.municipality) : '');
+                    $('#wdCertProvince').val(data.province != null ? String(data.province) : 'Antique');
+                    $('#wdCertDateReceived').val(data.date_received != null ? String(data.date_received) : '');
+                    $('#wdCertDateIssued').val(data.date_issued != null ? String(data.date_issued) : '');
+                    $('#wdCertBookNo').val(data.book_no != null ? String(data.book_no) : '');
+                    $('#wdCertRegisterNo').val(data.register_no != null ? String(data.register_no) : '');
+                    $('#wdCertPageNo').val(data.page_no != null ? String(data.page_no) : '');
+                    $('#wdCertPriest').val(data.priest != null ? String(data.priest) : '');
+                    $('#wdCertSponsors').val(data.sponsors != null ? String(data.sponsors) : '');
+                    $('#wdCertPurpose').val(data.purpose != null ? String(data.purpose) : '');
+                }
+
+                $certModal.on('shown.bs.modal', function() {
+                    $certBtn.attr('aria-expanded', 'true');
+                });
+                $certModal.on('hidden.bs.modal', function() {
+                    $certBtn.attr('aria-expanded', 'false');
+                });
+
+                $certBtn.on('click', function(e) {
+                    e.preventDefault();
+                    var wid = ($('#wdScheduleWeddingId').val() || '').trim();
+                    if (!wid) {
+                        sappcSwalSelectWeddingRowFirst();
+                        return;
+                    }
+                    if (!paymentDetailsUrl || !certificationDetailsUrl) {
+                        window.alert('Certification load is not configured.');
+                        return;
+                    }
+                    $.when(
+                        fetchJson(buildQueryUrl(paymentDetailsUrl, {
+                            wedding_id: wid
+                        }), jsonHeaders),
+                        fetchJson(buildQueryUrl(certificationDetailsUrl, {
+                            wedding_id: wid
+                        }), jsonHeaders)
+                    ).done(function(payTuple, certTuple) {
+                        var pay = payTuple && payTuple[0] ? payTuple[0] : null;
+                        var cert = certTuple && certTuple[0] ? certTuple[0] : null;
+                        if (pay && pay.ok && pay.data) {
+                            applyWeddingCertificationTopFromPayment(pay.data);
+                        }
+                        if (cert && cert.ok && cert.data) {
+                            applyWeddingCertificationFromDetails(cert.data);
+                        }
+                        certBsModal.show();
+                    }).fail(function(xhr) {
+                        var msg = 'Could not load record for certification.';
+                        var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                        if (data && data.message) msg = data.message;
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: msg
+                            });
+                        } else {
+                            window.alert(msg);
+                        }
+                    });
+                });
+            })();
 
             (function initMarriageApplicationModal() {
                 var $marriageAppModal = $('#weddingMarriageApplicationModal');

@@ -412,6 +412,7 @@
         data-confirmation-application-save-url="{{ route('admin.confirmation.application-save') }}"
         data-confirmation-arancel-details-url="{{ route('admin.confirmation.arancel-details') }}"
         data-confirmation-arancel-save-url="{{ route('admin.confirmation.arancel-save') }}"
+        data-confirmation-certification-details-url="{{ route('admin.confirmation.certification-details') }}"
         data-confirmation-delete-url="{{ route('admin.confirmation.record-delete') }}"
         data-schedule-details-url="{{ route('admin.confirmation.schedule-details') }}"
         aria-label="Confirmation records"

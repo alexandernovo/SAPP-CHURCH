@@ -567,6 +567,98 @@ class ConfirmationController extends Controller
         return response()->json(['ok' => true, 'message' => 'Arancel record saved.']);
     }
 
+    public function confirmationCertificationDetails(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'confirmation_id' => ['required', 'integer', 'min:1'],
+        ]);
+        $id = (int) $validated['confirmation_id'];
+        $row = DB::table('confirmation')->where('confirmationId', $id)->first();
+        if ($row === null) {
+            return response()->json(['message' => 'Confirmation record not found.'], 404);
+        }
+
+        $details = $this->latestConfirmationDetailsRow($id);
+        $data = [
+            'first_name' => trim((string) ($row->clientFName ?? '')),
+            'middle_name' => trim((string) ($row->clientMName ?? '')),
+            'family_name' => trim((string) ($row->clientLName ?? '')),
+            'date_of_birth' => '',
+            'place_of_birth' => '',
+            'father_first_name' => '',
+            'father_middle_name' => '',
+            'father_last_name' => '',
+            'mother_first_name' => '',
+            'mother_middle_name' => '',
+            'mother_last_name' => '',
+            'barangay' => '',
+            'municipality' => '',
+            'province' => 'Antique',
+            'date_received' => '',
+            'date_issued' => '',
+            'book_no' => '',
+            'register_no' => '',
+            'page_no' => '',
+            'priest' => '',
+            'sponsors' => '',
+            'purpose' => '',
+        ];
+
+        if ($details !== null) {
+            if (trim((string) ($details->firstName ?? '')) !== '') {
+                $data['first_name'] = trim((string) ($details->firstName ?? ''));
+            }
+            if (trim((string) ($details->middleName ?? '')) !== '') {
+                $data['middle_name'] = trim((string) ($details->middleName ?? ''));
+            }
+            if (trim((string) ($details->familyName ?? '')) !== '') {
+                $data['family_name'] = trim((string) ($details->familyName ?? ''));
+            }
+
+            $data['date_of_birth'] = $this->dateForForm($details->dateOfBirth ?? null);
+            $data['place_of_birth'] = (string) ($details->placeOfBirth ?? '');
+
+            $father = $this->splitFullNameThreeParts($details->fatherName ?? '');
+            $data['father_first_name'] = $father['first'];
+            $data['father_middle_name'] = $father['middle'];
+            $data['father_last_name'] = $father['last'];
+
+            $mother = $this->splitFullNameThreeParts($details->motherMaiden ?? '');
+            $data['mother_first_name'] = $mother['first'];
+            $data['mother_middle_name'] = $mother['middle'];
+            $data['mother_last_name'] = $mother['last'];
+
+            $addrBits = array_values(array_filter(array_map('trim', explode(',', (string) ($details->address ?? ''))), fn ($s) => $s !== ''));
+            if (isset($addrBits[0])) {
+                $data['barangay'] = $addrBits[0];
+            }
+            if (isset($addrBits[1])) {
+                $data['municipality'] = $addrBits[1];
+            }
+            if (count($addrBits) > 2) {
+                $data['province'] = implode(', ', array_slice($addrBits, 2));
+            }
+
+            $data['book_no'] = (string) ($details->bookNo ?? '');
+            $data['register_no'] = (string) ($details->registryNo ?? '');
+            $data['page_no'] = (string) ($details->pageNo ?? '');
+            $data['priest'] = (string) ($details->confirmationMinister ?? '');
+
+            $sponsors = array_values(array_filter([
+                trim((string) ($details->godparent1 ?? '')),
+                trim((string) ($details->godparent2 ?? '')),
+                trim((string) ($details->godparent3 ?? '')),
+                trim((string) ($details->godparent4 ?? '')),
+            ], fn ($s) => $s !== ''));
+            $data['sponsors'] = implode('; ', $sponsors);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'data' => $data,
+        ]);
+    }
+
     private function decodeConfirmationJsonColumn(object $row, string $column): array
     {
         $raw = $row->{$column} ?? null;
@@ -973,6 +1065,36 @@ class ConfirmationController extends Controller
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    /**
+     * @return array{first:string,middle:string,last:string}
+     */
+    private function splitFullNameThreeParts(mixed $raw): array
+    {
+        $raw = trim((string) ($raw ?? ''));
+        if ($raw === '') {
+            return ['first' => '', 'middle' => '', 'last' => ''];
+        }
+        $parts = preg_split('/\s+/', $raw) ?: [];
+        if ($parts === []) {
+            return ['first' => '', 'middle' => '', 'last' => ''];
+        }
+        if (count($parts) === 1) {
+            return ['first' => $parts[0], 'middle' => '', 'last' => ''];
+        }
+        if (count($parts) === 2) {
+            return ['first' => $parts[0], 'middle' => '', 'last' => $parts[1]];
+        }
+
+        $first = array_shift($parts);
+        $last = array_pop($parts);
+
+        return [
+            'first' => (string) $first,
+            'middle' => implode(' ', $parts),
+            'last' => (string) $last,
+        ];
     }
 
     private function nullableDecimalFromForm(mixed $value): ?float

@@ -37,8 +37,7 @@
             <button type="button" class="sappc-registry-toolbar_btn sappc-registry-toolbar_btn--outline"
                 id="burialCertificationBtn" title="Burial certification"
                 aria-label="Open burial certification form" aria-expanded="false"
-                aria-controls="burialCertificationModal" data-bs-toggle="modal"
-                data-bs-target="#burialCertificationModal">
+                aria-controls="burialCertificationModal">
                 <i class="fa-solid fa-certificate" aria-hidden="true"></i>
                 Certification
             </button>
@@ -58,7 +57,6 @@
         </div>
     </div>
 
-    {{-- Parish burial application (modal markup + public/css/burial/burialApplication.css) --}}
     @include('burial.partials.burialApplicationModal')
 
     <div class="sappcPaymentFeeModal">
@@ -203,6 +201,7 @@
         data-burial-delete-url="{{ route('admin.burial.record-delete') }}"
         data-burial-application-details-url="{{ route('admin.burial.application-details') }}"
         data-burial-application-save-url="{{ route('admin.burial.application-save') }}"
+        data-certification-details-url="{{ route('admin.burial.certification-details') }}"
         data-schedule-details-url="{{ route('admin.burial.schedule-details') }}"
         aria-label="Burial records"
     >
@@ -553,7 +552,7 @@
                         </form>
                     </div>
                     <div class="modal-footer sappcChristeningAppModalFooter">
-                        <button type="submit" form="burialCertificationForm"
+                        <button type="button"
                             class="sappcChristeningAppModalBtn sappcChristeningAppModalBtnSave" id="brCertAddRecordBtn">
                             Add Record
                         </button>
@@ -566,6 +565,7 @@
             </div>
         </div>
     </div>
+    @include('burial.partials.burialCertificationCertificate')
     </div>
 @endsection
 

@@ -1,5 +1,4 @@
-<script>
-    (function() {
+(function() {
         'use strict';
 
         function esc(s) {
@@ -11,7 +10,7 @@
         function getMetaCsrf() {
             return $('meta[name="csrf-token"]').attr('content') || '';
         }
-        
+
         function buildQueryUrl(base, params) {
             var q = {};
             Object.keys(params).forEach(function(k) {
@@ -39,16 +38,7 @@
             });
         }
 
-        function fetchJson(url, headers) {
-            return $.ajax({
-                url: url,
-                method: 'GET',
-                dataType: 'json',
-                headers: headers || {},
-            });
-        }
-
-        function sappcCnSwal(cfg) {
+        function sappcBrSwal(cfg) {
             if (typeof Swal !== 'undefined') {
                 return Swal.fire(cfg);
             }
@@ -64,7 +54,7 @@
             });
         }
 
-        function sappcCnConfirm(cfg) {
+        function sappcBrConfirm(cfg) {
             cfg = cfg || {};
             if (typeof Swal !== 'undefined') {
                 return Swal.fire({
@@ -84,13 +74,41 @@
             });
         }
 
-        function sappcSwalSelectConfirmationRowFirst() {
-            sappcCnSwal({
-                icon: 'warning',
-                title: 'Select a record',
-                text: 'Select a confirmation row in the table first.',
-                confirmButtonText: 'OK',
+        function fetchJson(url, headers) {
+            return $.ajax({
+                url: url,
+                method: 'GET',
+                dataType: 'json',
+                headers: headers || {},
             });
+        }
+
+        function paymentStatusCell(raw) {
+            var s = String(raw == null ? '' : raw).trim();
+            var lower = s.toLowerCase();
+            if (!s || s === '-') {
+                return '<span class="text-muted">\u2014</span>';
+            }
+            if (lower === 'paid') {
+                return '<span class="sappc-payment-badge sappc-payment-badge--paid">Paid</span>';
+            }
+            if (lower === 'unpaid') {
+                return '<span class="sappc-payment-badge sappc-payment-badge--unpaid">Unpaid</span>';
+            }
+            return esc(s);
+        }
+
+        function sappcSwalSelectBurialRowFirst() {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Select a record',
+                    text: 'Select a burial row in the table first.',
+                    confirmButtonText: 'OK',
+                });
+            } else {
+                window.alert('Select a burial row in the table first.');
+            }
         }
 
         function sappcPhMobileDigitsOnly(value) {
@@ -122,7 +140,7 @@
             return d.slice(0, 15);
         }
 
-        $(document).on('input', '#cnScheduleContact, #cnPaymentContact', function() {
+        $(document).on('input', '#brScheduleContact, #brPaymentContact', function() {
             var $el = $(this);
             var before = $el.val();
             var formatted = formatPhMobileDisplay(before);
@@ -141,6 +159,7 @@
                 '<td>' + esc(row.address) + '</td>' +
                 '<td>' + esc(row.sex) + '</td>' +
                 '<td>' + esc(row.contactNum) + '</td>' +
+                '<td class="text-center align-middle">' + paymentStatusCell(row.paymentStatus) + '</td>' +
                 '<td>' + esc(row.dateCreated) + '</td>' +
                 '<td class="text-center"><div class="sappc-icon-action_group">' +
                 '<a href="#" class="sappc-icon-action sappc-icon-action--view" title="View" aria-label="View record" data-record-id="' +
@@ -191,58 +210,51 @@
                 });
             })();
 
-            (function applyConfirmationFieldFormatGuides() {
+            (function applyBurialFieldFormatGuides() {
                 function ph(sel, val) {
                     var $el = $(sel);
                     if ($el.length) {
                         $el.attr('placeholder', val);
                     }
                 }
-                ph('#cnAppFirstName', 'Juan');
-                ph('#cnAppMiddleName', 'D.');
-                ph('#cnAppFamilyName', 'Cruz');
-                ph('#cnAppPob', 'Barbaza, Antique');
-                ph('#cnAppFather', 'Juan D. Cruz');
-                ph('#cnAppMother', 'Maria D. Cruz');
-                ph('#cnAppAddress', 'Street, Barangay, Municipality');
-                ph('#cnAppBapPlace', 'Parish church name');
-                ph('#cnAppMinisterBap', 'Rev. name (optional)');
-                ph('#cnAppBookNo', 'e.g. 1');
-                ph('#cnAppPageNo', 'e.g. 12');
-                ph('#cnAppRegistryNo', 'e.g. 45');
-                ph('#cnAppConfMinister', 'Rev. name (optional)');
-                ph('#cnAppGp1', 'Juan D. Cruz');
-                ph('#cnAppGp2', 'Juan D. Cruz');
-                ph('#cnAppGp3', 'Juan D. Cruz');
-                ph('#cnAppGp4', 'Juan D. Cruz');
-                ph('#cnCertChildFirst', 'Juan');
-                ph('#cnCertChildMiddle', 'D.');
-                ph('#cnCertChildLast', 'Cruz');
-                ph('#cnCertBirthplace', 'Barbaza, Antique');
-                ph('#cnCertFatherFirst', 'Juan');
-                ph('#cnCertFatherMiddle', 'D.');
-                ph('#cnCertFatherLast', 'Cruz');
-                ph('#cnCertMotherFirst', 'Maria');
-                ph('#cnCertMotherMiddle', 'D.');
-                ph('#cnCertMotherLast', 'Cruz');
-                ph('#cnCertPriest', 'Rev. name');
-                ph('#cnCertSponsors', 'Juan D. Cruz; Maria D. Cruz');
-                ph('#cnCertPurpose', 'e.g. school enrollment, passport');
+                ph('#brCertChildFirst', 'Juan');
+                ph('#brCertChildMiddle', 'D.');
+                ph('#brCertChildLast', 'Cruz');
+                ph('#brCertBirthplace', 'Barbaza, Antique');
+                ph('#brCertFatherFirst', 'Juan');
+                ph('#brCertFatherMiddle', 'D.');
+                ph('#brCertFatherLast', 'Cruz');
+                ph('#brCertMotherFirst', 'Maria');
+                ph('#brCertMotherMiddle', 'D.');
+                ph('#brCertMotherLast', 'Cruz');
+                ph('#brCertPriest', 'Rev. name');
+                ph('#brCertSponsors', 'Juan D. Cruz; Maria D. Cruz');
+                ph('#brCertPurpose', 'e.g. funeral service, estate');
+                ph('#brAppDeceasedName', 'Cruz, Juan D.');
+                ph('#brAppSpouseName', 'Cruz, Juan D.');
+                ph('#brAppClaimantName', 'Cruz, Juan D.');
+                ph('#brAppMinorFather', 'Cruz, Juan D.');
+                ph('#brAppMinorMother', 'Cruz, Juan D.');
             })();
 
-            var $panel = $('#confirmationRecordsPanel');
+            var $panel = $('#burialRecordsPanel');
             if (!$panel.length) return;
 
             var url = $panel.attr('data-records-url');
             if (!url) return;
 
             var csrf = getMetaCsrf();
+            var burialDeleteUrl = ($panel.attr('data-burial-delete-url') || '').trim();
             var jsonHeaders = {
                 Accept: 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
                 'X-CSRF-TOKEN': csrf,
             };
 
+            var burialAppDetailsUrl = ($panel.attr('data-burial-application-details-url') || '').trim();
+            var burialAppSaveUrl = ($panel.attr('data-burial-application-save-url') || '').trim();
+            var certificationDetailsUrl = ($panel.attr('data-certification-details-url') || '').trim();
+            var scheduleDetailsUrl = ($panel.attr('data-schedule-details-url') || '').trim();
             var state = {
                 page: 1,
                 per_page: 10,
@@ -252,16 +264,16 @@
                 date_to: '',
             };
 
-            var $searchInput = $('#confirmationSearch');
-            var $body = $('#confirmationTableBody');
-            var $info = $('#confirmationTableFooterInfo');
-            var $nav = $('#confirmationPagination');
+            var $searchInput = $('#burialSearch');
+            var $body = $('#burialTableBody');
+            var $info = $('#burialTableFooterInfo');
+            var $nav = $('#burialPagination');
 
             function renderTable(res) {
                 var html = '';
                 if (!res || !res.data || !res.data.length) {
                     html =
-                        '<tr class="sappc-table-empty"><td colspan="8" class="text-center text-muted py-4">No records found.</td></tr>';
+                        '<tr class="sappc-table-empty"><td colspan="9" class="text-center text-muted py-4">No records found.</td></tr>';
                 } else {
                     res.data.forEach(function(row) {
                         html += rowHtml(row);
@@ -302,7 +314,7 @@
 
             function fetchRecords() {
                 $body.html(
-                    '<tr class="sappc-table-loading"><td colspan="8" class="text-center text-muted py-4">Loading...</td></tr>'
+                    '<tr class="sappc-table-loading"><td colspan="9" class="text-center text-muted py-4">Loading...</td></tr>'
                 );
                 var reqUrl = buildQueryUrl(url, {
                     page: state.page,
@@ -311,7 +323,7 @@
                     letter: state.letter,
                     date_from: state.date_from,
                     date_to: state.date_to,
-                    registry_type: 'confirmation',
+                    registry_type: 'burial',
                 });
 
                 $.ajax({
@@ -331,7 +343,7 @@
                             textStatus ||
                             '?';
                         $body.html(
-                            '<tr><td colspan="8" class="text-center text-danger py-3">Could not load records (' +
+                            '<tr><td colspan="9" class="text-center text-danger py-3">Could not load records (' +
                             esc(String(msg)) +
                             ').</td></tr>'
                         );
@@ -358,15 +370,15 @@
                 }
             });
 
-            $('#confirmationEntries').on('change', function() {
+            $('#burialEntries').on('change', function() {
                 state.per_page = parseInt($(this).val(), 10) || 10;
                 state.page = 1;
                 fetchRecords();
             });
 
             $panel.find('.sappc-toolbar-date-strip_btn').on('click', function() {
-                state.date_from = $('#confirmationDateFrom').val() || '';
-                state.date_to = $('#confirmationDateTo').val() || '';
+                state.date_from = $('#burialDateFrom').val() || '';
+                state.date_to = $('#burialDateTo').val() || '';
                 state.page = 1;
                 fetchRecords();
             });
@@ -396,29 +408,21 @@
                 }
             });
 
-            var $reloadBtn = $('#confirmationReloadBtn');
+            var $reloadBtn = $('#burialReloadBtn');
             if ($reloadBtn.length) {
                 $reloadBtn.on('click', fetchRecords);
             }
 
+            fetchRecords();
+
             var paymentDetailsUrl = ($panel.attr('data-payment-details-url') || '').trim();
             var paymentSaveUrlPanel = ($panel.attr('data-payment-save-url') || '').trim();
-            var $appFormBtn = $('#confirmationApplicationFormBtn');
-            var confirmationAppDetailsUrl = ($panel.attr('data-confirmation-application-details-url') || $appFormBtn.attr('data-confirmation-application-details-url') || '').trim();
-            var confirmationAppSaveUrl = ($panel.attr('data-confirmation-application-save-url') || $appFormBtn.attr('data-confirmation-application-save-url') || '').trim();
-            var confirmationArancelDetailsUrl = ($panel.attr('data-confirmation-arancel-details-url') || $appFormBtn.attr('data-confirmation-arancel-details-url') || '').trim();
-            var confirmationArancelSaveUrl = ($panel.attr('data-confirmation-arancel-save-url') || $appFormBtn.attr('data-confirmation-arancel-save-url') || '').trim();
-            var certificationDetailsUrl = ($panel.attr('data-confirmation-certification-details-url') || '').trim();
-            var confirmationDeleteUrl = ($panel.attr('data-confirmation-delete-url') || '').trim();
-            var scheduleDetailsUrl = ($panel.attr('data-schedule-details-url') || '').trim();
 
-            var cnApplicationDraftsByConfirmationId = {};
-
-            var $paymentModal = $('#confirmationPaymentFeeModal');
-            var $paymentBtn = $('#confirmationPaymentFeeBtn');
-            var $paymentFeeForm = $('#confirmationPaymentFeeForm');
-            var $feeItemsBody = $('#confirmationPaymentFeeItemsBody');
-            var $addFeeBtn = $('#confirmationPaymentFeeAddItemBtn');
+            var $paymentModal = $('#burialPaymentFeeModal');
+            var $paymentBtn = $('#burialPaymentFeeBtn');
+            var $paymentFeeForm = $('#burialPaymentFeeForm');
+            var $feeItemsBody = $('#burialPaymentFeeItemsBody');
+            var $addFeeBtn = $('#burialPaymentFeeAddItemBtn');
 
             function renumberConfirmationFeeRows() {
                 $feeItemsBody.find('[data-fee-row]').each(function(i) {
@@ -507,22 +511,22 @@
 
             function serializeConfirmationPaymentFeeToObject() {
                 return {
-                    reference_code: ($('#cnPaymentRefCode').val() || '').trim(),
-                    client: ($('#cnPaymentClient').val() || '').trim(),
-                    contact_number: sappcPhMobileDigitsOnly($('#cnPaymentContact').val()),
-                    address: ($('#cnPaymentAddress').val() || '').trim(),
+                    reference_code: ($('#brPaymentRefCode').val() || '').trim(),
+                    client: ($('#brPaymentClient').val() || '').trim(),
+                    contact_number: sappcPhMobileDigitsOnly($('#brPaymentContact').val()),
+                    address: ($('#brPaymentAddress').val() || '').trim(),
                     fee_rows: collectConfirmationPaymentFeeRowsFromDom(),
                 };
             }
 
             function applyConfirmationPaymentFeeFormObject(data) {
                 if (!data || typeof data !== 'object') return;
-                $('#cnPaymentRefCode').val(data.reference_code != null ? String(data.reference_code) : '');
-                $('#cnPaymentClient').val(data.client != null ? String(data.client) : '');
-                $('#cnPaymentContact').val(
+                $('#brPaymentRefCode').val(data.reference_code != null ? String(data.reference_code) : '');
+                $('#brPaymentClient').val(data.client != null ? String(data.client) : '');
+                $('#brPaymentContact').val(
                     data.contact_number != null ? formatPhMobileDisplay(String(data.contact_number)) : ''
                 );
-                $('#cnPaymentAddress').val(data.address != null ? String(data.address) : '');
+                $('#brPaymentAddress').val(data.address != null ? String(data.address) : '');
                 var feeRows = data.fee_rows;
                 if (!Array.isArray(feeRows) || !feeRows.length) {
                     feeRows = [{}];
@@ -580,21 +584,17 @@
 
                 $paymentBtn.on('click', function(e) {
                     e.preventDefault();
-                    var cid = ($('#cnScheduleConfirmationId').val() || '').trim();
+                    var cid = ($('#brScheduleBurialId').val() || '').trim();
                     if (!cid) {
-                        sappcSwalSelectConfirmationRowFirst();
+                        sappcSwalSelectBurialRowFirst();
                         return;
                     }
                     if (!paymentDetailsUrl) {
-                        sappcCnSwal({
-                            icon: 'warning',
-                            title: 'Not configured',
-                            text: 'Payment load is not configured.',
-                        });
+                        window.alert('Payment load is not configured.');
                         return;
                     }
                     fetchJson(buildQueryUrl(paymentDetailsUrl, {
-                        confirmation_id: cid
+                        burial_id: cid
                     }), jsonHeaders)
                         .done(function(res) {
                             if (res && res.ok && res.data) {
@@ -606,11 +606,15 @@
                             var msg = 'Could not load payment details.';
                             var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
                             if (data && data.message) msg = data.message;
-                            sappcCnSwal({
-                                icon: 'error',
-                                title: 'Error',
-                                text: msg,
-                            });
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: msg
+                                });
+                            } else {
+                                window.alert(msg);
+                            }
                         });
                 });
 
@@ -618,22 +622,18 @@
                     e.preventDefault();
                     var saveUrl = ($paymentFeeForm.attr('data-save-url') || paymentSaveUrlPanel || '').trim();
                     if (!saveUrl) return;
-                    var cid = ($('#cnScheduleConfirmationId').val() || '').trim();
+                    var cid = ($('#brScheduleBurialId').val() || '').trim();
                     if (!cid) {
-                        sappcSwalSelectConfirmationRowFirst();
+                        sappcSwalSelectBurialRowFirst();
                         return;
                     }
                     var payload = serializeConfirmationPaymentFeeToObject();
-                    payload.confirmation_id = parseInt(cid, 10);
-                    if (isNaN(payload.confirmation_id)) {
-                        sappcCnSwal({
-                            icon: 'warning',
-                            title: 'Invalid record',
-                            text: 'Invalid record.',
-                        });
+                    payload.burial_id = parseInt(cid, 10);
+                    if (isNaN(payload.burial_id)) {
+                        window.alert('Invalid record.');
                         return;
                     }
-                    var $saveBtn = $('#confirmationPaymentFeeSaveBtn');
+                    var $saveBtn = $('#burialPaymentFeeSaveBtn');
                     $saveBtn.prop('disabled', true);
                     fetchPostJson(saveUrl, payload, csrf)
                         .done(function(res) {
@@ -643,12 +643,16 @@
                                     if (inst) inst.hide();
                                 }
                                 var msg = (res && res.message) ? res.message : 'Payment record saved.';
-                                sappcCnSwal({
-                                    icon: 'success',
-                                    title: 'Saved',
-                                    text: msg,
-                                    confirmButtonText: 'OK',
-                                });
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Saved',
+                                        text: msg,
+                                        confirmButtonText: 'OK',
+                                    });
+                                } else {
+                                    window.alert(msg);
+                                }
                                 fetchRecords();
                             }
                         })
@@ -661,11 +665,15 @@
                             } else if (data && data.message) {
                                 msg = data.message;
                             }
-                            sappcCnSwal({
-                                icon: 'error',
-                                title: 'Error',
-                                text: msg,
-                            });
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: msg
+                                });
+                            } else {
+                                window.alert(msg);
+                            }
                         })
                         .always(function() {
                             $saveBtn.prop('disabled', false);
@@ -673,562 +681,52 @@
                 });
             }
 
-            (function initConfirmationKompirmaModals() {
-                var applicationFieldNames = {
-                    first_name: 1,
-                    middle_name: 1,
-                    family_name: 1,
-                    date_of_birth: 1,
-                    place_of_birth: 1,
-                    father_name: 1,
-                    mother_maiden: 1,
-                    address: 1,
-                    baptism_date: 1,
-                    baptism_place: 1,
-                    minister_baptism: 1,
-                    book_no: 1,
-                    page_no: 1,
-                    registry_no: 1,
-                    confirmation_date: 1,
-                    confirmation_minister: 1,
-                    godparent_1: 1,
-                    godparent_2: 1,
-                    godparent_3: 1,
-                    godparent_4: 1,
-                };
-                var arancelFieldNames = {
-                    amt_arancel: 1,
-                    amt_candle: 1,
-                    amt_godparents: 1,
-                    other_label_1: 1,
-                    other_label_2: 1,
-                    other_label_3: 1,
-                    amt_other_1: 1,
-                    amt_other_2: 1,
-                    amt_other_3: 1,
-                    total_payment: 1,
-                    sig_bpc_chairman: 1,
-                    sig_parish_secretary: 1,
-                    sig_presacramental_instructor: 1,
-                    sig_parish_priest: 1,
-                };
-
-                function pickFields(src, set) {
-                    var o = {};
-                    if (!src || typeof src !== 'object') {
-                        return o;
-                    }
-                    Object.keys(src).forEach(function(k) {
-                        if (set[k]) {
-                            o[k] = src[k];
-                        }
-                    });
-                    return o;
-                }
-
-                var cnApplicationDraftSaveTimer = null;
-
-                function serializeConfirmationApplicationFormToObject() {
-                    var $form = $('#confirmationApplicationForm');
-                    if (!$form.length) {
-                        return {};
-                    }
-                    var arr = $form.serializeArray();
-                    var payload = {};
-                    $.each(arr, function(i, field) {
-                        var n = field.name;
-                        if (n.slice(-2) === '[]') {
-                            var base = n.slice(0, -2);
-                            if (!payload[base]) {
-                                payload[base] = [];
-                            }
-                            payload[base].push(field.value);
-                        } else if (payload[n] !== undefined) {
-                            if (!Array.isArray(payload[n])) {
-                                payload[n] = [payload[n]];
-                            }
-                            payload[n].push(field.value);
-                        } else {
-                            payload[n] = field.value;
-                        }
-                    });
-                    return payload;
-                }
-
-                function clearConfirmationApplicationFormFields() {
-                    var $form = $('#confirmationApplicationForm');
-                    if (!$form.length) {
-                        return;
-                    }
-                    $form.find('input[type="text"], input[type="date"], input[type="time"], textarea').val('');
-                    $form.find('input[type="checkbox"]').prop('checked', false);
-                    $form.find('input[type="hidden"]').each(function() {
-                        if (this.name && this.name !== '_token') {
-                            $(this).val('');
-                        }
-                    });
-                    updateConfirmationArancelTotal();
-                }
-
-                function parseConfirmationArancelAmount(raw) {
-                    if (raw == null) {
-                        return 0;
-                    }
-                    var s = String(raw).replace(/,/g, '').trim();
-                    if (s === '') {
-                        return 0;
-                    }
-                    var n = parseFloat(s);
-                    return isFinite(n) ? n : 0;
-                }
-
-                     function updateConfirmationArancelTotal() {
-                    var $form = $('#confirmationApplicationForm');
-                    if (!$form.length) {
-                        return;
-                    }
-                    var $table = $form.find('.sappcCnArTable');
-                    if (!$table.length) {
-                        return;
-                    }
-                    var sum = 0;
-                    var hasLine = false;
-                    $table.find('input.sappcCnArAmt').each(function() {
-                        if ($(this).attr('name') === 'total_payment') {
-                            return;
-                        }
-                        var raw = $(this).val();
-                        if (raw != null && String(raw).trim() !== '') {
-                            hasLine = true;
-                        }
-                        sum += parseConfirmationArancelAmount(raw);
-                    });
-                    var $tot = $form.find('input[name="total_payment"]');
-                    if (!$tot.length) {
-                        return;
-                    }
-                    if (!hasLine && sum === 0) {
-                        $tot.val('');
-                        return;
-                    }
-                    $tot.val(sum.toFixed(2));
-                }
-
-                function applyConfirmationApplicationFormObject(snap) {
-                    if (!snap || typeof snap !== 'object') {
-                        return;
-                    }
-                    var $form = $('#confirmationApplicationForm');
-                    if (!$form.length) {
-                        return;
-                    }
-                    clearConfirmationApplicationFormFields();
-                    $.each(snap, function(key, val) {
-                        var $fields = $form.find('[name]').filter(function() {
-                            return $(this).attr('name') === key;
-                        });
-                        if (!$fields.length) {
-                            return;
-                        }
-                        if ($fields.first().attr('type') === 'checkbox') {
-                            return;
-                        }
-                        if (Array.isArray(val)) {
-                            $fields.each(function(i) {
-                                if (val[i] !== undefined) {
-                                    $(this).val(val[i]);
-                                }
-                            });
-                        } else {
-                            $fields.val(val != null ? String(val) : '');
-                        }
-                    });
-                    updateConfirmationArancelTotal();
-                }
-
-                function confirmationApplicationDraftKey() {
-                    var cid = ($('#cnScheduleConfirmationId').val() || '').trim();
-                    return cid || '_none';
-                }
-
-                function snapshotConfirmationApplicationDraft() {
-                    var $form = $('#confirmationApplicationForm');
-                    if (!$form.length) {
-                        return;
-                    }
-                    cnApplicationDraftsByConfirmationId[confirmationApplicationDraftKey()] =
-                        serializeConfirmationApplicationFormToObject();
-                }
-
-                function restoreConfirmationApplicationDraftForCurrentRow() {
-                    var key = confirmationApplicationDraftKey();
-                    var snap = cnApplicationDraftsByConfirmationId[key];
-                    if (snap && Object.keys(snap).length) {
-                        applyConfirmationApplicationFormObject(snap);
-                    } else {
-                        clearConfirmationApplicationFormFields();
-                    }
-                }
-
-                /** Merges application + arancel payloads. Application JSON is built from confirmation_details + confirmationApplication; arancel from confirmation_details + confirmationArancel (server). */
-                function mergeApplicationPayloads(dApp, dAr) {
-                    var o = {};
-                    if (dApp && typeof dApp === 'object') {
-                        Object.keys(dApp).forEach(function(k) {
-                            o[k] = dApp[k];
-                        });
-                    }
-                    if (dAr && typeof dAr === 'object') {
-                        Object.keys(dAr).forEach(function(k) {
-                            o[k] = dAr[k];
-                        });
-                    }
-                    return o;
-                }
-
-                var $mApp = $('#confirmationApplicationModal');
-                var $fApp = $('#confirmationApplicationForm');
-
-                if (!$mApp.length || !$fApp.length || !$appFormBtn.length || typeof bootstrap === 'undefined') {
-                    return;
-                }
-
-                var bsCnAppModal = bootstrap.Modal.getOrCreateInstance($mApp[0]);
-                var pendingFocusSelectorCnApp = null;
-
-                $fApp.on('input change', 'input, textarea', function() {
-                    clearTimeout(cnApplicationDraftSaveTimer);
-                    cnApplicationDraftSaveTimer = setTimeout(function() {
-                        snapshotConfirmationApplicationDraft();
-                    }, 300);
-                });
-
-                $mApp.on('shown.bs.modal', function() {
-                    $appFormBtn.attr('aria-expanded', 'true');
-                    restoreConfirmationApplicationDraftForCurrentRow();
-                    updateConfirmationArancelTotal();
-                    if (pendingFocusSelectorCnApp) {
-                        var $el = $mApp.find(pendingFocusSelectorCnApp).first();
-                        if ($el.length) {
-                            $el.trigger('focus');
-                        }
-                        pendingFocusSelectorCnApp = null;
-                    }
-                });
-
-                $fApp.on('input change blur', '.sappcCnArTable input.sappcCnArAmt:not([name="total_payment"])', function() {
-                    updateConfirmationArancelTotal();
-                });
-
-                $mApp.on('hidden.bs.modal', function() {
-                    $appFormBtn.attr('aria-expanded', 'false');
-                    snapshotConfirmationApplicationDraft();
-                });
-
-                window.sappcConfirmationApplicationFormOpen = function(open, opts) {
-                    opts = opts || {};
-                    if (open !== false) {
-                        pendingFocusSelectorCnApp = opts.focusSelector || null;
-                        bsCnAppModal.show();
-                    } else {
-                        bsCnAppModal.hide();
-                    }
-                };
-
-                $appFormBtn.on('click', function(e) {
-                    e.preventDefault();
-                    var cid = ($('#cnScheduleConfirmationId').val() || '').trim();
-                    if (!cid) {
-                        sappcSwalSelectConfirmationRowFirst();
-                        return;
-                    }
-                    if (!confirmationAppDetailsUrl || !confirmationArancelDetailsUrl) {
-                        sappcCnSwal({
-                            icon: 'warning',
-                            title: 'Not configured',
-                            text: 'Application form is not configured.',
-                        });
-                        return;
-                    }
-                    $.when(
-                        fetchJson(
-                            buildQueryUrl(confirmationAppDetailsUrl, {
-                                confirmation_id: cid,
-                            }),
-                            jsonHeaders
-                        ),
-                        fetchJson(
-                            buildQueryUrl(confirmationArancelDetailsUrl, {
-                                confirmation_id: cid,
-                            }),
-                            jsonHeaders
-                        )
-                    )
-                        .done(function(resA, resB) {
-                            var r1 = resA && resA[0] ? resA[0] : resA;
-                            var r2 = resB && resB[0] ? resB[0] : resB;
-                            if (r1 && r1.ok && r2 && r2.ok) {
-                                var merged = mergeApplicationPayloads(r1.data || {}, r2.data || {});
-                                applyConfirmationApplicationFormObject(merged);
-                                $('#cnApplicationConfirmationId').val(cid);
-                                cnApplicationDraftsByConfirmationId[String(cid)] =
-                                    serializeConfirmationApplicationFormToObject();
-                                if (typeof window.sappcConfirmationApplicationFormOpen === 'function') {
-                                    window.sappcConfirmationApplicationFormOpen(true, {});
-                                } else {
-                                    bsCnAppModal.show();
-                                }
-                            } else {
-                                sappcCnSwal({
-                                    icon: 'error',
-                                    title: 'Error',
-                                    text: 'Could not load the form data.',
-                                });
-                            }
-                        })
-                        .fail(function() {
-                            sappcCnSwal({
-                                icon: 'error',
-                                title: 'Error',
-                                text: 'Could not load confirmation application and arancel.',
-                            });
-                        });
-                });
-
-                $('#confirmationTableBody').on('click', '.sappc-icon-action--view, .sappc-icon-action--edit', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    var id = ($(this).attr('data-record-id') || '').trim();
-                    if (!id) {
-                        return;
-                    }
-                    if (!confirmationAppDetailsUrl || !confirmationArancelDetailsUrl) {
-                        sappcCnSwal({
-                            icon: 'warning',
-                            title: 'Not configured',
-                            text: 'Application form is not configured.',
-                        });
-                        return;
-                    }
-                    $('#cnScheduleConfirmationId').val(id);
-                    $('#confirmationTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
-                    $(this).closest('tr').addClass('is-schedule-selected');
-                    $.when(
-                        fetchJson(
-                            buildQueryUrl(confirmationAppDetailsUrl, {
-                                confirmation_id: id,
-                            }),
-                            jsonHeaders
-                        ),
-                        fetchJson(
-                            buildQueryUrl(confirmationArancelDetailsUrl, {
-                                confirmation_id: id,
-                            }),
-                            jsonHeaders
-                        )
-                    )
-                        .done(function(resA, resB) {
-                            var r1 = resA && resA[0] ? resA[0] : resA;
-                            var r2 = resB && resB[0] ? resB[0] : resB;
-                            if (r1 && r1.ok && r2 && r2.ok) {
-                                var merged = mergeApplicationPayloads(r1.data || {}, r2.data || {});
-                                applyConfirmationApplicationFormObject(merged);
-                                $('#cnApplicationConfirmationId').val(id);
-                                cnApplicationDraftsByConfirmationId[String(id)] =
-                                    serializeConfirmationApplicationFormToObject();
-                                if (typeof window.sappcConfirmationApplicationFormOpen === 'function') {
-                                    window.sappcConfirmationApplicationFormOpen(true, {});
-                                }
-                            } else {
-                                var msg = 'Could not load the form data.';
-                                sappcCnSwal({
-                                    icon: 'error',
-                                    title: 'Error',
-                                    text: msg,
-                                });
-                            }
-                        })
-                        .fail(function() {
-                            var msg = 'Could not load confirmation application and arancel.';
-                            sappcCnSwal({
-                                icon: 'error',
-                                title: 'Error',
-                                text: msg,
-                            });
-                        });
-                });
-
-                $fApp.on('submit', function(ev) {
-                    ev.preventDefault();
-                    if (!confirmationAppSaveUrl || !confirmationArancelSaveUrl) {
-                        sappcCnSwal({
-                            icon: 'warning',
-                            title: 'Not configured',
-                            text: 'Save URLs are not configured.',
-                        });
-                        return;
-                    }
-                    var cid = ($('#cnScheduleConfirmationId').val() || '').trim();
-                    if (!cid) {
-                        sappcSwalSelectConfirmationRowFirst();
-                        return;
-                    }
-                    var wn = parseInt(cid, 10);
-                    if (isNaN(wn) || wn < 1) {
-                        sappcCnSwal({
-                            icon: 'warning',
-                            title: 'Invalid record',
-                            text: 'Invalid record.',
-                        });
-                        return;
-                    }
-                    var arr = $fApp.serializeArray();
-                    var payload = {};
-                    $.each(arr, function(i, field) {
-                        var n = field.name;
-                        if (n.slice(-2) === '[]') {
-                            var base = n.slice(0, -2);
-                            if (!payload[base]) {
-                                payload[base] = [];
-                            }
-                            payload[base].push(field.value);
-                        } else if (payload[n] !== undefined) {
-                            if (!Array.isArray(payload[n])) {
-                                payload[n] = [payload[n]];
-                            }
-                            payload[n].push(field.value);
-                        } else {
-                            payload[n] = field.value;
-                        }
-                    });
-                    var pApp = pickFields(payload, applicationFieldNames);
-                    var pAr = pickFields(payload, arancelFieldNames);
-                    pApp.confirmation_id = wn;
-                    pAr.confirmation_id = wn;
-                    var $saveBtn = $('#confirmationApplicationSaveBtn');
-                    $saveBtn.prop('disabled', true);
-                    fetchPostJson(confirmationAppSaveUrl, pApp, csrf)
-                        .done(function(r1) {
-                            if (!r1 || !r1.ok) {
-                                var m1 = r1 && r1.message ? r1.message : 'Application could not be saved.';
-                                sappcCnSwal({
-                                    icon: 'error',
-                                    title: 'Error',
-                                    text: m1,
-                                });
-                                $saveBtn.prop('disabled', false);
-                                return;
-                            }
-                            fetchPostJson(confirmationArancelSaveUrl, pAr, csrf)
-                                .done(function(r2) {
-                                    if (r2 && r2.ok) {
-                                        cnApplicationDraftsByConfirmationId[String(wn)] =
-                                            serializeConfirmationApplicationFormToObject();
-                                        if (typeof bootstrap !== 'undefined' && $mApp.length) {
-                                            var instM = bootstrap.Modal.getInstance($mApp[0]);
-                                            if (instM) {
-                                                instM.hide();
-                                            }
-                                        }
-                                        var okMsg =
-                                            r2 && r2.message ? r2.message : 'Confirmation application saved.';
-                                        sappcCnSwal({
-                                            icon: 'success',
-                                            title: 'Saved',
-                                            text: okMsg,
-                                            confirmButtonText: 'OK',
-                                        });
-                                    } else {
-                                        var m2 =
-                                            r2 && r2.message ? r2.message : 'Arancel could not be saved.';
-                                        sappcCnSwal({
-                                            icon: 'error',
-                                            title: 'Error',
-                                            text: m2,
-                                        });
-                                    }
-                                })
-                                .fail(function(xhr) {
-                                    var msg = 'Arancel could not be saved.';
-                                    var d = xhr && xhr.responseJSON ? xhr.responseJSON : null;
-                                    if (d && d.message) {
-                                        msg = d.message;
-                                    }
-                                    sappcCnSwal({
-                                        icon: 'error',
-                                        title: 'Error',
-                                        text: msg,
-                                    });
-                                })
-                                .always(function() {
-                                    $saveBtn.prop('disabled', false);
-                                });
-                        })
-                        .fail(function(xhr) {
-                            var msg = 'Application could not be saved.';
-                            var d = xhr && xhr.responseJSON ? xhr.responseJSON : null;
-                            if (d && d.errors) {
-                                var vals = Object.values(d.errors);
-                                if (vals.length && Array.isArray(vals[0]) && vals[0][0]) {
-                                    msg = vals[0][0];
-                                }
-                            } else if (d && d.message) {
-                                msg = d.message;
-                            }
-                            sappcCnSwal({
-                                icon: 'error',
-                                title: 'Error',
-                                text: msg,
-                            });
-                            $saveBtn.prop('disabled', false);
-                        });
-                });
-            })();
-
-            (function initConfirmationCertificationModal() {
-                var $certModal = $('#confirmationCertificationModal');
-                var $certBtn = $('#confirmationCertificationBtn');
-                var $certForm = $('#confirmationCertificationForm');
+            (function initBurialCertificationModal() {
+                try {
+                var $certModal = $('#burialCertificationModal');
+                var $certBtn = $('#burialCertificationBtn');
+                var $certForm = $('#burialCertificationForm');
                 if (!$certModal.length || !$certBtn.length || !$certForm.length || typeof bootstrap === 'undefined') {
                     return;
                 }
 
                 var certBsModal = bootstrap.Modal.getOrCreateInstance($certModal[0]);
+                var parishLogoUrl = "/assets/logos/SAPPC.png";
 
-                function applyConfirmationCertificationTopFromPayment(data) {
+                function applyBurialCertificationTopFromPayment(data) {
                     if (!data || typeof data !== 'object') return;
-                    $('#cnCertRefCode').val(data.reference_code != null ? String(data.reference_code) : '');
-                    $('#cnCertClient').val(data.client != null ? String(data.client) : '');
-                    $('#cnCertContact').val(
+                    $('#brCertRefCode').val(data.reference_code != null ? String(data.reference_code) : '');
+                    $('#brCertClient').val(data.client != null ? String(data.client) : '');
+                    $('#brCertContact').val(
                         data.contact_number != null ? formatPhMobileDisplay(String(data.contact_number)) : ''
                     );
-                    $('#cnCertTopAddress').val(data.address != null ? String(data.address) : '');
+                    $('#brCertTopAddress').val(data.address != null ? String(data.address) : '');
                 }
 
-                function applyConfirmationCertificationFromDetails(data) {
+                function applyBurialCertificationFromDetails(data) {
                     if (!data || typeof data !== 'object') return;
-                    $('#cnCertChildFirst').val(data.first_name != null ? String(data.first_name) : '');
-                    $('#cnCertChildMiddle').val(data.middle_name != null ? String(data.middle_name) : '');
-                    $('#cnCertChildLast').val(data.family_name != null ? String(data.family_name) : '');
-                    $('#cnCertBirthday').val(data.date_of_birth != null ? String(data.date_of_birth) : '');
-                    $('#cnCertBirthplace').val(data.place_of_birth != null ? String(data.place_of_birth) : '');
-                    $('#cnCertFatherFirst').val(data.father_first_name != null ? String(data.father_first_name) : '');
-                    $('#cnCertFatherMiddle').val(data.father_middle_name != null ? String(data.father_middle_name) : '');
-                    $('#cnCertFatherLast').val(data.father_last_name != null ? String(data.father_last_name) : '');
-                    $('#cnCertMotherFirst').val(data.mother_first_name != null ? String(data.mother_first_name) : '');
-                    $('#cnCertMotherMiddle').val(data.mother_middle_name != null ? String(data.mother_middle_name) : '');
-                    $('#cnCertMotherLast').val(data.mother_last_name != null ? String(data.mother_last_name) : '');
-                    $('#cnCertBarangay').val(data.barangay != null ? String(data.barangay) : '');
-                    $('#cnCertMunicipality').val(data.municipality != null ? String(data.municipality) : '');
-                    $('#cnCertProvince').val(data.province != null ? String(data.province) : 'Antique');
-                    $('#cnCertDateReceived').val(data.date_received != null ? String(data.date_received) : '');
-                    $('#cnCertDateIssued').val(data.date_issued != null ? String(data.date_issued) : '');
-                    $('#cnCertBookNo').val(data.book_no != null ? String(data.book_no) : '');
-                    $('#cnCertRegisterNo').val(data.register_no != null ? String(data.register_no) : '');
-                    $('#cnCertPageNo').val(data.page_no != null ? String(data.page_no) : '');
-                    $('#cnCertPriest').val(data.priest != null ? String(data.priest) : '');
-                    $('#cnCertSponsors').val(data.sponsors != null ? String(data.sponsors) : '');
-                    $('#cnCertPurpose').val(data.purpose != null ? String(data.purpose) : '');
+                    $('#brCertChildFirst').val(data.first_name != null ? String(data.first_name) : '');
+                    $('#brCertChildMiddle').val(data.middle_name != null ? String(data.middle_name) : '');
+                    $('#brCertChildLast').val(data.family_name != null ? String(data.family_name) : '');
+                    $('#brCertBirthday').val(data.date_of_birth != null ? String(data.date_of_birth) : '');
+                    $('#brCertBirthplace').val(data.place_of_birth != null ? String(data.place_of_birth) : '');
+                    $('#brCertFatherFirst').val(data.father_first_name != null ? String(data.father_first_name) : '');
+                    $('#brCertFatherMiddle').val(data.father_middle_name != null ? String(data.father_middle_name) : '');
+                    $('#brCertFatherLast').val(data.father_last_name != null ? String(data.father_last_name) : '');
+                    $('#brCertMotherFirst').val(data.mother_first_name != null ? String(data.mother_first_name) : '');
+                    $('#brCertMotherMiddle').val(data.mother_middle_name != null ? String(data.mother_middle_name) : '');
+                    $('#brCertMotherLast').val(data.mother_last_name != null ? String(data.mother_last_name) : '');
+                    $('#brCertBarangay').val(data.barangay != null ? String(data.barangay) : '');
+                    $('#brCertMunicipality').val(data.municipality != null ? String(data.municipality) : '');
+                    $('#brCertProvince').val(data.province != null ? String(data.province) : 'Antique');
+                    $('#brCertDateReceived').val(data.date_received != null ? String(data.date_received) : '');
+                    $('#brCertDateIssued').val(data.date_issued != null ? String(data.date_issued) : '');
+                    $('#brCertBookNo').val(data.book_no != null ? String(data.book_no) : '');
+                    $('#brCertRegisterNo').val(data.register_no != null ? String(data.register_no) : '');
+                    $('#brCertPageNo').val(data.page_no != null ? String(data.page_no) : '');
+                    $('#brCertPriest').val(data.priest != null ? String(data.priest) : '');
+                    $('#brCertSponsors').val(data.sponsors != null ? String(data.sponsors) : '');
+                    $('#brCertPurpose').val(data.purpose != null ? String(data.purpose) : '');
                 }
 
                 $certModal.on('shown.bs.modal', function() {
@@ -1240,61 +738,169 @@
 
                 $certBtn.on('click', function(e) {
                     e.preventDefault();
-                    var cid = ($('#cnScheduleConfirmationId').val() || '').trim();
-                    if (!cid) {
-                        sappcSwalSelectConfirmationRowFirst();
+                    var bid = ($('#brScheduleBurialId').val() || '').trim();
+                    if (!bid) {
+                        sappcSwalSelectBurialRowFirst();
                         return;
                     }
                     if (!paymentDetailsUrl || !certificationDetailsUrl) {
-                        sappcCnSwal({
-                            icon: 'warning',
-                            title: 'Not configured',
-                            text: 'Certification load is not configured.',
-                        });
+                        window.alert('Certification load is not configured.');
                         return;
                     }
                     $.when(
                         fetchJson(buildQueryUrl(paymentDetailsUrl, {
-                            confirmation_id: cid
+                            burial_id: bid
                         }), jsonHeaders),
                         fetchJson(buildQueryUrl(certificationDetailsUrl, {
-                            confirmation_id: cid
+                            burial_id: bid
                         }), jsonHeaders)
                     ).done(function(payTuple, certTuple) {
                         var pay = payTuple && payTuple[0] ? payTuple[0] : null;
                         var cert = certTuple && certTuple[0] ? certTuple[0] : null;
                         if (pay && pay.ok && pay.data) {
-                            applyConfirmationCertificationTopFromPayment(pay.data);
+                            applyBurialCertificationTopFromPayment(pay.data);
                         }
                         if (cert && cert.ok && cert.data) {
-                            applyConfirmationCertificationFromDetails(cert.data);
+                            applyBurialCertificationFromDetails(cert.data);
                         }
                         certBsModal.show();
                     }).fail(function(xhr) {
                         var msg = 'Could not load record for certification.';
                         var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
                         if (data && data.message) msg = data.message;
-                        sappcCnSwal({
-                            icon: 'error',
-                            title: 'Error',
-                            text: msg,
-                        });
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: msg
+                            });
+                        } else {
+                            window.alert(msg);
+                        }
                     });
                 });
+
+                function certFieldValue(sel) {
+                    return ($(sel).val() || '').toString().trim();
+                }
+
+                function formatPrintDate(iso) {
+                    if (!iso) return '';
+                    try {
+                        var d = new Date(String(iso).slice(0, 10) + 'T12:00:00');
+                        if (isNaN(d.getTime())) return iso;
+                        return d.toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                        });
+                    } catch (e) {
+                        return iso;
+                    }
+                }
+
+                function certLineText() {
+                    var fullName = [certFieldValue('#brCertChildFirst'), certFieldValue('#brCertChildMiddle'), certFieldValue('#brCertChildLast')].join(' ').replace(/\s+/g, ' ').trim();
+                    var father = [certFieldValue('#brCertFatherFirst'), certFieldValue('#brCertFatherMiddle'), certFieldValue('#brCertFatherLast')].join(' ').replace(/\s+/g, ' ').trim();
+                    var mother = [certFieldValue('#brCertMotherFirst'), certFieldValue('#brCertMotherMiddle'), certFieldValue('#brCertMotherLast')].join(' ').replace(/\s+/g, ' ').trim();
+                    var address = [certFieldValue('#brCertBarangay'), certFieldValue('#brCertMunicipality'), certFieldValue('#brCertProvince')].filter(function(v) {
+                        return v !== '';
+                    }).join(', ');
+                    return {
+                        full_name: fullName,
+                        birth_date: formatPrintDate(certFieldValue('#brCertBirthday')),
+                        birth_place: certFieldValue('#brCertBirthplace'),
+                        father: father,
+                        mother: mother,
+                        address: address,
+                        priest: certFieldValue('#brCertPriest'),
+                        sponsors: certFieldValue('#brCertSponsors'),
+                        purpose: certFieldValue('#brCertPurpose'),
+                        book_no: certFieldValue('#brCertBookNo'),
+                        register_no: certFieldValue('#brCertRegisterNo'),
+                        page_no: certFieldValue('#brCertPageNo'),
+                        date_received: formatPrintDate(certFieldValue('#brCertDateReceived')),
+                        date_issued: formatPrintDate(certFieldValue('#brCertDateIssued')),
+                    };
+                }
+
+                function printBurialCertificationSheet() {
+                    var d = certLineText();
+                    var printWin = window.open('', '_blank');
+                    if (!printWin) {
+                        window.alert('Pop-up blocked. Please allow pop-ups to print the certificate.');
+                        return;
+                    }
+                    var html = '' +
+                        '<!doctype html><html><head><meta charset="utf-8"><title>Burial Certificate</title>' +
+                        '<style>' +
+                        'body{margin:0;background:#f0f0f0;font-family:"Times New Roman",serif;color:#19305f;padding:18px;}' +
+                        '.sheet{max-width:850px;margin:0 auto;background:#fff;border:4px solid #122b71;box-shadow:inset 0 0 0 2px #fff,inset 0 0 0 4px #122b71;padding:24px 22px;}' +
+                        '.head{text-align:center;} .logo{width:76px;height:76px;object-fit:contain;margin:0 auto 8px;display:block;}' +
+                        '.parish{font-size:28px;font-weight:700;margin:0;} .sub{font-size:26px;margin:0 0 10px;border-bottom:1px solid #7d8aa7;display:inline-block;padding-bottom:3px;}' +
+                        '.title{font-size:66px;line-height:1;margin:10px 0 2px;color:#17376f;font-weight:500;} .txt{font-size:30px;margin:0 0 14px;}' +
+                        '.ln{font-size:31px;line-height:1.35;border-bottom:1px solid #425881;margin:8px 0;padding-bottom:3px;word-wrap:break-word;}' +
+                        '.center{font-weight:700;text-align:center;border:none;margin:16px 0;} .twoCol{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:8px;}' +
+                        '.small .ln{font-size:29px;margin:6px 0;} @media print{body{background:#fff;padding:0}.sheet{border-width:3px;box-shadow:none}}' +
+                        '</style></head><body>' +
+                        '<div class="sheet"><div class="head">' +
+                        '<img class="logo" src="' + esc(parishLogoUrl) + '" alt="Parish logo">' +
+                        '<p class="parish">PARISH OF: ST. ANTHONY OF PADUA</p><p class="sub">POBLACION, BARBAZA, ANTIQUE</p>' +
+                        '<h1 class="title">Certificate of Burial</h1><p class="txt">This is to certify that</p></div>' +
+                        '<div class="ln">' + esc(d.full_name || '______________________________') + '</div>' +
+                        '<div class="ln">born on the ' + esc(d.birth_date || '________________') + ' at ' + esc(d.birth_place || '________________________') + '</div>' +
+                        '<div class="ln">to (Father) ' + esc(d.father || '________________________') + '</div>' +
+                        '<div class="ln">and (Mother) ' + esc(d.mother || '________________________') + '</div>' +
+                        '<div class="ln">of (Address) ' + esc(d.address || '______________________________________________') + '</div>' +
+                        '<p class="center">received the SACRAMENT OF BURIAL</p>' +
+                        '<div class="ln">by the Rev. ' + esc(d.priest || '________________________') + '</div>' +
+                        '<div class="ln">the Sponsor/s being ' + esc(d.sponsors || '________________________') + '</div>' +
+                        '<div class="ln">Purpose: ' + esc(d.purpose || 'FOR ALL LEGAL PURPOSES') + '</div>' +
+                        '<div class="twoCol small"><div>' +
+                        '<div class="ln">Date Received: ' + esc(d.date_received || '________________') + '</div>' +
+                        '<div class="ln">Date Issued: ' + esc(d.date_issued || '________________') + '</div>' +
+                        '</div><div>' +
+                        '<div class="ln">Book No.: ' + esc(d.book_no || '________') + '</div>' +
+                        '<div class="ln">Page No.: ' + esc(d.page_no || '________') + '</div>' +
+                        '<div class="ln">Register No.: ' + esc(d.register_no || '________') + '</div>' +
+                        '</div></div></div></body></html>';
+                    printWin.document.open();
+                    printWin.document.write(html);
+                    printWin.document.close();
+                    printWin.focus();
+                    setTimeout(function() {
+                        printWin.print();
+                    }, 350);
+                }
+
+                $certForm.on('submit', function(e) {
+                    e.preventDefault();
+                    printBurialCertificationSheet();
+                });
+
+                $('#brCertAddRecordBtn').on('click', function(e) {
+                    e.preventDefault();
+                    printBurialCertificationSheet();
+                });
+                } catch (err) {
+                    if (window.console && typeof window.console.error === 'function') {
+                        window.console.error('Burial certification modal init failed:', err);
+                    }
+                }
             })();
 
-            var $scheduleForm = $('#confirmationScheduleRequestForm');
-            var $scheduleBtn = $('#confirmationScheduleRequestBtn');
+            var $scheduleForm = $('#burialScheduleRequestForm');
+            var $scheduleBtn = $('#burialScheduleRequestBtn');
             var scheduleSaveUrl = $scheduleForm.attr('data-schedule-save-url') || $scheduleBtn.attr('data-schedule-save-url') || '';
             var scheduleReservedUrl = ($scheduleForm.attr('data-schedule-reserved-url') || '').trim();
             var calendarReservedLookup = {};
-            var $scheduleModal = $('#confirmationScheduleRequestModal');
-            var $calMonthSel = $('#cnCalMonth');
-            var $calYearSel = $('#cnCalYear');
-            var $calMonthNumEl = $('#cnCalMonthNum');
-            var $calDayCells = $('#cnCalDayCells');
-            var $scheduleDateInput = $('#cnScheduleDate');
-            var $scheduleTimeInput = $('#cnScheduleTime24');
+            var $scheduleModal = $('#burialScheduleRequestModal');
+            var $calMonthSel = $('#brCalMonth');
+            var $calYearSel = $('#brCalYear');
+            var $calMonthNumEl = $('#brCalMonthNum');
+            var $calDayCells = $('#brCalDayCells');
+            var $scheduleDateInput = $('#brScheduleDate');
+            var $scheduleTimeInput = $('#brScheduleTime24');
 
             function toIsoDate(y, m0, d) {
                 return String(y) + '-' + String(m0 + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
@@ -1424,39 +1030,36 @@
 
             function resetScheduleRequestFormForNewEntry() {
                 if (!$scheduleForm.length) return;
-                $('#cnScheduleConfirmationId').val('');
-                $('#cnScheduleRefCode').val($scheduleForm.attr('data-default-reference-code') || '');
-                $('#cnScheduleContact').val('');
-                $('#cnScheduleClient').val('');
-                $('#cnScheduleAddress').val('');
-                $('#cnScheduleSex').val('');
-                $scheduleDateInput.val('');
+                $('#brScheduleBurialId').val('');
+                $('#brScheduleRefCode').val($scheduleForm.attr('data-default-reference-code') || '');
+                $('#brScheduleContact').val('');
+                $('#brScheduleClient').val('');
+                $('#brScheduleAddress').val('');
+                $('#brScheduleSex').val('');
+                $scheduleDateInput.val(new Date().toISOString().slice(0, 10));
                 $scheduleTimeInput.val('10:00');
-                $('#confirmationTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                $('#burialTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
                 var sel = parseIsoDate($scheduleDateInput.val());
                 if (sel) {
                     calendarViewDate = new Date(sel.getFullYear(), sel.getMonth(), 1);
-                } else {
-                    var todayMonth = new Date();
-                    calendarViewDate = new Date(todayMonth.getFullYear(), todayMonth.getMonth(), 1);
                 }
                 syncCalendarHeader();
                 renderCalendarDayGrid();
             }
 
             function initScheduleCalendar() {
-                if (!$calMonthSel.length || !$calYearSel.length || !$('#cnCalPrev').length || !$('#cnCalNext').length || !$calDayCells.length || !$scheduleDateInput.length) {
+                if (!$calMonthSel.length || !$calYearSel.length || !$('#brCalPrev').length || !$('#brCalNext').length || !$calDayCells.length || !$scheduleDateInput.length) {
                     return;
                 }
                 populateCalendarSelectors();
                 syncCalendarHeader();
                 renderCalendarDayGrid();
-                $('#cnCalPrev').on('click', function() {
+                $('#brCalPrev').on('click', function() {
                     calendarViewDate = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth() - 1, 1);
                     syncCalendarHeader();
                     renderCalendarDayGrid();
                 });
-                $('#cnCalNext').on('click', function() {
+                $('#brCalNext').on('click', function() {
                     calendarViewDate = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth() + 1, 1);
                     syncCalendarHeader();
                     renderCalendarDayGrid();
@@ -1497,30 +1100,30 @@
 
             initScheduleCalendar();
 
-            $('#confirmationTableBody').on('click', 'tr', function(e) {
+            $('#burialTableBody').on('click', 'tr', function(e) {
                 if ($(e.target).closest('a,button').length) return;
                 var $tr = $(this);
                 if ($tr.hasClass('sappc-table-loading') || $tr.hasClass('sappc-table-empty')) return;
-                $('#confirmationTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                $('#burialTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
                 $tr.addClass('is-schedule-selected');
-                if (($tr.attr('data-document-type') || '').trim() !== 'Confirmation') {
-                    $('#cnScheduleConfirmationId').val('');
+                if (($tr.attr('data-document-type') || '').trim() !== 'Burial') {
+                    $('#brScheduleBurialId').val('');
                     return;
                 }
                 var $tds = $tr.find('td');
                 if ($tds.length < 6) return;
-                $('#cnScheduleConfirmationId').val($tr.attr('data-record-id') || '');
-                $('#cnScheduleRefCode').val(($tds.eq(1).text() || '').trim());
-                $('#cnScheduleClient').val(($tds.eq(2).text() || '').trim());
-                $('#cnScheduleAddress').val(($tds.eq(3).text() || '').trim());
+                $('#brScheduleBurialId').val($tr.attr('data-record-id') || '');
+                $('#brScheduleRefCode').val(($tds.eq(1).text() || '').trim());
+                $('#brScheduleClient').val(($tds.eq(2).text() || '').trim());
+                $('#brScheduleAddress').val(($tds.eq(3).text() || '').trim());
                 var rawSex = ($tds.eq(4).text() || '').trim();
                 if (rawSex === '\u2014' || rawSex === '-' || rawSex === '') {
-                    $('#cnScheduleSex').val('');
+                    $('#brScheduleSex').val('');
                 } else {
-                    $('#cnScheduleSex').val(rawSex);
+                    $('#brScheduleSex').val(rawSex);
                 }
                 var rawContact = ($tds.eq(5).text() || '').trim();
-                $('#cnScheduleContact').val(
+                $('#brScheduleContact').val(
                     (rawContact === '\u2014' || rawContact === '-' || rawContact === '') ? '' : formatPhMobileDisplay(rawContact)
                 );
             });
@@ -1528,19 +1131,19 @@
             if ($scheduleForm.length && scheduleSaveUrl) {
                 $scheduleForm.on('submit', function(e) {
                     e.preventDefault();
-                    var cid = ($('#cnScheduleConfirmationId').val() || '').trim();
+                    var cid = ($('#brScheduleBurialId').val() || '').trim();
                     var payload = {
-                        schedule_date: $('#cnScheduleDate').val(),
-                        schedule_time: $('#cnScheduleTime24').val(),
-                        client: ($('#cnScheduleClient').val() || '').trim(),
-                        sex: ($('#cnScheduleSex').val() || '').trim(),
-                        contact_number: sappcPhMobileDigitsOnly($('#cnScheduleContact').val()),
-                        address: ($('#cnScheduleAddress').val() || '').trim(),
-                        reference_code: ($('#cnScheduleRefCode').val() || '').trim(),
+                        schedule_date: $('#brScheduleDate').val(),
+                        schedule_time: $('#brScheduleTime24').val(),
+                        client: ($('#brScheduleClient').val() || '').trim(),
+                        sex: ($('#brScheduleSex').val() || '').trim(),
+                        contact_number: sappcPhMobileDigitsOnly($('#brScheduleContact').val()),
+                        address: ($('#brScheduleAddress').val() || '').trim(),
+                        reference_code: ($('#brScheduleRefCode').val() || '').trim(),
                     };
                     if (cid) {
                         var n = parseInt(cid, 10);
-                        if (!isNaN(n)) payload.confirmation_id = n;
+                        if (!isNaN(n)) payload.burial_id = n;
                     }
                     var $submitBtn = $scheduleForm.find('button[type="submit"], input[type="submit"]').first();
                     $submitBtn.prop('disabled', true);
@@ -1570,11 +1173,15 @@
                             if (lines.length === 0 && data && data.message) {
                                 msg = String(data.message);
                             }
-                            sappcCnSwal({
-                                icon: 'error',
-                                title: 'Cannot save schedule',
-                                text: msg,
-                            });
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Cannot save schedule',
+                                    text: msg,
+                                });
+                            } else {
+                                window.alert(msg);
+                            }
                         })
                         .always(function() {
                             $submitBtn.prop('disabled', false);
@@ -1582,27 +1189,30 @@
                 });
             }
 
-            function applyConfirmationScheduleDetailsToForm(d) {
+            function applyBurialScheduleDetailsToForm(d) {
                 if (!d || typeof d !== 'object') return;
-                if (d.confirmation_id != null && String(d.confirmation_id).trim() !== '') {
-                    $('#cnScheduleConfirmationId').val(String(d.confirmation_id).trim());
+                if (d.burial_id != null && String(d.burial_id).trim() !== '') {
+                    $('#brScheduleBurialId').val(String(d.burial_id).trim());
                 }
-                $('#cnScheduleRefCode').val(d.reference_code != null ? String(d.reference_code) : '');
-                $('#cnScheduleClient').val(d.client != null ? String(d.client) : '');
-                $('#cnScheduleAddress').val(d.address != null ? String(d.address) : '');
-                $('#cnScheduleSex').val(d.sex != null ? String(d.sex) : '');
+                $('#brScheduleRefCode').val(d.reference_code != null ? String(d.reference_code) : '');
+                $('#brScheduleClient').val(d.client != null ? String(d.client) : '');
+                $('#brScheduleAddress').val(d.address != null ? String(d.address) : '');
+                $('#brScheduleSex').val(d.sex != null ? String(d.sex) : '');
                 var cn = d.contact_number != null ? String(d.contact_number).trim() : '';
-                $('#cnScheduleContact').val(cn !== '' ? formatPhMobileDisplay(cn) : '');
+                $('#brScheduleContact').val(cn !== '' ? formatPhMobileDisplay(cn) : '');
                 var sd = d.schedule_date != null ? String(d.schedule_date).trim().slice(0, 10) : '';
-                $('#cnScheduleDate').val(sd);
+                $('#brScheduleDate').val(sd);
                 var st = d.schedule_time != null ? String(d.schedule_time).trim() : '';
                 if (st.length >= 5) {
                     st = st.slice(0, 5);
                 }
-                $('#cnScheduleTime24').val(st || '10:00');
+                $('#brScheduleTime24').val(st || '10:00');
             }
 
-            function syncConfirmationScheduleModalCalendarFromInputs() {
+            function syncBurialScheduleModalCalendarFromInputs() {
+                if (!$scheduleDateInput.val()) {
+                    $scheduleDateInput.val(new Date().toISOString().slice(0, 10));
+                }
                 if (!$scheduleTimeInput.val()) {
                     $scheduleTimeInput.val('10:00');
                 }
@@ -1618,14 +1228,14 @@
             }
 
             $scheduleBtn.on('click', function() {
-                var cid = ($('#cnScheduleConfirmationId').val() || '').trim();
-                var $sel = $('#confirmationTableBody tr.is-schedule-selected');
+                var cid = ($('#brScheduleBurialId').val() || '').trim();
+                var $sel = $('#burialTableBody tr.is-schedule-selected');
                 if (!cid && $sel.length) {
                     var doc = ($sel.attr('data-document-type') || '').trim();
-                    if (doc === 'Confirmation') {
+                    if (doc === 'Burial') {
                         var rid = ($sel.attr('data-record-id') || '').trim();
                         if (rid) {
-                            $('#cnScheduleConfirmationId').val(rid);
+                            $('#brScheduleBurialId').val(rid);
                             cid = rid;
                         }
                     }
@@ -1638,14 +1248,14 @@
             if ($scheduleBtn.length && $scheduleModal.length) {
                 $scheduleModal.on('shown.bs.modal', function() {
                     $scheduleBtn.attr('aria-expanded', 'true');
-                    var cid = ($('#cnScheduleConfirmationId').val() || '').trim();
+                    var cid = ($('#brScheduleBurialId').val() || '').trim();
                     if (cid && scheduleDetailsUrl) {
                         fetchJson(buildQueryUrl(scheduleDetailsUrl, {
-                            confirmation_id: cid,
+                            burial_id: cid,
                         }), jsonHeaders)
                             .done(function(res) {
                                 if (res && res.ok && res.data) {
-                                    applyConfirmationScheduleDetailsToForm(res.data);
+                                    applyBurialScheduleDetailsToForm(res.data);
                                 }
                             })
                             .fail(function(xhr) {
@@ -1654,17 +1264,17 @@
                                 if (data && data.message) {
                                     msg = String(data.message);
                                 }
-                                sappcCnSwal({
+                                sappcBrSwal({
                                     icon: 'error',
                                     title: 'Error',
                                     text: msg,
                                 });
                             })
                             .always(function() {
-                                syncConfirmationScheduleModalCalendarFromInputs();
+                                syncBurialScheduleModalCalendarFromInputs();
                             });
                     } else {
-                        syncConfirmationScheduleModalCalendarFromInputs();
+                        syncBurialScheduleModalCalendarFromInputs();
                     }
                 });
                 $scheduleModal.on('hidden.bs.modal', function() {
@@ -1672,33 +1282,26 @@
                 });
             }
 
-            $('#confirmationTableBody').on('click', '.sappc-icon-action--delete', function(e) {
+            $('#burialTableBody').on('click', '.sappc-icon-action--delete', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 var id = ($(this).attr('data-record-id') || '').trim();
-                if (!id || !confirmationDeleteUrl) {
-                    return;
-                }
+                if (!id || !burialDeleteUrl) return;
 
                 function runDelete() {
                     fetchPostJson(
-                        confirmationDeleteUrl,
-                        {
-                            confirmation_id: parseInt(id, 10),
-                        },
-                        csrf
-                    )
+                            burialDeleteUrl, {
+                                burial_id: parseInt(id, 10),
+                            },
+                            csrf
+                        )
                         .done(function(res) {
                             if (res && res.ok) {
-                                delete cnApplicationDraftsByConfirmationId[String(id)];
-                                if (($('#cnScheduleConfirmationId').val() || '').trim() === id) {
-                                    $('#cnScheduleConfirmationId').val('');
-                                }
-                                if (($('#cnApplicationConfirmationId').val() || '').trim() === id) {
-                                    $('#cnApplicationConfirmationId').val('');
+                                if (($('#brScheduleBurialId').val() || '').trim() === id) {
+                                    $('#brScheduleBurialId').val('');
                                 }
                                 var msg = res && res.message ? res.message : 'Removed.';
-                                sappcCnSwal({
+                                sappcBrSwal({
                                     icon: 'success',
                                     title: 'Deleted',
                                     text: msg,
@@ -1709,10 +1312,8 @@
                         .fail(function(xhr) {
                             var msg = 'Could not delete.';
                             var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
-                            if (data && data.message) {
-                                msg = data.message;
-                            }
-                            sappcCnSwal({
+                            if (data && data.message) msg = data.message;
+                            sappcBrSwal({
                                 icon: 'error',
                                 title: 'Error',
                                 text: msg,
@@ -1720,18 +1321,186 @@
                         });
                 }
 
-                sappcCnConfirm({
-                    title: 'Delete confirmation record?',
-                    text: 'This permanently deletes this confirmation row from the registry and removes related rows in confirmation details.',
+                sappcBrConfirm({
+                    title: 'Delete burial record?',
+                    text: 'This permanently deletes this burial row from the registry (including schedule and payment data).',
                     confirmButtonText: 'Yes, delete',
                 }).then(function(r) {
-                    if (r.isConfirmed) {
-                        runDelete();
-                    }
+                    if (r.isConfirmed) runDelete();
                 });
             });
 
-            fetchRecords();
+            (function initBurialApplicationModal() {
+                var $burialAppModal = $('#burialApplicationFormModal');
+                var $burialAppForm = $('#burialApplicationForm');
+                var $burialAppBtn = $('#burialApplicationFormBtn');
+                if (!$burialAppModal.length || !$burialAppForm.length || !$burialAppBtn.length) {
+                    return;
+                }
+
+                function applyBurialApplicationData(data) {
+                    if (!data || typeof data !== 'object') {
+                        return;
+                    }
+                    var $f = $burialAppForm;
+                    if ($f[0]) {
+                        $f[0].reset();
+                    }
+                    $f.find('input[type=radio]').prop('checked', false);
+                    Object.keys(data).forEach(function(key) {
+                        if (key === '_token') {
+                            return;
+                        }
+                        var val = data[key];
+                        if (val === undefined || val === null) {
+                            return;
+                        }
+                        var escName = String(key).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+                        var $fields = $f.find('[name="' + escName + '"]');
+                        if (!$fields.length) {
+                            return;
+                        }
+                        var el0 = $fields[0];
+                        if (el0.type === 'radio') {
+                            var s = String(val);
+                            $fields.each(function() {
+                                if (this.value === s) {
+                                    $(this).prop('checked', true);
+                                }
+                            });
+                        } else if (!el0.readOnly) {
+                            $fields.val(String(val));
+                        }
+                    });
+                }
+
+                function collectBurialApplicationPayload() {
+                    var $f = $burialAppForm;
+                    var out = {};
+                    $f.find('input, select, textarea').each(function() {
+                        var n = this.name;
+                        if (!n || n === '_token') {
+                            return;
+                        }
+                        if (this.type === 'radio') {
+                            if ($(this).is(':checked')) {
+                                out[n] = this.value;
+                            }
+                            return;
+                        }
+                        out[n] = $(this).val() == null ? '' : String($(this).val());
+                    });
+                    return out;
+                }
+
+                $burialAppModal.on('shown.bs.modal', function() {
+                    $burialAppBtn.attr('aria-expanded', 'true');
+                });
+                $burialAppModal.on('hidden.bs.modal', function() {
+                    $burialAppBtn.attr('aria-expanded', 'false');
+                });
+
+                $burialAppBtn.on('click', function(e) {
+                    e.preventDefault();
+                    if (typeof bootstrap === 'undefined') {
+                        window.alert('Bootstrap is required for this dialog.');
+                        return;
+                    }
+                    var cid = ($('#brScheduleBurialId').val() || '').trim();
+                    if (!cid) {
+                        sappcSwalSelectBurialRowFirst();
+                        return;
+                    }
+                    if (!burialAppDetailsUrl) {
+                        window.alert('Burial application is not configured.');
+                        return;
+                    }
+                    var bsModal = bootstrap.Modal.getOrCreateInstance($burialAppModal[0]);
+                    fetchJson(buildQueryUrl(burialAppDetailsUrl, {
+                        burial_id: cid,
+                    }), jsonHeaders)
+                        .done(function(res) {
+                            if (res && res.ok) {
+                                if ($burialAppForm[0]) {
+                                    $burialAppForm[0].reset();
+                                }
+                                $burialAppForm.find('input[type=radio]').prop('checked', false);
+                                $('#brAppBurialId').val(cid);
+                                applyBurialApplicationData(res.data || {});
+                                bsModal.show();
+                            }
+                        })
+                        .fail(function(xhr) {
+                            var msg = 'Could not load burial application.';
+                            var d = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                            if (d && d.message) {
+                                msg = d.message;
+                            }
+                            sappcBrSwal({
+                                icon: 'error',
+                                title: 'Error',
+                                text: msg,
+                            });
+                        });
+                });
+
+                $('#burialApplicationFormSaveBtn').on('click', function() {
+                    if (!burialAppSaveUrl) {
+                        return;
+                    }
+                    if (typeof bootstrap === 'undefined') {
+                        return;
+                    }
+                    var bid = ($('#brAppBurialId').val() || '').trim() || ($('#brScheduleBurialId').val() || '').trim();
+                    if (!bid) {
+                        sappcSwalSelectBurialRowFirst();
+                        return;
+                    }
+                    var n = parseInt(bid, 10);
+                    if (isNaN(n) || n < 1) {
+                        window.alert('Invalid record.');
+                        return;
+                    }
+                    var payload = collectBurialApplicationPayload();
+                    payload.burial_id = n;
+                    var $saveBtn = $('#burialApplicationFormSaveBtn');
+                    var bsModal = bootstrap.Modal.getOrCreateInstance($burialAppModal[0]);
+                    $saveBtn.prop('disabled', true);
+                    fetchPostJson(burialAppSaveUrl, payload, csrf)
+                        .done(function(res) {
+                            if (res && res.ok) {
+                                bsModal.hide();
+                                var msg = res && res.message ? res.message : 'Burial application saved.';
+                                sappcBrSwal({
+                                    icon: 'success',
+                                    title: 'Saved',
+                                    text: msg,
+                                });
+                            }
+                        })
+                        .fail(function(xhr) {
+                            var msg = 'Could not save burial application.';
+                            var d = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                            if (d && d.errors) {
+                                var vals = Object.values(d.errors);
+                                if (vals.length && Array.isArray(vals[0]) && vals[0][0]) {
+                                    msg = vals[0][0];
+                                }
+                            } else if (d && d.message) {
+                                msg = d.message;
+                            }
+                            sappcBrSwal({
+                                icon: 'error',
+                                title: 'Error',
+                                text: msg,
+                            });
+                        })
+                        .always(function() {
+                            $saveBtn.prop('disabled', false);
+                        });
+                });
+            })();
+
+            // Initial fetch is already called earlier.
         });
     })();
-</script>

@@ -472,6 +472,94 @@ class WeddingController extends Controller
         ]);
     }
 
+    public function weddingCertificationDetails(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'wedding_id' => ['required', 'integer', 'min:1'],
+        ]);
+        $weddingId = (int) $validated['wedding_id'];
+        $row = DB::table('wedding')->where('weddingId', $weddingId)->first();
+        if ($row === null) {
+            return response()->json(['message' => 'Wedding record not found.'], 404);
+        }
+
+        $details = DB::table('wedding_details')
+            ->where('weddingId', $weddingId)
+            ->orderByDesc('weddingDetailsId')
+            ->first();
+
+        $data = [
+            'first_name' => '',
+            'middle_name' => '',
+            'family_name' => '',
+            'date_of_birth' => '',
+            'place_of_birth' => '',
+            'father_first_name' => '',
+            'father_middle_name' => '',
+            'father_last_name' => '',
+            'mother_first_name' => '',
+            'mother_middle_name' => '',
+            'mother_last_name' => '',
+            'barangay' => '',
+            'municipality' => '',
+            'province' => 'Antique',
+            'date_received' => '',
+            'date_issued' => '',
+            'book_no' => '',
+            'register_no' => '',
+            'page_no' => '',
+            'priest' => '',
+            'sponsors' => '',
+            'purpose' => '',
+        ];
+
+        if ($details !== null) {
+            $groom = $this->splitFullNameThreeParts($details->groomFullName ?? '');
+            $data['first_name'] = $groom['first'];
+            $data['middle_name'] = $groom['middle'];
+            $data['family_name'] = $groom['last'];
+            $data['date_of_birth'] = $this->dateForForm($details->groomDateOfBirth ?? null);
+            $data['place_of_birth'] = (string) ($details->groomPlaceOfBirth ?? '');
+
+            $father = $this->splitFullNameThreeParts($details->groomFather ?? '');
+            $data['father_first_name'] = $father['first'];
+            $data['father_middle_name'] = $father['middle'];
+            $data['father_last_name'] = $father['last'];
+
+            $mother = $this->splitFullNameThreeParts($details->groomMotherMaiden ?? '');
+            $data['mother_first_name'] = $mother['first'];
+            $data['mother_middle_name'] = $mother['middle'];
+            $data['mother_last_name'] = $mother['last'];
+
+            $addrBits = array_values(array_filter(array_map('trim', explode(',', (string) ($details->groomPresentAddress ?? ''))), fn ($s) => $s !== ''));
+            if (isset($addrBits[0])) {
+                $data['barangay'] = $addrBits[0];
+            }
+            if (isset($addrBits[1])) {
+                $data['municipality'] = $addrBits[1];
+            }
+            if (count($addrBits) > 2) {
+                $data['province'] = implode(', ', array_slice($addrBits, 2));
+            }
+
+            $data['priest'] = (string) ($details->officiatingPriest ?? '');
+            $data['sponsors'] = implode('; ', array_values(array_filter([
+                trim((string) ($details->sponsorsLine1 ?? '')),
+                trim((string) ($details->sponsorsLine2 ?? '')),
+                trim((string) ($details->sponsorsLine3 ?? '')),
+            ], fn ($s) => $s !== '')));
+        } else {
+            $data['first_name'] = trim((string) ($row->clientFName ?? ''));
+            $data['middle_name'] = trim((string) ($row->clientMName ?? ''));
+            $data['family_name'] = trim((string) ($row->clientLName ?? ''));
+        }
+
+        return response()->json([
+            'ok' => true,
+            'data' => $data,
+        ]);
+    }
+
     public function deleteWeddingRecord(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -523,6 +611,42 @@ class WeddingController extends Controller
         }
 
         return [];
+    }
+
+    /**
+     * @return array{first:string,middle:string,last:string}
+     */
+    private function splitFullNameThreeParts(mixed $value): array
+    {
+        $full = trim((string) ($value ?? ''));
+        if ($full === '') {
+            return ['first' => '', 'middle' => '', 'last' => ''];
+        }
+        $parts = preg_split('/\s+/', $full) ?: [];
+        if (count($parts) === 1) {
+            return ['first' => $parts[0], 'middle' => '', 'last' => ''];
+        }
+        if (count($parts) === 2) {
+            return ['first' => $parts[0], 'middle' => '', 'last' => $parts[1]];
+        }
+
+        return [
+            'first' => $parts[0],
+            'middle' => implode(' ', array_slice($parts, 1, -1)),
+            'last' => $parts[count($parts) - 1],
+        ];
+    }
+
+    private function dateForForm(mixed $value): string
+    {
+        if ($value === null || $value === '') {
+            return '';
+        }
+        try {
+            return Carbon::parse($value)->format('Y-m-d');
+        } catch (\Throwable) {
+            return trim((string) $value);
+        }
     }
 
     private function defaultWeddingPaymentFeeRows(): array

@@ -254,6 +254,7 @@
 
             var burialAppDetailsUrl = ($panel.attr('data-burial-application-details-url') || '').trim();
             var burialAppSaveUrl = ($panel.attr('data-burial-application-save-url') || '').trim();
+            var certificationDetailsUrl = ($panel.attr('data-certification-details-url') || '').trim();
             var scheduleDetailsUrl = ($panel.attr('data-schedule-details-url') || '').trim();
             var state = {
                 page: 1,
@@ -412,6 +413,8 @@
             if ($reloadBtn.length) {
                 $reloadBtn.on('click', fetchRecords);
             }
+
+            fetchRecords();
 
             var paymentDetailsUrl = ($panel.attr('data-payment-details-url') || '').trim();
             var paymentSaveUrlPanel = ($panel.attr('data-payment-save-url') || '').trim();
@@ -678,6 +681,256 @@
                         });
                 });
             }
+
+            (function initBurialCertificationModal() {
+                try {
+                var $certModal = $('#burialCertificationModal');
+                var $certBtn = $('#burialCertificationBtn');
+                var $certForm = $('#burialCertificationForm');
+                if (!$certModal.length || !$certBtn.length || !$certForm.length || typeof bootstrap === 'undefined') {
+                    return;
+                }
+
+                var certBsModal = bootstrap.Modal.getOrCreateInstance($certModal[0]);
+                var parishLogoUrl = @json(asset('assets/logos/SAPPC.png'));
+                var burialCertBgUrl = @json(asset('assets/certificates/burialCert.jpg'));
+
+                function applyBurialCertificationTopFromPayment(data) {
+                    if (!data || typeof data !== 'object') return;
+                    $('#brCertRefCode').val(data.reference_code != null ? String(data.reference_code) : '');
+                    $('#brCertClient').val(data.client != null ? String(data.client) : '');
+                    $('#brCertContact').val(
+                        data.contact_number != null ? formatPhMobileDisplay(String(data.contact_number)) : ''
+                    );
+                    $('#brCertTopAddress').val(data.address != null ? String(data.address) : '');
+                }
+
+                function applyBurialCertificationFromDetails(data) {
+                    if (!data || typeof data !== 'object') return;
+                    $('#brCertChildFirst').val(data.first_name != null ? String(data.first_name) : '');
+                    $('#brCertChildMiddle').val(data.middle_name != null ? String(data.middle_name) : '');
+                    $('#brCertChildLast').val(data.family_name != null ? String(data.family_name) : '');
+                    $('#brCertBirthday').val(data.date_of_birth != null ? String(data.date_of_birth) : '');
+                    $('#brCertBirthplace').val(data.place_of_birth != null ? String(data.place_of_birth) : '');
+                    $('#brCertFatherFirst').val(data.father_first_name != null ? String(data.father_first_name) : '');
+                    $('#brCertFatherMiddle').val(data.father_middle_name != null ? String(data.father_middle_name) : '');
+                    $('#brCertFatherLast').val(data.father_last_name != null ? String(data.father_last_name) : '');
+                    $('#brCertMotherFirst').val(data.mother_first_name != null ? String(data.mother_first_name) : '');
+                    $('#brCertMotherMiddle').val(data.mother_middle_name != null ? String(data.mother_middle_name) : '');
+                    $('#brCertMotherLast').val(data.mother_last_name != null ? String(data.mother_last_name) : '');
+                    $('#brCertBarangay').val(data.barangay != null ? String(data.barangay) : '');
+                    $('#brCertMunicipality').val(data.municipality != null ? String(data.municipality) : '');
+                    $('#brCertProvince').val(data.province != null ? String(data.province) : 'Antique');
+                    $('#brCertDateReceived').val(data.date_received != null ? String(data.date_received) : '');
+                    $('#brCertDateIssued').val(data.date_issued != null ? String(data.date_issued) : '');
+                    $('#brCertBookNo').val(data.book_no != null ? String(data.book_no) : '');
+                    $('#brCertRegisterNo').val(data.register_no != null ? String(data.register_no) : '');
+                    $('#brCertPageNo').val(data.page_no != null ? String(data.page_no) : '');
+                    $('#brCertPriest').val(data.priest != null ? String(data.priest) : '');
+                    $('#brCertSponsors').val(data.sponsors != null ? String(data.sponsors) : '');
+                    $('#brCertPurpose').val(data.purpose != null ? String(data.purpose) : '');
+                }
+
+                $certModal.on('shown.bs.modal', function() {
+                    $certBtn.attr('aria-expanded', 'true');
+                });
+                $certModal.on('hidden.bs.modal', function() {
+                    $certBtn.attr('aria-expanded', 'false');
+                });
+
+                $certBtn.on('click', function(e) {
+                    e.preventDefault();
+                    var bid = ($('#brScheduleBurialId').val() || '').trim();
+                    if (!bid) {
+                        sappcSwalSelectBurialRowFirst();
+                        return;
+                    }
+                    if (!paymentDetailsUrl || !certificationDetailsUrl) {
+                        window.alert('Certification load is not configured.');
+                        return;
+                    }
+                    $.when(
+                        fetchJson(buildQueryUrl(paymentDetailsUrl, {
+                            burial_id: bid
+                        }), jsonHeaders),
+                        fetchJson(buildQueryUrl(certificationDetailsUrl, {
+                            burial_id: bid
+                        }), jsonHeaders)
+                    ).done(function(payTuple, certTuple) {
+                        var pay = payTuple && payTuple[0] ? payTuple[0] : null;
+                        var cert = certTuple && certTuple[0] ? certTuple[0] : null;
+                        if (pay && pay.ok && pay.data) {
+                            applyBurialCertificationTopFromPayment(pay.data);
+                        }
+                        if (cert && cert.ok && cert.data) {
+                            applyBurialCertificationFromDetails(cert.data);
+                        }
+                        certBsModal.show();
+                    }).fail(function(xhr) {
+                        var msg = 'Could not load record for certification.';
+                        var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                        if (data && data.message) msg = data.message;
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: msg
+                            });
+                        } else {
+                            window.alert(msg);
+                        }
+                    });
+                });
+
+                function certFieldValue(sel) {
+                    return ($(sel).val() || '').toString().trim();
+                }
+
+                function formatPrintDate(iso) {
+                    if (!iso) return '';
+                    try {
+                        var d = new Date(String(iso).slice(0, 10) + 'T12:00:00');
+                        if (isNaN(d.getTime())) return iso;
+                        return d.toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                        });
+                    } catch (e) {
+                        return iso;
+                    }
+                }
+
+                function certLineText() {
+                    var fullName = [certFieldValue('#brCertChildFirst'), certFieldValue('#brCertChildMiddle'), certFieldValue('#brCertChildLast')].join(' ').replace(/\s+/g, ' ').trim();
+                    var father = [certFieldValue('#brCertFatherFirst'), certFieldValue('#brCertFatherMiddle'), certFieldValue('#brCertFatherLast')].join(' ').replace(/\s+/g, ' ').trim();
+                    var mother = [certFieldValue('#brCertMotherFirst'), certFieldValue('#brCertMotherMiddle'), certFieldValue('#brCertMotherLast')].join(' ').replace(/\s+/g, ' ').trim();
+                    var address = [certFieldValue('#brCertBarangay'), certFieldValue('#brCertMunicipality'), certFieldValue('#brCertProvince')].filter(function(v) {
+                        return v !== '';
+                    }).join(', ');
+                    return {
+                        full_name: fullName,
+                        birth_date: formatPrintDate(certFieldValue('#brCertBirthday')),
+                        birth_place: certFieldValue('#brCertBirthplace'),
+                        father: father,
+                        mother: mother,
+                        address: address,
+                        priest: certFieldValue('#brCertPriest'),
+                        sponsors: certFieldValue('#brCertSponsors'),
+                        purpose: certFieldValue('#brCertPurpose'),
+                        book_no: certFieldValue('#brCertBookNo'),
+                        register_no: certFieldValue('#brCertRegisterNo'),
+                        page_no: certFieldValue('#brCertPageNo'),
+                        date_received: formatPrintDate(certFieldValue('#brCertDateReceived')),
+                        date_issued: formatPrintDate(certFieldValue('#brCertDateIssued')),
+                    };
+                }
+
+                function printBurialCertificationSheet() {
+                    var d = certLineText();
+                    var rawBirth = certFieldValue('#brCertBirthday');
+                    var birthDay = '';
+                    var birthMonthYear = '';
+                    if (rawBirth && rawBirth.length >= 10) {
+                        var p = rawBirth.split('-');
+                        if (p.length === 3) {
+                            birthDay = p[2];
+                            var mIdx = parseInt(p[1], 10) - 1;
+                            var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                            var mName = (mIdx >= 0 && mIdx < 12) ? months[mIdx] : p[1];
+                            birthMonthYear = mName + ' ' + p[0];
+                        }
+                    }
+                    var printData = {
+                        full_name: d.full_name || '',
+                        birth_day: birthDay,
+                        birth_month_year: birthMonthYear,
+                        place_of_birth: d.birth_place || '',
+                        father_name: d.father || '',
+                        mother_name: d.mother || '',
+                        address: d.address || '',
+                        baptism_date: d.date_received || '',
+                        priest_name: d.priest || '',
+                        sponsors: d.sponsors || '',
+                        purpose: d.purpose || '',
+                        book_no: d.book_no || '',
+                        page_no: d.page_no || '',
+                        register_no: d.register_no || '',
+                        date_issued: d.date_issued || '',
+                    };
+                    var tplNode = document.getElementById('burialCertificatePrintableTemplate');
+                    if (!tplNode || !tplNode.content) {
+                        window.alert('Print template not found.');
+                        return;
+                    }
+                    var tplStyleNode = tplNode.content.querySelector('style');
+                    var tplWrapNode = tplNode.content.querySelector('.bc-wrap');
+                    if (!tplStyleNode || !tplWrapNode) {
+                        window.alert('Print template is incomplete.');
+                        return;
+                    }
+                    var tplCss = tplStyleNode.textContent || '';
+                    var tplBody = tplWrapNode.outerHTML || '';
+                    var printWin = window.open('', '_blank');
+                    if (!printWin) {
+                        window.alert('Pop-up blocked. Please allow pop-ups to print the certificate.');
+                        return;
+                    }
+                    var html = '<!doctype html><html><head><meta charset="utf-8"><title>Burial Certificate</title><style>' +
+                        tplCss +
+                        '</style></head><body>' + tplBody + '</body></html>';
+                    printWin.document.open();
+                    printWin.document.write(html);
+                    printWin.document.close();
+                    printWin.onload = function() {
+                        var sheet = printWin.document.querySelector('.bc-sheet');
+                        if (sheet) {
+                            sheet.style.backgroundImage = 'url(' + burialCertBgUrl + ')';
+                            sheet.style.backgroundSize = 'cover';
+                            sheet.style.backgroundPosition = 'center';
+                            sheet.style.backgroundRepeat = 'no-repeat';
+                        }
+                        function setVal(id, v) {
+                            var el = printWin.document.getElementById(id);
+                            if (el) el.value = v || '';
+                        }
+                        setVal('bcFullName', printData.full_name);
+                        setVal('bcBirthDay', printData.birth_day);
+                        setVal('bcBirthMonthYear', printData.birth_month_year);
+                        setVal('bcBirthplace', printData.place_of_birth);
+                        setVal('bcFatherName', printData.father_name);
+                        setVal('bcMotherName', printData.mother_name);
+                        setVal('bcAddress', printData.address);
+                        setVal('bcBaptismDate', printData.baptism_date);
+                        setVal('bcPriestName', printData.priest_name);
+                        setVal('bcSponsors', printData.sponsors);
+                        setVal('bcPurpose', printData.purpose);
+                        setVal('bcBookNo', printData.book_no);
+                        setVal('bcPageNo', printData.page_no);
+                        setVal('bcRegisterNo', printData.register_no);
+                        setVal('bcDateIssued', printData.date_issued);
+                    };
+                    printWin.focus();
+                    setTimeout(function() {
+                        printWin.print();
+                    }, 350);
+                }
+
+                $certForm.on('submit', function(e) {
+                    e.preventDefault();
+                    printBurialCertificationSheet();
+                });
+
+                $('#brCertAddRecordBtn').on('click', function(e) {
+                    e.preventDefault();
+                    printBurialCertificationSheet();
+                });
+                } catch (err) {
+                    if (window.console && typeof window.console.error === 'function') {
+                        window.console.error('Burial certification modal init failed:', err);
+                    }
+                }
+            })();
 
             var $scheduleForm = $('#burialScheduleRequestForm');
             var $scheduleBtn = $('#burialScheduleRequestBtn');
@@ -1291,7 +1544,7 @@
                 });
             })();
 
-            fetchRecords();
+            // Initial fetch is already called earlier.
         });
     })();
 </script>

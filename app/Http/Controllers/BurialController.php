@@ -472,6 +472,85 @@ class BurialController extends Controller
         ]);
     }
 
+    public function burialCertificationDetails(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'burial_id' => ['required', 'integer', 'min:1'],
+        ]);
+        $burialId = (int) $validated['burial_id'];
+        $row = DB::table('burial')->where('burialId', $burialId)->first();
+        if ($row === null) {
+            return response()->json(['message' => 'Burial record not found.'], 404);
+        }
+
+        $details = DB::table('burial_details')
+            ->where('burialId', $burialId)
+            ->orderByDesc('burialDetailsId')
+            ->first();
+
+        $data = [
+            'first_name' => trim((string) ($row->clientFName ?? '')),
+            'middle_name' => trim((string) ($row->clientMName ?? '')),
+            'family_name' => trim((string) ($row->clientLName ?? '')),
+            'date_of_birth' => '',
+            'place_of_birth' => '',
+            'father_first_name' => '',
+            'father_middle_name' => '',
+            'father_last_name' => '',
+            'mother_first_name' => '',
+            'mother_middle_name' => '',
+            'mother_last_name' => '',
+            'barangay' => '',
+            'municipality' => '',
+            'province' => 'Antique',
+            'date_received' => '',
+            'date_issued' => '',
+            'book_no' => '',
+            'register_no' => '',
+            'page_no' => '',
+            'priest' => '',
+            'sponsors' => '',
+            'purpose' => '',
+        ];
+
+        if ($details !== null) {
+            $deceased = $this->splitFullNameThreeParts($details->deceasedName ?? '');
+            if ($deceased['first'] !== '' || $deceased['middle'] !== '' || $deceased['last'] !== '') {
+                $data['first_name'] = $deceased['first'];
+                $data['middle_name'] = $deceased['middle'];
+                $data['family_name'] = $deceased['last'];
+            }
+            $data['date_of_birth'] = $this->dateForForm($details->baptismDate ?? null);
+            $data['place_of_birth'] = (string) ($details->claimantPlace ?? '');
+
+            $father = $this->splitFullNameThreeParts($details->minorFatherName ?? '');
+            $data['father_first_name'] = $father['first'];
+            $data['father_middle_name'] = $father['middle'];
+            $data['father_last_name'] = $father['last'];
+
+            $mother = $this->splitFullNameThreeParts($details->minorMotherName ?? '');
+            $data['mother_first_name'] = $mother['first'];
+            $data['mother_middle_name'] = $mother['middle'];
+            $data['mother_last_name'] = $mother['last'];
+
+            $addrBits = array_values(array_filter(array_map('trim', explode(',', (string) ($details->deceasedAddress ?? ''))), fn ($s) => $s !== ''));
+            if (isset($addrBits[0])) {
+                $data['barangay'] = $addrBits[0];
+            }
+            if (isset($addrBits[1])) {
+                $data['municipality'] = $addrBits[1];
+            }
+            if (count($addrBits) > 2) {
+                $data['province'] = implode(', ', array_slice($addrBits, 2));
+            }
+        }
+
+        return response()->json([
+            'ok' => true,
+            'data' => $data,
+        ]);
+    }
+
     public function deleteBurialRecord(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -523,6 +602,42 @@ class BurialController extends Controller
         }
 
         return [];
+    }
+
+    /**
+     * @return array{first:string,middle:string,last:string}
+     */
+    private function splitFullNameThreeParts(mixed $value): array
+    {
+        $full = trim((string) ($value ?? ''));
+        if ($full === '') {
+            return ['first' => '', 'middle' => '', 'last' => ''];
+        }
+        $parts = preg_split('/\s+/', $full) ?: [];
+        if (count($parts) === 1) {
+            return ['first' => $parts[0], 'middle' => '', 'last' => ''];
+        }
+        if (count($parts) === 2) {
+            return ['first' => $parts[0], 'middle' => '', 'last' => $parts[1]];
+        }
+
+        return [
+            'first' => $parts[0],
+            'middle' => implode(' ', array_slice($parts, 1, -1)),
+            'last' => $parts[count($parts) - 1],
+        ];
+    }
+
+    private function dateForForm(mixed $value): string
+    {
+        if ($value === null || $value === '') {
+            return '';
+        }
+        try {
+            return Carbon::parse($value)->format('Y-m-d');
+        } catch (\Throwable) {
+            return trim((string) $value);
+        }
     }
 
     private function defaultBurialPaymentFeeRows(): array

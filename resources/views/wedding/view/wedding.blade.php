@@ -37,8 +37,7 @@
             <button type="button" class="sappc-registry-toolbar_btn sappc-registry-toolbar_btn--outline"
                 id="weddingCertificationBtn" title="Wedding certification"
                 aria-label="Open wedding certification form" aria-expanded="false"
-                aria-controls="weddingCertificationModal" data-bs-toggle="modal"
-                data-bs-target="#weddingCertificationModal">
+                aria-controls="weddingCertificationModal">
                 <i class="fa-solid fa-certificate" aria-hidden="true"></i>
                 Certification
             </button>
@@ -202,6 +201,7 @@
         data-payment-save-url="{{ route('admin.wedding.payment-save') }}"
         data-marriage-application-details-url="{{ route('admin.wedding.marriage-application-details') }}"
         data-marriage-application-save-url="{{ route('admin.wedding.marriage-application-save') }}"
+        data-certification-details-url="{{ route('admin.wedding.certification-details') }}"
         data-wedding-delete-url="{{ route('admin.wedding.record-delete') }}"
         data-schedule-details-url="{{ route('admin.wedding.schedule-details') }}"
         aria-label="Wedding records"

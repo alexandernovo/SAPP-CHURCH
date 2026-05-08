@@ -1,3 +1,130 @@
+.sappcBurialCertPaper {
+    background: #f3f3f3;
+    padding: 1rem;
+}
+
+.sappcBurialCertPaper_border {
+    background: #fff;
+    border: 4px solid #122b71;
+    box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 4px #122b71;
+    padding: 1.5rem 1.35rem 1.2rem;
+}
+
+.sappcBurialCertPaper_head {
+    text-align: center;
+    color: #1d2e57;
+}
+
+.sappcBurialCertPaper_parish,
+.sappcBurialCertPaper_sub {
+    margin: 0;
+    font-family: "Times New Roman", serif;
+    letter-spacing: 0.02em;
+}
+
+.sappcBurialCertPaper_parish {
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.sappcBurialCertPaper_sub {
+    font-size: 1.02rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid #7d8aa7;
+    display: inline-block;
+    padding-bottom: 0.2rem;
+}
+
+.sappcBurialCertPaper_title {
+    margin: 0.65rem 0 0.25rem;
+    font-size: clamp(2rem, 4vw, 3rem);
+    color: #17376f;
+    font-family: "Times New Roman", serif;
+    font-weight: 500;
+}
+
+.sappcBurialCertPaper_text {
+    margin: 0.15rem 0 0.75rem;
+    font-size: 1.05rem;
+    color: #1d2e57;
+    font-family: "Times New Roman", serif;
+}
+
+.sappcBurialCertPaper_text--center {
+    text-align: center;
+    font-weight: 700;
+    margin: 0.7rem 0;
+}
+
+.sappcBurialCertPaper_lines {
+    display: grid;
+    gap: 0.55rem;
+}
+
+.sappcBurialCertPaper_line {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.38rem;
+    font-family: "Times New Roman", serif;
+    color: #1d2e57;
+}
+
+.sappcBurialCertPaper_line > span {
+    font-size: 1rem;
+}
+
+.sappcBurialCertPaper_line input {
+    border: 0;
+    border-bottom: 1px solid #425881;
+    background: transparent;
+    min-height: 1.45rem;
+    font-size: 0.95rem;
+    color: #15294f;
+    padding: 0.08rem 0.16rem;
+}
+
+#brCertChildFirst,
+#brCertChildMiddle,
+#brCertChildLast,
+#brCertFatherFirst,
+#brCertFatherMiddle,
+#brCertFatherLast,
+#brCertMotherFirst,
+#brCertMotherMiddle,
+#brCertMotherLast {
+    flex: 1 1 30%;
+}
+
+#brCertBirthday,
+#brCertDateReceived,
+#brCertDateIssued {
+    width: 10.5rem;
+}
+
+#brCertBirthplace,
+#brCertSponsors,
+#brCertPurpose {
+    flex: 1 1 18rem;
+}
+
+#brCertBarangay,
+#brCertMunicipality,
+#brCertProvince {
+    flex: 1 1 8rem;
+}
+
+#brCertBookNo,
+#brCertRegisterNo,
+#brCertPageNo {
+    width: 9rem;
+}
+
+.sappcBurialCertPaper_footerGrid {
+    margin-top: 0.35rem;
+    display: grid;
+    gap: 0.45rem;
+}
 
 #burialApplicationFormModal .modal-dialog {
     max-width: 52rem;
