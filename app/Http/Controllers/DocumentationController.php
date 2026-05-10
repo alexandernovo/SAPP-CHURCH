@@ -19,13 +19,55 @@ class DocumentationController extends Controller
         return view('document.view.document', [
             'docReportMonth' => $docReportMonth,
             'reportLabel' => $reportLabel,
+            'applicationReportUrl' => route('admin.document.application-form-report'),
         ]);
     }
 
-    public function burialReport(Request $request): JsonResponse
+    public function reportWindow(Request $request): View
     {
-        $month = $this->resolveMonthString($request->input('month'));
+        $validated = $request->validate([
+            'month' => ['nullable', 'string'],
+            'service_type' => ['required', 'string', 'in:christening,burial,confirmation,wedding'],
+        ]);
 
+        $data = $this->buildApplicationFormReportData(
+            $this->resolveMonthString($validated['month'] ?? null),
+            (string) $validated['service_type']
+        );
+
+        return view('document.view.report-window', $data);
+    }
+
+    public function applicationFormReport(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'month' => ['nullable', 'string'],
+            'service_type' => ['required', 'string', 'in:christening,burial,confirmation,wedding'],
+        ]);
+
+        $data = $this->buildApplicationFormReportData(
+            $this->resolveMonthString($validated['month'] ?? null),
+            (string) $validated['service_type']
+        );
+
+        return response()->json([
+            'ok' => true,
+            'month' => $data['month'],
+            'service_type' => $data['service_type'],
+            'report_label' => $data['report_label'],
+            'service_heading' => $data['service_heading'],
+            'rows' => $data['rows'],
+        ]);
+    }
+
+    /**
+     * Rows for the document report: records from the live registry table for the
+     * calendar month of `dateCreated` (christening, confirmation, wedding, burial).
+     *
+     * @return array{month: string, service_type: string, report_label: string, service_heading: string, rows: array<int, array<string, mixed>>}
+     */
+    private function buildApplicationFormReportData(string $month, string $serviceType): array
+    {
         try {
             $carbon = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
         } catch (\Throwable) {
@@ -33,11 +75,21 @@ class DocumentationController extends Controller
             $month = $carbon->format('Y-m');
         }
 
-        $rows = DB::table('burial')
+        /** @var array<string, array{0: string, 1: string}> */
+        $registry = [
+            'christening' => ['christening', 'christeningId'],
+            'confirmation' => ['confirmation', 'confirmationId'],
+            'wedding' => ['wedding', 'weddingId'],
+            'burial' => ['burial', 'burialId'],
+        ];
+
+        [$table, $idColumn] = $registry[$serviceType];
+
+        $rows = DB::table($table)
             ->whereYear('dateCreated', $carbon->year)
             ->whereMonth('dateCreated', $carbon->month)
             ->orderBy('dateCreated')
-            ->orderBy('burialId')
+            ->orderBy($idColumn)
             ->get();
 
         $out = [];
@@ -58,11 +110,33 @@ class DocumentationController extends Controller
             ];
         }
 
+        $serviceHeading = match ($serviceType) {
+            'christening' => 'CHRISTENING CERTIFICATION',
+            'burial' => 'BURIAL CERTIFICATION',
+            'confirmation' => 'CONFIRMATION CERTIFICATION',
+            'wedding' => 'WEDDING CERTIFICATION',
+            default => 'DOCUMENT',
+        };
+
+        return [
+            'month' => $month,
+            'service_type' => $serviceType,
+            'report_label' => $carbon->translatedFormat('F Y'),
+            'service_heading' => $serviceHeading,
+            'rows' => $out,
+        ];
+    }
+
+    public function burialReport(Request $request): JsonResponse
+    {
+        $month = $this->resolveMonthString($request->input('month'));
+        $data = $this->buildApplicationFormReportData($month, 'burial');
+
         return response()->json([
             'ok' => true,
-            'month' => $month,
-            'report_label' => $carbon->translatedFormat('F Y'),
-            'rows' => $out,
+            'month' => $data['month'],
+            'report_label' => $data['report_label'],
+            'rows' => $data['rows'],
         ]);
     }
 

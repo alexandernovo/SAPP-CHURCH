@@ -41,6 +41,14 @@
     text-decoration: underline;
 }
 
+.sappc-doc-page--report-active .sappc-doc-page_head {
+    display: none;
+}
+
+.sappc-doc-page--report-active .sappc-doc-sheet {
+    margin-top: 0;
+}
+
 .sappc-doc-page_sep {
     margin: 0 0.35rem;
     opacity: 0.6;
@@ -56,6 +64,17 @@
     min-height: 0;
     padding: 0.35rem 0 1.5rem;
     box-sizing: border-box;
+}
+
+.sappc-doc-picker-wrap.sappc-doc-picker-wrap--hidden {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    flex: 0 0 0 !important;
+    overflow: hidden !important;
 }
 
 .sappc-doc-picker-card {
@@ -132,6 +151,29 @@
     gap: 1rem;
 }
 
+.sappc-doc-picker_field {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.sappc-doc-picker_month-wrap {
+    position: relative;
+}
+
+.sappc-doc-picker_month {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.95rem;
+    font-family: var(--sappc-font-family, Arial, Helvetica, sans-serif);
+    color: var(--sappc-charcoal, #212121);
+    background-color: #fff;
+    border: 2px solid var(--sappc-gold, #b8860b);
+    border-radius: 0.35rem;
+    min-height: 2.75rem;
+    box-sizing: border-box;
+}
+
 .sappc-doc-picker_label {
     margin: 0 0 0.55rem;
     font-size: 0.95rem;
@@ -166,9 +208,16 @@
     background-color: #fff;
     border: 2px solid var(--sappc-gold, #b8860b);
     border-radius: 0.35rem;
-    appearance: auto;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: none;
     min-height: 2.75rem;
     box-sizing: border-box;
+}
+
+.sappc-doc-picker_select::-ms-expand {
+    display: none;
 }
 
 .sappc-doc-picker_btn {
@@ -198,15 +247,41 @@
     cursor: not-allowed;
 }
 
-.sappc-doc-hidden-month {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-    width: 0;
-    height: 0;
+.sappc-doc-picker_btn--secondary {
+    margin-top: 0.5rem;
+    color: var(--sappc-gold-dark, #9a7209);
+    background: #fff;
+    border: 2px solid var(--sappc-gold, #b8860b);
 }
 
-/* White document sheet */
+.sappc-doc-picker_btn--secondary:hover:not(:disabled) {
+    background: rgba(184, 134, 11, 0.1);
+    border-color: var(--sappc-gold-dark, #9a7209);
+    color: var(--sappc-charcoal, #212121);
+}
+
+.sappc-doc-report-window {
+    margin: 0;
+    min-height: 100vh;
+    background: #e8e8e8;
+}
+
+.sappc-doc-report-window_inner {
+    max-width: 58rem;
+    margin: 0 auto;
+    padding: 1rem 0.75rem 2rem;
+    box-sizing: border-box;
+}
+
+.sappc-doc-report-window_sheet {
+    margin-top: 0;
+}
+
+.sappc-doc-report-window_toolbar {
+    justify-content: space-between;
+}
+
+
 .sappc-doc-sheet {
     background: var(--sappc-white, #fff);
     border: 1px solid var(--sappc-border, #bdbdbd);
@@ -215,6 +290,104 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     box-sizing: border-box;
     margin-top: 0.8rem;
+}
+
+.sappc-doc-sheet__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem 1rem;
+    margin: 0 0 1.1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--sappc-border, #e0e0e0);
+}
+
+.sappc-doc-toolbar_month-field {
+    margin-right: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    min-width: 12rem;
+    max-width: 100%;
+}
+
+.sappc-doc-toolbar_month-label {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--sappc-charcoal, #212121);
+}
+
+.sappc-doc-toolbar_month-wrap {
+    position: relative;
+}
+
+.sappc-doc-toolbar_month-input {
+    max-width: 16rem;
+}
+
+.sappc-doc-toolbar_filters {
+    margin-right: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0.65rem 1rem;
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-family: var(--sappc-font-family, Arial, Helvetica, sans-serif);
+    color: var(--sappc-gold-dark, #9a7209);
+    background: #fff;
+    border: 2px solid var(--sappc-gold, #b8860b);
+    border-radius: 0.4rem;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sappc-doc-toolbar_filters:hover {
+    background: rgba(184, 134, 11, 0.12);
+    color: var(--sappc-charcoal, #212121);
+}
+
+.sappc-doc-toolbar_print {
+    width: auto;
+    min-width: 11rem;
+    margin-top: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+}
+
+.sappc-doc-toolbar_exports {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.sappc-doc-toolbar_icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.65rem;
+    height: 2.65rem;
+    padding: 0;
+    border: 2px solid var(--sappc-gold, #b8860b);
+    border-radius: 0.35rem;
+    background: #fff;
+    color: var(--sappc-gold-dark, #9a7209);
+    font-size: 1.15rem;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sappc-doc-toolbar_icon:hover {
+    background: rgba(184, 134, 11, 0.12);
+    color: var(--sappc-charcoal, #212121);
 }
 
 @media (max-width: 768px) {
@@ -266,7 +439,6 @@
     padding: 0.15rem 0.4rem 0;
 }
 
-/* Main parish name — largest line in the letterhead (bold black caps) */
 .sappc-doc-letterhead_line {
     margin: 0;
     font-weight: 800;
@@ -282,7 +454,7 @@
     margin: 0 0 0.4rem;
 }
 
-/* Diocese + address — slightly smaller than primary, same weight */
+
 .sappc-doc-letterhead_line--sub {
     font-size: clamp(0.78rem, 1.9vw, 0.98rem);
     letter-spacing: 0.05em;
@@ -290,7 +462,6 @@
     margin: 0.18rem 0 0;
 }
 
-/* “BURIAL REPORT AS OF …” — large gold/brown display, similar visual weight to primary line */
 .sappc-doc-report-title {
     text-align: center;
     font-size: clamp(1.15rem, 3.5vw, 1.8rem);
@@ -308,6 +479,20 @@
     width: 100%;
     overflow-x: auto;
     margin-bottom: 2.5rem;
+}
+
+#sappcDocTableOuter .dataTables_wrapper .row {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+#sappcDocTableOuter .dataTables_filter input {
+    margin-left: 0.35rem;
+}
+
+#sappcDocTableOuter .dataTables_info,
+#sappcDocTableOuter .dataTables_length label {
+    font-size: clamp(0.72rem, 1.2vw, 0.82rem);
 }
 
 .sappc-doc-table {
@@ -365,16 +550,19 @@
 }
 
 @media print {
+    .no-print,
     .sappc-sidebar,
     .sappc-topbar,
     .sappc-site-footer,
-    .sappc-doc-picker-card {
+    .sappc-doc-picker-wrap,
+    .sappc-doc-page_head {
         display: none !important;
     }
 
     .sappc-doc-sheet {
         border: none;
         box-shadow: none;
+        padding: 0.5rem 0 !important;
     }
 
     .sappc-content {
@@ -384,5 +572,79 @@
     .sappc-doc-page {
         max-width: none;
         margin: 0;
+    }
+
+    /* Match on-screen report: no DataTables chrome in print */
+    #sappcDocTableOuter .sappc-doc-dt-controls,
+    #sappcDocTableOuter .dataTables_length,
+    #sappcDocTableOuter .dataTables_filter,
+    #sappcDocTableOuter .dataTables_info,
+    #sappcDocTableOuter .dataTables_paginate,
+    #sappcDocTableOuter .dataTables_processing {
+        display: none !important;
+    }
+
+    #sappcDocTableOuter .dataTables_wrapper {
+        padding: 0 !important;
+    }
+
+    #sappcDocTableOuter .dataTables_wrapper .row {
+        margin: 0 !important;
+    }
+
+    /* Strip DataTables sort UI if present (older / theme classes) */
+    #sappcDocDataTable thead th.sorting:before,
+    #sappcDocDataTable thead th.sorting:after,
+    #sappcDocDataTable thead th.sorting_asc:before,
+    #sappcDocDataTable thead th.sorting_asc:after,
+    #sappcDocDataTable thead th.sorting_desc:before,
+    #sappcDocDataTable thead th.sorting_desc:after {
+        display: none !important;
+        content: none !important;
+    }
+
+    #sappcDocDataTable thead .dt-column-order,
+    #sappcDocDataTable thead button.dt-column-order {
+        display: none !important;
+    }
+
+    #sappcDocDataTable thead th,
+    #sappcDocDataTable thead td {
+        background: #2c2c2c !important;
+        color: #fff !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    #sappcDocDataTable.table-hover tbody tr:hover td {
+        background-color: transparent !important;
+    }
+
+    #sappcDocTableOuter .sappc-doc-table {
+        width: 100% !important;
+        font-size: 9pt;
+    }
+
+    #sappcDocTableOuter .sappc-doc-table tbody td {
+        border: 1px solid #bdbdbd !important;
+    }
+
+    .sappc-doc-report-title {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .sappc-doc-letterhead_crest,
+    .sappc-doc-letterhead_seal {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    #sappcDocDataTable thead {
+        display: table-header-group;
+    }
+
+    #sappcDocDataTable tbody tr {
+        page-break-inside: avoid;
     }
 }

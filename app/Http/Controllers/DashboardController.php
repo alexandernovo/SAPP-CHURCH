@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DocumentationApplicationReport;
 use App\Support\ClientNameDisplay;
+use App\Support\DocumentationApplicationReportWriter;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -375,6 +377,8 @@ class DashboardController extends Controller
             return;
         }
 
+        DocumentationApplicationReportWriter::deleteFor(DocumentationApplicationReport::SERVICE_CHRISTENING, $christeningId);
+
         DB::table('christening_certification')->where('christeningId', $christeningId)->delete();
         DB::table('christening_details')->where('christeningId', $christeningId)->delete();
         DB::table('christening')->where('christeningId', $christeningId)->delete();
@@ -388,6 +392,9 @@ class DashboardController extends Controller
         if ($row === null) {
             return;
         }
+
+        DocumentationApplicationReportWriter::deleteFor(DocumentationApplicationReport::SERVICE_CONFIRMATION, $confirmationId);
+
         if (DB::getSchemaBuilder()->hasTable('confirmation_details')) {
             DB::table('confirmation_details')->where('confirmationId', $confirmationId)->delete();
         }
@@ -401,6 +408,9 @@ class DashboardController extends Controller
         if ($row === null) {
             return;
         }
+
+        DocumentationApplicationReportWriter::deleteFor(DocumentationApplicationReport::SERVICE_WEDDING, $weddingId);
+
         DB::table('wedding')->where('weddingId', $weddingId)->delete();
         $this->deleteCustomerIfOrphaned($row->customerId ?? null);
     }
@@ -411,6 +421,9 @@ class DashboardController extends Controller
         if ($row === null) {
             return;
         }
+
+        DocumentationApplicationReportWriter::deleteFor(DocumentationApplicationReport::SERVICE_BURIAL, $burialId);
+
         DB::table('burial')->where('burialId', $burialId)->delete();
         $this->deleteCustomerIfOrphaned($row->customerId ?? null);
     }

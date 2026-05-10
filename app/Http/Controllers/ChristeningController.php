@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Support\ClientNameDisplay;
+use App\Support\DocumentationApplicationReportWriter;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -302,6 +303,13 @@ class ChristeningController extends Controller
             $row['updated_at'] = now();
             $detailsId = (int) DB::table('christening_details')->insertGetId($row);
         }
+
+        DocumentationApplicationReportWriter::syncChristening(
+            $christeningId,
+            $row['firstName'] ?? null,
+            $row['middleName'] ?? null,
+            $row['familyName'] ?? null,
+        );
 
         return response()->json([
             'ok' => true,

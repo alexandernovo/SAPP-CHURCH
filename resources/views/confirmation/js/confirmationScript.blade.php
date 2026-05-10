@@ -88,9 +88,32 @@
             sappcCnSwal({
                 icon: 'warning',
                 title: 'Select a record',
-                text: 'Select a confirmation row in the table first.',
+                text: 'Select a confirmation row in the table first (click the row so it is highlighted).',
                 confirmButtonText: 'OK',
             });
+        }
+
+        function sappcConfirmationGetSelectedRecordIdStrict() {
+            var $row = $('#confirmationTableBody tr.is-schedule-selected').first();
+            if (!$row.length) {
+                return '';
+            }
+            if (($row.attr('data-document-type') || '').trim() !== 'Confirmation') {
+                return '';
+            }
+            var rid = ($row.attr('data-record-id') || '').trim();
+            if (!rid) {
+                return '';
+            }
+            var n = parseInt(rid, 10);
+            if (isNaN(n) || n < 1 || String(n) !== rid) {
+                return '';
+            }
+            var hid = ($('#cnScheduleConfirmationId').val() || '').trim();
+            if (hid !== rid) {
+                return '';
+            }
+            return rid;
         }
 
         function sappcPhMobileDigitsOnly(value) {
@@ -1240,7 +1263,7 @@
 
                 $certBtn.on('click', function(e) {
                     e.preventDefault();
-                    var cid = ($('#cnScheduleConfirmationId').val() || '').trim();
+                    var cid = sappcConfirmationGetSelectedRecordIdStrict();
                     if (!cid) {
                         sappcSwalSelectConfirmationRowFirst();
                         return;
@@ -1280,6 +1303,14 @@
                             text: msg,
                         });
                     });
+                });
+
+                $certForm.on('submit', function(ev) {
+                    ev.preventDefault();
+                    if (!sappcConfirmationGetSelectedRecordIdStrict()) {
+                        sappcSwalSelectConfirmationRowFirst();
+                        return;
+                    }
                 });
             })();
 
@@ -1501,6 +1532,10 @@
                 if ($(e.target).closest('a,button').length) return;
                 var $tr = $(this);
                 if ($tr.hasClass('sappc-table-loading') || $tr.hasClass('sappc-table-empty')) return;
+                if ($tr.hasClass('is-schedule-selected')) {
+                    resetScheduleRequestFormForNewEntry();
+                    return;
+                }
                 $('#confirmationTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
                 $tr.addClass('is-schedule-selected');
                 if (($tr.attr('data-document-type') || '').trim() !== 'Confirmation') {

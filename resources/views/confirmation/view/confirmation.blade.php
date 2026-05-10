@@ -35,10 +35,9 @@
                 Schedule Request
             </button>
             <button type="button" class="sappc-registry-toolbar_btn sappc-registry-toolbar_btn--outline"
-                id="confirmationCertificationBtn" title="Confirmation certification"
+                id="confirmationCertificationBtn" title="Confirmation certification (select a table row first)"
                 aria-label="Open confirmation certification form" aria-expanded="false"
-                aria-controls="confirmationCertificationModal" data-bs-toggle="modal"
-                data-bs-target="#confirmationCertificationModal">
+                aria-controls="confirmationCertificationModal">
                 <i class="fa-solid fa-certificate" aria-hidden="true"></i>
                 Certification
             </button>

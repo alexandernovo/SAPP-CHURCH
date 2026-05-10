@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Support\ClientNameDisplay;
+use App\Support\DocumentationApplicationReportWriter;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -504,6 +505,8 @@ class ConfirmationController extends Controller
                 'message' => 'Could not save. Run database migrations and try again.',
             ], 422);
         }
+
+        DocumentationApplicationReportWriter::syncConfirmation($id, $data);
 
         return response()->json(['ok' => true, 'message' => 'Confirmation application saved.']);
     }

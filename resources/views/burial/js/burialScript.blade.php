@@ -1147,6 +1147,10 @@
                 if ($(e.target).closest('a,button').length) return;
                 var $tr = $(this);
                 if ($tr.hasClass('sappc-table-loading') || $tr.hasClass('sappc-table-empty')) return;
+                if ($tr.hasClass('is-schedule-selected')) {
+                    resetScheduleRequestFormForNewEntry();
+                    return;
+                }
                 $('#burialTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
                 $tr.addClass('is-schedule-selected');
                 if (($tr.attr('data-document-type') || '').trim() !== 'Burial') {

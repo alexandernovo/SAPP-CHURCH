@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Support\ClientNameDisplay;
+use App\Support\DocumentationApplicationReportWriter;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -465,6 +466,8 @@ class BurialController extends Controller
                 'message' => 'Could not save. If the problem persists, run database migrations and try again.',
             ], 422);
         }
+
+        DocumentationApplicationReportWriter::syncBurial($burialId, $data);
 
         return response()->json([
             'ok' => true,

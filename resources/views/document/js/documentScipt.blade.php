@@ -1,77 +1,103 @@
 @php
-    $burialReportUrl = $burialReportUrl ?? route('admin.document.burial-report');
+    $applicationReportUrl = $applicationReportUrl ?? route('admin.document.application-form-report');
 @endphp
 <script>
     (function ($) {
-        var url = @json($burialReportUrl);
+        var url = @json($applicationReportUrl);
+        var $table = $('#sappcDocDataTable');
         var $body = $('#sappcDocTableBody');
         var $label = $('#sappcDocReportLabel');
+        var $service = $('#sappcDocReportService');
         var $month = $('#sappcDocReportMonth');
+        var $type = $('#sappcDocType');
 
-        function esc(s) {
-            return String(s == null ? '' : s)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;');
+        function currentServiceType() {
+            var t = $type.val();
+            return t && t !== '' ? t : 'burial';
         }
 
-        function renderTable(rows) {
-            $body.empty();
-            if (!rows || !rows.length) {
-                $body.append(
-                    '<tr><td colspan="7" class="text-center py-3">No records for this month.</td></tr>'
-                );
+        function destroyDocDataTable() {
+            if (!$table.length || !$.fn.DataTable) {
                 return;
             }
-            rows.forEach(function (r) {
-                $body.append(
-                    '<tr><td>' +
-                        esc(r.no) +
-                        '</td><td>' +
-                        esc(r.reference_code) +
-                        '</td><td>' +
-                        esc(r.client) +
-                        '</td><td>' +
-                        esc(r.address) +
-                        '</td><td>' +
-                        esc(r.sex) +
-                        '</td><td>' +
-                        esc(r.contact_number) +
-                        '</td><td>' +
-                        esc(r.date) +
-                        '</td></tr>'
-                );
+            if ($.fn.DataTable.isDataTable('#sappcDocDataTable')) {
+                $table.DataTable().destroy();
+            }
+        }
+
+        function showTableMessage(html) {
+            destroyDocDataTable();
+            $body.html(
+                '<tr><td colspan="7" class="text-center py-3">' + html + '</td></tr>'
+            );
+        }
+
+        function initDocDataTable(rows) {
+            destroyDocDataTable();
+            $body.empty();
+
+            var data = Array.isArray(rows) ? rows : [];
+
+            $table.DataTable({
+                data: data,
+                columns: [
+                    { data: 'no', className: 'text-end' },
+                    { data: 'reference_code' },
+                    { data: 'client' },
+                    { data: 'address' },
+                    { data: 'sex' },
+                    { data: 'contact_number' },
+                    { data: 'date' },
+                ],
+                order: [[0, 'asc']],
+                paging: false,
+                ordering: false,
+                info: false,
+                autoWidth: false,
+                deferRender: true,
+                dom: "<'row align-items-center mb-2 g-2 sappc-doc-dt-controls'<'col-sm-12 col-md-6 ms-auto'f>>rt",
+                language: {
+                    emptyTable: 'No records for this month.',
+                    zeroRecords: 'No matching records found.',
+                    search: 'Search:',
+                },
+                columnDefs: [{ targets: 0, type: 'num' }],
             });
         }
 
-        function loadReport() {
-            var m = $month.val();
+        function loadReport(serviceType, monthOverride) {
+            var m = monthOverride != null && monthOverride !== '' ? monthOverride : $month.val();
+            var st = serviceType != null && serviceType !== '' ? serviceType : currentServiceType();
             if (!m) {
                 return;
             }
-            $body.html(
-                '<tr><td colspan="7" class="text-center py-3">Loading…</td></tr>'
-            );
+
+            showTableMessage('Loading…');
+
             $.ajax({
                 url: url,
                 method: 'GET',
-                data: { month: m },
+                data: { month: m, service_type: st },
                 dataType: 'json',
             })
                 .done(function (res) {
                     if (!res || !res.ok) {
-                        $body.html(
-                            '<tr><td colspan="7" class="text-center py-3">Invalid response.</td></tr>'
-                        );
+                        showTableMessage('Invalid response.');
                         return;
                     }
+                    if ($service.length) {
+                        $service.text(String(res.service_heading || '').toUpperCase());
+                    }
                     $label.text(String(res.report_label || '').toUpperCase());
-                    renderTable(res.rows || []);
+                    try {
+                        initDocDataTable(res.rows || []);
+                    } catch (e) {
+                        showTableMessage('Could not build the data table.');
+                        return;
+                    }
                 })
                 .fail(function () {
-                    $body.html(
-                        '<tr><td colspan="7" class="text-center py-3">Could not load data.</td></tr>'
-                    );
+                    showTableMessage('Could not load data.');
                 });
         }
 
@@ -82,9 +108,15 @@
                 u.searchParams.set('month', m);
                 window.history.replaceState({}, '', u);
             }
-            loadReport();
+            if ($('#sappcDocumentSheet').is(':visible')) {
+                loadReport(currentServiceType(), m);
+            }
         });
 
-        loadReport();
+        $(document).on('sappc:doc-report', function (_e, payload) {
+            var st = payload && payload.type ? payload.type : currentServiceType();
+            var mo = payload && payload.month != null ? payload.month : $month.val();
+            loadReport(st, mo);
+        });
     })(jQuery);
 </script>
