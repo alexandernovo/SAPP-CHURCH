@@ -1123,6 +1123,12 @@
     border-radius: 2px;
 }
 
+/* Native date picker: align with official form row height */
+.sappcChOfficialInput[type="date"] {
+    min-height: 2.1rem;
+    line-height: 1.25;
+}
+
 .sappcChOfficialInputAge {
     max-width: 4rem;
     display: inline-block;
@@ -1185,6 +1191,20 @@
     font-size: 0.75rem;
     font-family: inherit;
     padding: 0.1rem 0.15rem;
+}
+
+.sappcChOfficialDottedRow .sappcChOfficialDottedInput[type="date"] {
+    flex: 0 1 auto;
+    min-width: 7.25rem;
+    max-width: 10rem;
+    border: 1px solid #000;
+    border-radius: 2px;
+    border-bottom: 1px solid #000;
+    background: #fff;
+    padding: 0.18rem 0.35rem;
+    min-height: 1.85rem;
+    line-height: 1.2;
+    box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.06);
 }
 
 .sappcChOfficialDottedInputFull {
@@ -1368,6 +1388,7 @@
     font-size: 0.72rem;
     line-height: 1.35;
     color: #111;
+    text-align: center;
     -webkit-appearance: none;
     appearance: none;
 }

@@ -305,13 +305,11 @@
                 }
             }
 
-            ph('#chAppDob', 'mm/dd/yyyy');
             ph('#chAppMiddleName', 'MARIA');
             ph('#chAppPob', 'Barbaza, Antique');
             ph('#chAppFather', 'Juan D. Cruz');
             ph('#chAppMother', 'Maria D. Cruz');
             ph('#chAppParentAddress', 'Street, Barangay, Municipality');
-            ph('#chAppBaptismDate', 'mm/dd/yyyy');
             ph('#chAppMinister', 'Rev. name (optional)');
 
             ph('#chCertChildFirst', 'Juan');
@@ -492,7 +490,7 @@
         function clearChristeningApplicationFormFields() {
             var $form = $('#christeningApplicationForm');
             if (!$form.length) return;
-            $form.find('input[type="text"], textarea').val('');
+            $form.find('input[type="text"], input[type="date"], input[type="email"], input[type="tel"], textarea').val('');
             $form.find('input[type="checkbox"]').prop('checked', false);
             updateChristeningApplicationFeeTotal();
             var $bp = $('#chAppBaptismPlace');
@@ -689,6 +687,7 @@
                 fetchPostJson(url, payload, csrf)
                     .done(function(res) {
                         if (res && res.ok) {
+                            var shouldReopenFromDashboard = isDashboardEmbeddedAppContext();
                             if (typeof bootstrap !== 'undefined' && $appModal.length) {
                                 var inst = bootstrap.Modal.getInstance($appModal[0]);
                                 if (inst) inst.hide();
@@ -703,6 +702,11 @@
                                 });
                             } else {
                                 window.alert(msg);
+                            }
+                            if (shouldReopenFromDashboard) {
+                                setTimeout(function() {
+                                    $('#christeningApplicationFormBtn').trigger('click');
+                                }, 120);
                             }
                         }
                     })
@@ -901,6 +905,17 @@
         var christeningDeleteUrl = ($panel.attr('data-christening-delete-url') || '').trim();
         var scheduleDetailsUrl = ($panel.attr('data-schedule-details-url') || '').trim();
         if (!url) return;
+
+        function isDashboardEmbeddedAppContext() {
+            try {
+                var u = new URL(window.location.href);
+                return (u.searchParams.get('embed') || '').trim() === '1';
+            } catch (e1) {
+                return false;
+            }
+        }
+
+        tryOpenChristeningApplicationFromDashboardQuery();
 
         if ($paymentModal.length && $paymentBtn.length && typeof bootstrap !== 'undefined') {
             var paymentBsModal = bootstrap.Modal.getOrCreateInstance($paymentModal[0]);
@@ -1549,11 +1564,38 @@
             return q;
         }
 
+        function tryOpenChristeningApplicationFromDashboardQuery() {
+            try {
+                var u = new URL(window.location.href);
+                var id = (u.searchParams.get('sappc_dash_app') || '').trim();
+                if (!id) {
+                    return;
+                }
+                u.searchParams.delete('sappc_dash_app');
+                var q = u.searchParams.toString();
+                window.history.replaceState({}, '', u.pathname + (q ? '?' + q : '') + u.hash);
+                $('#chScheduleChristeningId').val(id);
+                $('#christeningTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                $('#christeningTableBody tr').each(function() {
+                    if (($(this).attr('data-record-id') || '').trim() === id) {
+                        $(this).addClass('is-schedule-selected');
+                        return false;
+                    }
+                });
+                setTimeout(function() {
+                    $('#christeningApplicationFormBtn').trigger('click');
+                }, 0);
+            } catch (e1) {}
+        }
+
         function fetchRecords() {
             $('#christeningTableBody').html('<tr class="sappc-table-loading"><td colspan="9" class="text-center text-muted py-4">Loading…</td></tr>');
             var reqUrl = buildQueryUrl(url, fetchQueryParams());
             fetchJson(reqUrl, jsonHeaders)
-                .done(renderTable)
+                .done(function(res) {
+                    renderTable(res);
+                    tryOpenChristeningApplicationFromDashboardQuery();
+                })
                 .fail(function(xhr) {
                     var msg = xhr && xhr.status ? xhr.status : '?';
                     $('#christeningTableBody').html('<tr><td colspan="9" class="text-center text-danger py-3">Could not load records (' + msg + ').</td></tr>');
@@ -1898,6 +1940,18 @@
                                 if (inst) inst.hide();
                             }
                             fetchRecords();
+                            var okMsg =
+                                res && res.message ? String(res.message) : 'Schedule reserved successfully.';
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Reserved',
+                                    text: okMsg,
+                                    confirmButtonText: 'OK',
+                                });
+                            } else {
+                                window.alert(okMsg);
+                            }
                         }
                     })
                     .fail(function(xhr) {

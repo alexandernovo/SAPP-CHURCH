@@ -8,7 +8,9 @@
     <link rel="stylesheet" href="{{ asset('css/sappcDashboard/sappcDashboard.css') }}">
     @stack('styles')
 </head>
-<body class="sappc-dash" data-sappc-sidebar-collapsed="0">
+<body
+    class="sappc-dash{{ request()->boolean('embed') ? ' sappc-dash--registry-embed' : '' }}"
+    data-sappc-sidebar-collapsed="0">
     <div class="sappc-dash_backdrop" id="sappcSidebarBackdrop" aria-hidden="true"></div>
 
     <div class="sappc-dash_layout">

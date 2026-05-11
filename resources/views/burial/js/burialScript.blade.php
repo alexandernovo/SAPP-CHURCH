@@ -244,6 +244,32 @@
             var url = $panel.attr('data-records-url');
             if (!url) return;
 
+            function tryOpenBurialApplicationFromDashboardQuery() {
+                try {
+                    var u = new URL(window.location.href);
+                    var id = (u.searchParams.get('sappc_dash_app') || '').trim();
+                    if (!id) {
+                        return;
+                    }
+                    u.searchParams.delete('sappc_dash_app');
+                    var q = u.searchParams.toString();
+                    window.history.replaceState({}, '', u.pathname + (q ? '?' + q : '') + u.hash);
+                    $('#brScheduleBurialId').val(id);
+                    $('#burialTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                    $('#burialTableBody tr').each(function() {
+                        if (($(this).attr('data-record-id') || '').trim() === id) {
+                            $(this).addClass('is-schedule-selected');
+                            return false;
+                        }
+                    });
+                    setTimeout(function() {
+                        $('#burialApplicationFormBtn').trigger('click');
+                    }, 0);
+                } catch (e1) {}
+            }
+
+            tryOpenBurialApplicationFromDashboardQuery();
+
             var csrf = getMetaCsrf();
             var burialDeleteUrl = ($panel.attr('data-burial-delete-url') || '').trim();
             var jsonHeaders = {
@@ -336,7 +362,10 @@
                         'X-Requested-With': 'XMLHttpRequest',
                     },
                 })
-                    .done(renderTable)
+                    .done(function(res) {
+                        renderTable(res);
+                        tryOpenBurialApplicationFromDashboardQuery();
+                    })
                     .fail(function(xhr, textStatus, errorThrown) {
                         var msg =
                             (xhr && xhr.status) ||
@@ -1202,6 +1231,18 @@
                                     if (inst) inst.hide();
                                 }
                                 fetchRecords();
+                                var okMsgBr =
+                                    res && res.message ? String(res.message) : 'Schedule reserved successfully.';
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Reserved',
+                                        text: okMsgBr,
+                                        confirmButtonText: 'OK',
+                                    });
+                                } else {
+                                    window.alert(okMsgBr);
+                                }
                             }
                         })
                         .fail(function(xhr) {

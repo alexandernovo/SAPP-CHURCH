@@ -38,11 +38,6 @@ class DashboardController extends Controller
     }
 
 
-    private static function chartMonthLabels(): array
-    {
-        return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-    }
-
     public function index(Request $request): View
     {
         $rawPerPage = (int) $request->input('per_page', 10);
@@ -76,7 +71,6 @@ class DashboardController extends Controller
             'statsYearOptions' => $statsYearOptions,
             'perPageOptions' => self::PER_PAGE_OPTIONS,
             'letterOptions' => self::letterFilterOptions(),
-            'chartMonthLabels' => self::chartMonthLabels(),
             'stats' => [
                 'christening' => (int) DB::table('christening')->whereYear('dateCreated', $statsYear)->count(),
                 'confirmation' => (int) DB::table('confirmation')->whereYear('dateCreated', $statsYear)->count(),
@@ -119,38 +113,64 @@ class DashboardController extends Controller
 
     public function monthlyStats(Request $request): JsonResponse
     {
-        $type = strtolower((string) $request->query('type', ''));
-        $table = match ($type) {
-            'christening' => 'christening',
-            'confirmation' => 'confirmation',
-            'wedding' => 'wedding',
-            'burial' => 'burial',
-            default => null,
-        };
-
-        if ($table === null) {
-            return response()->json(['message' => 'Invalid document type.'], 422);
-        }
+        $type = strtolower((string) $request->query('type', 'all'));
+        $registryTables = ['christening', 'confirmation', 'wedding', 'burial'];
 
         $year = (int) $request->query('year', date('Y'));
         if ($year < 2000 || $year > 2100) {
             return response()->json(['message' => 'Invalid year.'], 422);
         }
 
-        $byMonth = DB::table($table)
-            ->whereYear('dateCreated', $year)
-            ->selectRaw('MONTH(dateCreated) as m, COUNT(*) as c')
-            ->groupBy('m')
-            ->orderBy('m')
-            ->pluck('c', 'm')
-            ->all();
-
         $short = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+
+        if ($type === 'all' || $type === '') {
+            $byMonth = array_fill(1, 12, 0);
+            foreach ($registryTables as $table) {
+                $chunk = DB::table($table)
+                    ->whereYear('dateCreated', $year)
+                    ->selectRaw('MONTH(dateCreated) as m, COUNT(*) as c')
+                    ->groupBy('m')
+                    ->orderBy('m')
+                    ->pluck('c', 'm')
+                    ->all();
+                for ($i = 1; $i <= 12; $i++) {
+                    $key = (string) $i;
+                    $byMonth[$i] += (int) ($chunk[$i] ?? $chunk[$key] ?? 0);
+                }
+            }
+            $type = 'all';
+        } else {
+            $table = match ($type) {
+                'christening' => 'christening',
+                'confirmation' => 'confirmation',
+                'wedding' => 'wedding',
+                'burial' => 'burial',
+                default => null,
+            };
+
+            if ($table === null) {
+                return response()->json(['message' => 'Invalid document type.'], 422);
+            }
+
+            $chunk = DB::table($table)
+                ->whereYear('dateCreated', $year)
+                ->selectRaw('MONTH(dateCreated) as m, COUNT(*) as c')
+                ->groupBy('m')
+                ->orderBy('m')
+                ->pluck('c', 'm')
+                ->all();
+
+            $byMonth = array_fill(1, 12, 0);
+            for ($i = 1; $i <= 12; $i++) {
+                $key = (string) $i;
+                $byMonth[$i] = (int) ($chunk[$i] ?? $chunk[$key] ?? 0);
+            }
+        }
+
         $months = [];
         $total = 0;
         for ($i = 1; $i <= 12; $i++) {
-            $key = (string) $i;
-            $c = (int) ($byMonth[$i] ?? $byMonth[$key] ?? 0);
+            $c = (int) ($byMonth[$i] ?? 0);
             $total += $c;
             $months[] = [
                 'month' => $i,

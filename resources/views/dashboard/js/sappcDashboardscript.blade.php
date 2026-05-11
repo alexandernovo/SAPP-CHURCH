@@ -132,6 +132,158 @@
                     .addEventListener('change', loadMonthlyBreakdown);
             }
 
+            (function initDashboardDocChart() {
+                var root = document.getElementById('sappcDocChartRoot');
+                var canvas = document.getElementById('sappcDocChart');
+                if (!root || !canvas || typeof Chart === 'undefined') {
+                    return;
+                }
+                var monthlyBase = root.getAttribute('data-monthly-url');
+                if (!monthlyBase) {
+                    return;
+                }
+                var catSel = document.getElementById('sappcDocChartCategory');
+                var yearSel = document.getElementById('sappcDocChartYear');
+                if (!catSel || !yearSel) {
+                    return;
+                }
+
+                var docChart = null;
+                var monthFullNames = [
+                    'January',
+                    'February',
+                    'March',
+                    'April',
+                    'May',
+                    'June',
+                    'July',
+                    'August',
+                    'September',
+                    'October',
+                    'November',
+                    'December',
+                ];
+
+                function emptyTwelve() {
+                    var z = [];
+                    for (var i = 0; i < 12; i++) {
+                        z.push(0);
+                    }
+                    return z;
+                }
+
+                function applyChartData(labels, counts, yearNum) {
+                    var maxVal = 0;
+                    counts.forEach(function(c) {
+                        var n = typeof c === 'number' ? c : parseInt(c, 10);
+                        if (!isNaN(n) && n > maxVal) {
+                            maxVal = n;
+                        }
+                    });
+                    var suggested = maxVal <= 0 ? 5 : Math.ceil(maxVal * 1.12);
+
+                    if (!docChart) {
+                        docChart = new Chart(canvas, {
+                            type: 'bar',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    label: 'Requests',
+                                    data: counts,
+                                    backgroundColor: '#616161',
+                                    borderColor: '#424242',
+                                    borderWidth: 1,
+                                }],
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        display: false,
+                                    },
+                                    tooltip: {
+                                        callbacks: {
+                                            title: function(items) {
+                                                var ix = items.length && items[0] ? items[0].dataIndex : 0;
+                                                var name = monthFullNames[ix] || '';
+                                                return name + ' ' + yearNum;
+                                            },
+                                        },
+                                    },
+                                },
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        suggestedMax: suggested,
+                                        ticks: {
+                                            precision: 0,
+                                        },
+                                    },
+                                    x: {
+                                        ticks: {
+                                            maxRotation: 45,
+                                            minRotation: 0,
+                                            font: {
+                                                size: 10,
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        });
+                        return;
+                    }
+                    docChart.data.labels = labels;
+                    docChart.data.datasets[0].data = counts;
+                    if (docChart.options.scales && docChart.options.scales.y) {
+                        docChart.options.scales.y.suggestedMax = suggested;
+                    }
+                    docChart.update();
+                }
+
+                function loadChart() {
+                    var type = (catSel.value || 'all').toLowerCase();
+                    var year = parseInt(yearSel.value, 10);
+                    if (isNaN(year)) {
+                        year = new Date().getFullYear();
+                    }
+                    var u = buildQueryUrl(monthlyBase, {
+                        type: type,
+                        year: year,
+                    });
+                    fetchJson(u, {
+                            Accept: 'application/json',
+                        })
+                        .then(function(res) {
+                            var months = res.months || [];
+                            var labels = months.map(function(m) {
+                                return m.label != null ? String(m.label) : '';
+                            });
+                            var counts = months.map(function(m) {
+                                var c = m.count;
+                                return typeof c === 'number' ? c : parseInt(c, 10) || 0;
+                            });
+                            if (labels.length !== 12 || counts.length !== 12) {
+                                labels = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+                                counts = emptyTwelve();
+                            }
+                            applyChartData(labels, counts, year);
+                        })
+                        .catch(function() {
+                            applyChartData(
+                                ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'],
+                                emptyTwelve(),
+                                year
+                            );
+                        });
+                }
+
+                catSel.addEventListener('change', loadChart);
+                yearSel.addEventListener('change', loadChart);
+                loadChart();
+            })();
+
             var panel = document.getElementById('sappcRecordsPanel');
             if (!panel) return;
 
@@ -368,6 +520,110 @@
 
             var deleteUrl = panel.getAttribute('data-delete-url');
 
+            function swalSelectDashboardRowFirst() {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Select a record',
+                        text: 'Click a table row to highlight it, then use Edit or Delete.',
+                        confirmButtonText: 'OK',
+                    });
+                } else {
+                    window.alert('Select a table row first.');
+                }
+            }
+
+            function dashboardModuleUrl(documentType) {
+                var map = {
+                    Christening: panel.getAttribute('data-url-christening'),
+                    Confirmation: panel.getAttribute('data-url-confirmation'),
+                    Wedding: panel.getAttribute('data-url-wedding'),
+                    Burial: panel.getAttribute('data-url-burial'),
+                };
+                return (map[documentType] || '').trim();
+            }
+
+            function dashboardActionRowContext(btn) {
+                var tr = btn.closest('tr');
+                if (!tr || !tr.classList.contains('is-schedule-selected')) {
+                    return null;
+                }
+                var rid = (btn.getAttribute('data-record-id') || '').trim();
+                var trid = (tr.getAttribute('data-record-id') || '').trim();
+                if (!rid || rid !== trid) {
+                    return null;
+                }
+                var documentType = (tr.getAttribute('data-document-type') || '').trim();
+                if (!documentType) {
+                    return null;
+                }
+                return {
+                    recordId: rid,
+                    documentType: documentType,
+                };
+            }
+
+            var dashAppShellEl = document.getElementById('sappcDashApplicationShell');
+            var dashAppIframe = document.getElementById('sappcDashApplicationIframe');
+            var dashAppCloseBtn = document.getElementById('sappcDashApplicationClose');
+
+            function closeDashApplicationShell() {
+                if (dashAppIframe) {
+                    dashAppIframe.setAttribute('src', 'about:blank');
+                }
+                if (dashAppShellEl) {
+                    dashAppShellEl.hidden = true;
+                }
+                document.body.classList.remove('sappc-dash-app-shell-open');
+            }
+
+            function openDashApplicationShell(openUrlStr) {
+                if (!dashAppShellEl || !dashAppIframe) {
+                    return;
+                }
+                dashAppIframe.setAttribute('src', openUrlStr);
+                dashAppShellEl.hidden = false;
+                document.body.classList.add('sappc-dash-app-shell-open');
+            }
+
+            if (dashAppCloseBtn) {
+                dashAppCloseBtn.addEventListener('click', closeDashApplicationShell);
+            }
+
+            document.addEventListener('keydown', function(ev) {
+                if (ev.key !== 'Escape') {
+                    return;
+                }
+                if (!document.body.classList.contains('sappc-dash-app-shell-open')) {
+                    return;
+                }
+                closeDashApplicationShell();
+            });
+
+            var tbody = document.getElementById('sappcTableBody');
+            if (tbody) {
+                tbody.addEventListener('click', function(e) {
+                    if (e.target.closest('a,button')) {
+                        return;
+                    }
+                    var tr = e.target.closest('tr');
+                    if (!tr || tr.closest('#sappcTableBody') !== tbody) {
+                        return;
+                    }
+                    if (tr.classList.contains('sappc-table-empty') || tr.classList.contains('sappc-table-loading')) {
+                        return;
+                    }
+                    if (tr.classList.contains('is-schedule-selected')) {
+                        tr.classList.remove('is-schedule-selected');
+                        return;
+                    }
+                    tbody.querySelectorAll('tr.is-schedule-selected').forEach(function(x) {
+                        x.classList.remove('is-schedule-selected');
+                    });
+                    tr.classList.add('is-schedule-selected');
+                });
+            }
+
             function deleteRegistryRow(recordId, documentType) {
                 if (!deleteUrl) return;
                 var postHeaders = Object.assign({}, jsonHeaders, {
@@ -427,13 +683,58 @@
             }
 
             panel.addEventListener('click', function(e) {
-                var btn = e.target.closest('.sappc-action-delete');
-                if (!btn) return;
+                var delBtn = e.target.closest('.sappc-action-delete');
+                var editBtn = e.target.closest('.sappc-action-edit');
+                if (!delBtn && !editBtn) {
+                    return;
+                }
                 e.preventDefault();
-                var rid = btn.getAttribute('data-record-id');
-                var dtype = btn.getAttribute('data-document-type');
-                if (!rid || !dtype || !deleteUrl) return;
+                var btn = delBtn || editBtn;
+                var ctx = dashboardActionRowContext(btn);
+                if (!ctx) {
+                    swalSelectDashboardRowFirst();
+                    return;
+                }
 
+                if (editBtn) {
+                    var target = dashboardModuleUrl(ctx.documentType);
+                    if (!target) {
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Cannot open',
+                                text: 'No module URL is configured for this document type.',
+                            });
+                        } else {
+                            window.alert('No module URL for this document type.');
+                        }
+                        return;
+                    }
+                    if (!dashAppShellEl || !dashAppIframe) {
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Cannot open',
+                                text: 'Application editor is not available on this page.',
+                            });
+                        }
+                        return;
+                    }
+                    var openUrl;
+                    try {
+                        openUrl = new URL(target, window.location.href);
+                    } catch (err1) {
+                        openUrl = new URL(String(target), window.location.origin);
+                    }
+                    openUrl.searchParams.set('sappc_dash_app', ctx.recordId);
+                    openUrl.searchParams.set('embed', '1');
+                    openDashApplicationShell(openUrl.toString());
+                    return;
+                }
+
+                if (!deleteUrl) {
+                    return;
+                }
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
                         title: 'Delete this record?',
@@ -444,12 +745,14 @@
                         cancelButtonText: 'Cancel',
                         focusCancel: true,
                     }).then(function(res) {
-                        if (res.isConfirmed) deleteRegistryRow(rid, dtype);
+                        if (res.isConfirmed) {
+                            deleteRegistryRow(ctx.recordId, ctx.documentType);
+                        }
                     });
                 } else if (
                     window.confirm('Delete this record? This action cannot be undone.')
                 ) {
-                    deleteRegistryRow(rid, dtype);
+                    deleteRegistryRow(ctx.recordId, ctx.documentType);
                 }
             });
         });

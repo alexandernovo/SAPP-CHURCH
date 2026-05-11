@@ -149,7 +149,11 @@
                 <section class="sappc-table-panel sappc-table-panel--below-overview" id="sappcRecordsPanel"
                     data-records-url="{{ route('admin.dashboard.records') }}"
                     data-delete-url="{{ route('admin.dashboard.records.delete') }}"
-                    data-per-page-options="{{ json_encode($perPageOptions) }}">
+                    data-per-page-options="{{ json_encode($perPageOptions) }}"
+                    data-url-christening="{{ route('admin.christening') }}"
+                    data-url-confirmation="{{ route('admin.confirmation') }}"
+                    data-url-wedding="{{ route('admin.wedding') }}"
+                    data-url-burial="{{ route('admin.burial') }}">
                     <div class="sappc-table-toolbar">
                         <div class="sappc-table-toolbar_row sappc-table-toolbar_row--primary">
                             <div class="sappc-table-toolbar_entries">
@@ -226,35 +230,46 @@
                     </div>
 
                 </section>
+
+                <div id="sappcDashApplicationShell" class="sappc-dash-app-shell" hidden>
+                    <div class="sappc-dash-app-shell_bar">
+                        <button type="button" class="sappc-dash-app-shell_close" id="sappcDashApplicationClose"
+                            aria-label="Close application editor">
+                            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <iframe class="sappc-dash-app-shell_iframe" id="sappcDashApplicationIframe" title="Application form"
+                        src="about:blank"></iframe>
+                </div>
+
                 <button type="button" id="sappcReloadRecords" class="sappc-table-reload-bar_btn"
                     title="Reload page" aria-label="Reload page">
                     <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
                     <span class="sappc-table-reload-bar_text">Reload</span>
                 </button>
-                <section class="sappc-chart-section">
+                <section class="sappc-chart-section" id="sappcDocChartRoot"
+                    data-monthly-url="{{ route('admin.dashboard.stats.monthly') }}">
                     <h2 class="sappc-chart-section_title">STATISTIC DATA CHART</h2>
                     <div class="sappc-chart-card">
                         <div class="sappc-chart-card_head">
                             <div class="sappc-chart-card_head-lead" aria-hidden="true"></div>
-                            <h3 class="sappc-chart-card_subtitle">Number of Document Request</h3>
+                            <h3 class="sappc-chart-card_subtitle">Number of document requests by month</h3>
                             <div class="sappc-chart-card_filters">
-                                <select class="form-select form-select-sm" aria-label="Category">
-                                    <option>Category</option>
-                                    <option>Christening</option>
-                                    <option>Confirmation</option>
-                                    <option>Wedding</option>
-                                    <option>Burial</option>
+                                <label class="visually-hidden" for="sappcDocChartCategory">Document type</label>
+                                <select id="sappcDocChartCategory" class="form-select form-select-sm"
+                                    aria-label="Document type">
+                                    <option value="all" selected>All types of services</option>
+                                    <option value="christening">Christening</option>
+                                    <option value="confirmation">Confirmation</option>
+                                    <option value="wedding">Wedding</option>
+                                    <option value="burial">Burial</option>
                                 </select>
-                                <select class="form-select form-select-sm" aria-label="Months">
-                                    <option>Months</option>
-                                    @foreach ($chartMonthLabels as $m)
-                                        <option value="{{ $m }}">{{ $m }}</option>
+                                <label class="visually-hidden" for="sappcDocChartYear">Year</label>
+                                <select id="sappcDocChartYear" class="form-select form-select-sm" aria-label="Year">
+                                    @foreach ($statsYearOptions as $y)
+                                        <option value="{{ $y }}" @selected((int) $y === (int) $statsYear)>{{ $y }}
+                                        </option>
                                     @endforeach
-                                </select>
-                                <select class="form-select form-select-sm" aria-label="Year">
-                                    <option>Year</option>
-                                    <option>2026</option>
-                                    <option>2025</option>
                                 </select>
                             </div>
                         </div>
@@ -276,54 +291,6 @@
     <script src="{{ asset('js/adminSidebar.js') }}"></script>
     @stack('scripts')
     <script src="{{ asset('js/sappcDashboardDataTable.js') }}"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof Chart === 'undefined') return;
-            var el = document.getElementById('sappcDocChart');
-            if (!el) return;
-            var months = @json($chartMonthLabels);
-            new Chart(el, {
-                type: 'bar',
-                data: {
-                    labels: months,
-                    datasets: [{
-                        label: 'Requests',
-                        data: [1, 2, 0, 3, 2, 4, 1, 2, 3, 2, 1, 2],
-                        backgroundColor: '#4a4a4a',
-                        borderColor: '#3a3a3a',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 5,
-                            ticks: {
-                                stepSize: 1
-                            }
-                        },
-                        x: {
-                            ticks: {
-                                maxRotation: 45,
-                                minRotation: 45,
-                                font: {
-                                    size: 10
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        });
-    </script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @include('dashboard.js.sappcDashboardscript', ['initialTablePayload' => $initialTablePayload])
 </body>

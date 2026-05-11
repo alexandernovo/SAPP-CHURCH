@@ -286,10 +286,21 @@ class ChristeningController extends Controller
 
         $row = $this->mapApplicationRequestToDetailsRow($request);
 
-        $existing = DB::table('christening_details')
-            ->where('christeningId', $christeningId)
-            ->orderByDesc('christeningDetailsId')
-            ->first();
+        try {
+            $existing = DB::table('christening_details')
+                ->where('christeningId', $christeningId)
+                ->orderByDesc('christeningDetailsId')
+                ->first();
+        } catch (QueryException $e) {
+            report($e);
+
+            return response()->json([
+                'ok' => false,
+                'message' => $this->isCorruptedChristeningDetailsIndex($e)
+                    ? 'The christening details index appears corrupted. Please repair the table and try again.'
+                    : 'Could not load christening details. Please try again.',
+            ], 422);
+        }
 
         if ($existing) {
             $row['updated_at'] = now();
@@ -335,10 +346,21 @@ class ChristeningController extends Controller
 
         $christening = DB::table('christening')->where('christeningId', $christeningId)->first();
 
-        $details = DB::table('christening_details')
-            ->where('christeningId', $christeningId)
-            ->orderByDesc('christeningDetailsId')
-            ->first();
+        try {
+            $details = DB::table('christening_details')
+                ->where('christeningId', $christeningId)
+                ->orderByDesc('christeningDetailsId')
+                ->first();
+        } catch (QueryException $e) {
+            report($e);
+
+            return response()->json([
+                'ok' => false,
+                'message' => $this->isCorruptedChristeningDetailsIndex($e)
+                    ? 'The christening details index appears corrupted. Please repair the table and try again.'
+                    : 'Could not load christening details. Please try again.',
+            ], 422);
+        }
 
         $data = $this->mapChristeningDetailsRowToFormFields($details);
 
@@ -354,10 +376,27 @@ class ChristeningController extends Controller
 
         $data['baptism_place'] = self::CHRISTENING_FIXED_BAPTISM_PLACE;
 
+        if ($christening !== null) {
+            $guardianContact = trim((string) ($data['guardian_contact'] ?? ''));
+            if ($guardianContact === '') {
+                $fromRegistry = $this->digitsOnlyForContactSlots((string) ($christening->contactNum ?? ''));
+                if ($fromRegistry !== '') {
+                    $data['guardian_contact'] = $fromRegistry;
+                }
+            }
+        }
+
         return response()->json([
             'ok' => true,
             'data' => $data,
         ]);
+    }
+
+    private function digitsOnlyForContactSlots(string $raw): string
+    {
+        $digits = preg_replace('/\D+/', '', $raw) ?? '';
+
+        return $digits === '' ? '' : (strlen($digits) > 11 ? substr($digits, -11) : $digits);
     }
 
 
@@ -968,10 +1007,21 @@ class ChristeningController extends Controller
 
         $christening = DB::table('christening')->where('christeningId', $christeningId)->first();
 
-        $details = DB::table('christening_details')
-            ->where('christeningId', $christeningId)
-            ->orderByDesc('christeningDetailsId')
-            ->first();
+        try {
+            $details = DB::table('christening_details')
+                ->where('christeningId', $christeningId)
+                ->orderByDesc('christeningDetailsId')
+                ->first();
+        } catch (QueryException $e) {
+            report($e);
+
+            return response()->json([
+                'ok' => false,
+                'message' => $this->isCorruptedChristeningDetailsIndex($e)
+                    ? 'The christening details index appears corrupted. Please repair the table and try again.'
+                    : 'Could not load christening details. Please try again.',
+            ], 422);
+        }
 
         $overlay = $this->mapChristeningDetailsRowToCertificationOverlay($details);
 
@@ -995,6 +1045,17 @@ class ChristeningController extends Controller
             'has_saved_cert' => $certRow !== null,
             'data' => $overlay,
         ]);
+    }
+
+    private function isCorruptedChristeningDetailsIndex(QueryException $e): bool
+    {
+        $errorInfo = $e->errorInfo;
+        $vendorCode = isset($errorInfo[1]) ? (int) $errorInfo[1] : null;
+        $message = strtolower($e->getMessage());
+
+        return $vendorCode === 1712
+            && str_contains($message, 'christening_details')
+            && str_contains($message, 'corrupt');
     }
 
     /**

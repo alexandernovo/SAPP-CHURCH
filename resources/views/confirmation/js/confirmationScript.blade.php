@@ -259,6 +259,32 @@
             var url = $panel.attr('data-records-url');
             if (!url) return;
 
+            function tryOpenConfirmationApplicationFromDashboardQuery() {
+                try {
+                    var u = new URL(window.location.href);
+                    var id = (u.searchParams.get('sappc_dash_app') || '').trim();
+                    if (!id) {
+                        return;
+                    }
+                    u.searchParams.delete('sappc_dash_app');
+                    var q = u.searchParams.toString();
+                    window.history.replaceState({}, '', u.pathname + (q ? '?' + q : '') + u.hash);
+                    $('#cnScheduleConfirmationId').val(id);
+                    $('#confirmationTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                    $('#confirmationTableBody tr').each(function() {
+                        if (($(this).attr('data-record-id') || '').trim() === id) {
+                            $(this).addClass('is-schedule-selected');
+                            return false;
+                        }
+                    });
+                    setTimeout(function() {
+                        $('#confirmationApplicationFormBtn').trigger('click');
+                    }, 0);
+                } catch (e1) {}
+            }
+
+            tryOpenConfirmationApplicationFromDashboardQuery();
+
             var csrf = getMetaCsrf();
             var jsonHeaders = {
                 Accept: 'application/json',
@@ -346,7 +372,10 @@
                         'X-Requested-With': 'XMLHttpRequest',
                     },
                 })
-                    .done(renderTable)
+                    .done(function(res) {
+                        renderTable(res);
+                        tryOpenConfirmationApplicationFromDashboardQuery();
+                    })
                     .fail(function(xhr, textStatus, errorThrown) {
                         var msg =
                             (xhr && xhr.status) ||
@@ -1587,6 +1616,14 @@
                                     if (inst) inst.hide();
                                 }
                                 fetchRecords();
+                                var okMsgCn =
+                                    res && res.message ? String(res.message) : 'Schedule reserved successfully.';
+                                sappcCnSwal({
+                                    icon: 'success',
+                                    title: 'Reserved',
+                                    text: okMsgCn,
+                                    confirmButtonText: 'OK',
+                                });
                             }
                         })
                         .fail(function(xhr) {

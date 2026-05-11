@@ -365,8 +365,9 @@
                                     <div class="sappcChOfficialField sappcChOfficialFieldGrow">
                                         <label class="sappcChOfficialLabel" for="chAppDob">Date of birth <span
                                                 class="sappcChOfficialLabelSub">(if registered)</span></label>
-                                        <input type="text" class="sappcChOfficialInput sappcChOfficialInputRounded"
-                                            id="chAppDob" name="date_of_birth">
+                                        <input type="date" class="sappcChOfficialInput sappcChOfficialInputRounded"
+                                            id="chAppDob" name="date_of_birth"
+                                            title="Date of birth (if registered)">
                                     </div>
                                     <div class="sappcChOfficialField sappcChOfficialFieldNarrow">
                                         <label class="sappcChOfficialLabel" for="chAppRegistryNo">Registry number</label>
@@ -414,13 +415,13 @@
 
                                 <div class="sappcChOfficialDottedRow">
                                     <span>Date</span>
-                                    <input type="text" class="sappcChOfficialDottedInput" name="marriage_date_1"
+                                    <input type="date" class="sappcChOfficialDottedInput" name="marriage_date_1"
                                         aria-label="Marriage date (first)">
                                     <span>Date</span>
-                                    <input type="text" class="sappcChOfficialDottedInput" name="marriage_date_2"
+                                    <input type="date" class="sappcChOfficialDottedInput" name="marriage_date_2"
                                         aria-label="Marriage date (second)">
                                     <span>Date</span>
-                                    <input type="text" class="sappcChOfficialDottedInput" name="marriage_date_3"
+                                    <input type="date" class="sappcChOfficialDottedInput" name="marriage_date_3"
                                         aria-label="Marriage date (third)">
                                 </div>
                                 <div class="sappcChOfficialDottedRow">
@@ -456,8 +457,9 @@
                                     <label class="sappcChOfficialLabel" for="chAppBaptismDate"><span
                                             class="sappcChOfficialHiligaynon">Petsa kang pagbunyag</span> <span
                                             class="sappcChOfficialLabelNote">(Date of Baptism)</span></label>
-                                    <input type="text" class="sappcChOfficialInput sappcChOfficialInputRounded"
-                                        id="chAppBaptismDate" name="baptism_date">
+                                    <input type="date" class="sappcChOfficialInput sappcChOfficialInputRounded"
+                                        id="chAppBaptismDate" name="baptism_date"
+                                        title="Date of baptism">
                                 </div>
                                 <div class="sappcChOfficialField">
                                     <label class="sappcChOfficialLabel" for="chAppBaptismPlace"><span

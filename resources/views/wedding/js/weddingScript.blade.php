@@ -274,6 +274,32 @@
             var fetchRecords = function() {};
 
             if (recordsUrl) {
+            function tryOpenWeddingApplicationFromDashboardQuery() {
+                try {
+                    var u = new URL(window.location.href);
+                    var id = (u.searchParams.get('sappc_dash_app') || '').trim();
+                    if (!id) {
+                        return;
+                    }
+                    u.searchParams.delete('sappc_dash_app');
+                    var q = u.searchParams.toString();
+                    window.history.replaceState({}, '', u.pathname + (q ? '?' + q : '') + u.hash);
+                    $('#wdScheduleWeddingId').val(id);
+                    $('#weddingTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                    $('#weddingTableBody tr').each(function() {
+                        if (($(this).attr('data-record-id') || '').trim() === id) {
+                            $(this).addClass('is-schedule-selected');
+                            return false;
+                        }
+                    });
+                    setTimeout(function() {
+                        $('#weddingApplicationFormBtn').trigger('click');
+                    }, 0);
+                } catch (e1) {}
+            }
+
+            tryOpenWeddingApplicationFromDashboardQuery();
+
             var state = {
                 page: 1,
                 per_page: 10,
@@ -354,7 +380,10 @@
                         'X-Requested-With': 'XMLHttpRequest',
                     },
                 })
-                    .done(renderTable)
+                    .done(function(res) {
+                        renderTable(res);
+                        tryOpenWeddingApplicationFromDashboardQuery();
+                    })
                     .fail(function(xhr, textStatus, errorThrown) {
                         var msg =
                             (xhr && xhr.status) ||
@@ -1358,6 +1387,18 @@
                                     if (inst) inst.hide();
                                 }
                                 fetchRecords();
+                                var okMsgWd =
+                                    res && res.message ? String(res.message) : 'Schedule reserved successfully.';
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Reserved',
+                                        text: okMsgWd,
+                                        confirmButtonText: 'OK',
+                                    });
+                                } else {
+                                    window.alert(okMsgWd);
+                                }
                             }
                         })
                         .fail(function(xhr) {

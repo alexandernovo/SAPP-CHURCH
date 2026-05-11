@@ -93,6 +93,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    text-decoration: none;
+}
+
+.sappc-cert-report_close:hover,
+.sappc-cert-report_close:focus,
+.sappc-cert-report_close:focus-visible {
+    text-decoration: none;
 }
 
 .sappc-cert-report_close:hover {
