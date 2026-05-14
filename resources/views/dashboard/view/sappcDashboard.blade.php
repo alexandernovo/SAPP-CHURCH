@@ -8,6 +8,10 @@
     <title>Dashboard — {{ config('app.name', 'SAPP Church') }}</title>
     @include('layouts.cdn')
     <link rel="stylesheet" href="{{ asset('css/sappcDashboard/sappcDashboard.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/christening/applicationOfChristening.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/confirmation/confirmationKompirmaModals.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/wedding/marriageApplicationKasal.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/burial/burialApplication.css') }}">
     @stack('styles')
 </head>
 
@@ -231,15 +235,81 @@
 
                 </section>
 
-                <div id="sappcDashApplicationShell" class="sappc-dash-app-shell" hidden>
-                    <div class="sappc-dash-app-shell_bar">
-                        <button type="button" class="sappc-dash-app-shell_close" id="sappcDashApplicationClose"
-                            aria-label="Close application editor">
-                            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
-                        </button>
-                    </div>
-                    <iframe class="sappc-dash-app-shell_iframe" id="sappcDashApplicationIframe" title="Application form"
-                        src="about:blank"></iframe>
+                @include('christening.partials.applicationModal')
+                @include('confirmation.partials.applicationModal')
+                @include('wedding.partials.marriageApplicationModal')
+                @include('burial.partials.burialApplicationModal')
+
+                <div class="d-none" aria-hidden="true">
+                    <input type="hidden" id="chScheduleChristeningId" value="">
+                    <button type="button" id="christeningApplicationFormBtn"
+                        data-load-url="{{ route('admin.christening.application-details') }}"></button>
+                    <section id="christeningRecordsPanel"
+                        data-records-url="{{ route('admin.dashboard.records') }}"
+                        data-registry-type="christening"
+                        data-application-details-url="{{ route('admin.christening.application-details') }}"
+                        data-payment-details-url="{{ route('admin.christening.payment-details') }}"
+                        data-payment-save-url="{{ route('admin.christening.payment-save') }}"
+                        data-certification-save-url="{{ route('admin.christening.certification-form') }}"
+                        data-certification-details-url="{{ route('admin.christening.certification-details') }}"
+                        data-christening-delete-url="{{ route('admin.christening.record-delete') }}"
+                        data-schedule-details-url="{{ route('admin.christening.schedule-details') }}">
+                    </section>
+                </div>
+
+                <div class="d-none" aria-hidden="true">
+                    <input type="hidden" id="cnScheduleConfirmationId" value="">
+                    <button type="button" id="confirmationApplicationFormBtn"
+                        data-confirmation-application-details-url="{{ route('admin.confirmation.application-details') }}"
+                        data-confirmation-arancel-details-url="{{ route('admin.confirmation.arancel-details') }}"></button>
+                    <section id="confirmationRecordsPanel"
+                        data-records-url="{{ route('admin.dashboard.records') }}"
+                        data-registry-type="confirmation"
+                        data-payment-details-url="{{ route('admin.confirmation.payment-details') }}"
+                        data-payment-save-url="{{ route('admin.confirmation.payment-save') }}"
+                        data-confirmation-application-details-url="{{ route('admin.confirmation.application-details') }}"
+                        data-confirmation-application-save-url="{{ route('admin.confirmation.application-save') }}"
+                        data-confirmation-arancel-details-url="{{ route('admin.confirmation.arancel-details') }}"
+                        data-confirmation-arancel-save-url="{{ route('admin.confirmation.arancel-save') }}"
+                        data-confirmation-certification-details-url="{{ route('admin.confirmation.certification-details') }}"
+                        data-confirmation-delete-url="{{ route('admin.confirmation.record-delete') }}"
+                        data-schedule-details-url="{{ route('admin.confirmation.schedule-details') }}">
+                    </section>
+                </div>
+
+                <div class="d-none" aria-hidden="true">
+                    <input type="hidden" id="wdScheduleWeddingId" value="">
+                    <button type="button" id="weddingApplicationFormBtn"
+                        data-marriage-application-details-url="{{ route('admin.wedding.marriage-application-details') }}"
+                        data-marriage-application-save-url="{{ route('admin.wedding.marriage-application-save') }}"></button>
+                    <section id="weddingRecordsPanel"
+                        data-records-url="{{ route('admin.dashboard.records') }}"
+                        data-registry-type="wedding"
+                        data-payment-details-url="{{ route('admin.wedding.payment-details') }}"
+                        data-payment-save-url="{{ route('admin.wedding.payment-save') }}"
+                        data-marriage-application-details-url="{{ route('admin.wedding.marriage-application-details') }}"
+                        data-marriage-application-save-url="{{ route('admin.wedding.marriage-application-save') }}"
+                        data-certification-details-url="{{ route('admin.wedding.certification-details') }}"
+                        data-wedding-delete-url="{{ route('admin.wedding.record-delete') }}"
+                        data-schedule-details-url="{{ route('admin.wedding.schedule-details') }}">
+                    </section>
+                </div>
+
+                <div class="d-none" aria-hidden="true">
+                    <input type="hidden" id="brScheduleBurialId" value="">
+                    <button type="button" id="burialApplicationFormBtn"></button>
+                    <section id="burialRecordsPanel"
+                        data-records-url="{{ route('admin.dashboard.records') }}"
+                        data-registry-type="burial"
+                        data-payment-details-url="{{ route('admin.burial.payment-details') }}"
+                        data-payment-save-url="{{ route('admin.burial.payment-save') }}"
+                        data-burial-delete-url="{{ route('admin.burial.record-delete') }}"
+                        data-burial-application-details-url="{{ route('admin.burial.application-details') }}"
+                        data-burial-application-save-url="{{ route('admin.burial.application-save') }}"
+                        data-certification-save-url="{{ route('admin.burial.certification-form') }}"
+                        data-certification-details-url="{{ route('admin.burial.certification-details') }}"
+                        data-schedule-details-url="{{ route('admin.burial.schedule-details') }}">
+                    </section>
                 </div>
 
                 <button type="button" id="sappcReloadRecords" class="sappc-table-reload-bar_btn"
@@ -292,6 +362,10 @@
     @stack('scripts')
     <script src="{{ asset('js/sappcDashboardDataTable.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    @include('christening.js.christeningScript', ['initialTablePayload' => $initialTablePayload])
+    @include('confirmation.js.confirmationScript')
+    @include('wedding.js.weddingScript')
+    @include('burial.js.burialScript')
     @include('dashboard.js.sappcDashboardscript', ['initialTablePayload' => $initialTablePayload])
 </body>
 

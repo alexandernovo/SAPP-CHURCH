@@ -268,6 +268,15 @@
                 } catch (e1) {}
             }
 
+            function isDashboardEmbeddedAppContext() {
+                try {
+                    var u = new URL(window.location.href);
+                    return (u.searchParams.get('embed') || '').trim() === '1';
+                } catch (e1) {
+                    return false;
+                }
+            }
+
             tryOpenBurialApplicationFromDashboardQuery();
 
             var csrf = getMetaCsrf();
@@ -280,6 +289,7 @@
 
             var burialAppDetailsUrl = ($panel.attr('data-burial-application-details-url') || '').trim();
             var burialAppSaveUrl = ($panel.attr('data-burial-application-save-url') || '').trim();
+            var certificationSaveUrl = ($panel.attr('data-certification-save-url') || '').trim();
             var certificationDetailsUrl = ($panel.attr('data-certification-details-url') || '').trim();
             var scheduleDetailsUrl = ($panel.attr('data-schedule-details-url') || '').trim();
             var state = {
@@ -855,6 +865,36 @@
                     };
                 }
 
+                function saveBurialCertificationRecord() {
+                    var bid = ($('#brScheduleBurialId').val() || '').trim();
+                    if (!bid) {
+                        sappcSwalSelectBurialRowFirst();
+                        return $.Deferred().reject({
+                            responseJSON: {
+                                message: 'Please select a burial record first.'
+                            }
+                        }).promise();
+                    }
+                    if (!certificationSaveUrl) {
+                        return $.Deferred().reject({
+                            responseJSON: {
+                                message: 'Certification save is not configured.'
+                            }
+                        }).promise();
+                    }
+
+                    var payload = {
+                        burial_id: parseInt(bid, 10),
+                        reference_code: certFieldValue('#brCertRefCode'),
+                        client: certFieldValue('#brCertClient'),
+                        contact_number: sappcPhMobileDigitsOnly(certFieldValue('#brCertContact')),
+                        top_address: certFieldValue('#brCertTopAddress'),
+                        date_issued: certFieldValue('#brCertDateIssued'),
+                    };
+
+                    return fetchPostJson(certificationSaveUrl, payload, csrf);
+                }
+
                 function printBurialCertificationSheet() {
                     var d = certLineText();
                     var rawBirth = certFieldValue('#brCertBirthday');
@@ -952,7 +992,44 @@
 
                 $('#brCertAddRecordBtn').on('click', function(e) {
                     e.preventDefault();
-                    printBurialCertificationSheet();
+                    var $btn = $(this);
+                    $btn.prop('disabled', true);
+                    saveBurialCertificationRecord()
+                        .done(function(res) {
+                            printBurialCertificationSheet();
+                            var msg = (res && res.message) ? res.message : 'Certification record saved.';
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Saved',
+                                    text: msg
+                                });
+                            }
+                        })
+                        .fail(function(xhr) {
+                            var msg = 'Certification could not be saved.';
+                            var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                            if (data && data.errors) {
+                                var vals = Object.values(data.errors);
+                                if (vals.length && Array.isArray(vals[0]) && vals[0][0]) {
+                                    msg = vals[0][0];
+                                }
+                            } else if (data && data.message) {
+                                msg = data.message;
+                            }
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: msg
+                                });
+                            } else {
+                                window.alert(msg);
+                            }
+                        })
+                        .always(function() {
+                            $btn.prop('disabled', false);
+                        });
                 });
                 } catch (err) {
                     if (window.console && typeof window.console.error === 'function') {
@@ -1418,6 +1495,28 @@
                 });
             });
 
+            $('#burialTableBody').on('click', '.sappc-icon-action--view, .sappc-icon-action--edit', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var id = ($(this).attr('data-record-id') || '').trim();
+                if (!id) {
+                    return;
+                }
+                if (!burialAppDetailsUrl) {
+                    sappcBrSwal({
+                        icon: 'warning',
+                        title: 'Not configured',
+                        text: 'Burial application is not configured.',
+                    });
+                    return;
+                }
+                $('#brScheduleBurialId').val(id);
+                $('#brAppBurialId').val(id);
+                $('#burialTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                $(this).closest('tr').addClass('is-schedule-selected');
+                $('#burialApplicationFormBtn').trigger('click');
+            });
+
             (function initBurialApplicationModal() {
                 var $burialAppModal = $('#burialApplicationFormModal');
                 var $burialAppForm = $('#burialApplicationForm');
@@ -1557,6 +1656,7 @@
                     fetchPostJson(burialAppSaveUrl, payload, csrf)
                         .done(function(res) {
                             if (res && res.ok) {
+                                var shouldReopenFromDashboard = isDashboardEmbeddedAppContext();
                                 bsModal.hide();
                                 var msg = res && res.message ? res.message : 'Burial application saved.';
                                 sappcBrSwal({
@@ -1564,6 +1664,11 @@
                                     title: 'Saved',
                                     text: msg,
                                 });
+                                if (shouldReopenFromDashboard) {
+                                    setTimeout(function() {
+                                        $('#burialApplicationFormBtn').trigger('click');
+                                    }, 120);
+                                }
                             }
                         })
                         .fail(function(xhr) {

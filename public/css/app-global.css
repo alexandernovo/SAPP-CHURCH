@@ -11,3 +11,11 @@ html {
 body {
     font-family: Arial, Helvetica, sans-serif;
 }
+
+*, *::before, *::after {
+    font-family: inherit;
+}
+
+input, button, select, textarea {
+    font-family: inherit;
+}

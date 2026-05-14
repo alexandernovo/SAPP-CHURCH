@@ -423,9 +423,14 @@ class BurialController extends Controller
             return response()->json(['message' => 'Burial record not found.'], 404);
         }
 
+        $details = DB::table('burial_details')
+            ->where('burialId', $burialId)
+            ->orderByDesc('burialDetailsId')
+            ->first();
+
         return response()->json([
             'ok' => true,
-            'data' => $this->decodeBurialApplication($row),
+            'data' => $this->mapBurialDetailsRowToApplicationPayload($details),
         ]);
     }
 
@@ -446,18 +451,25 @@ class BurialController extends Controller
         }
         unset($data['burial_id'], $data['_token']);
 
-        $encoded = json_encode($data, JSON_UNESCAPED_UNICODE);
-        if ($encoded === false) {
-            return response()->json([
-                'ok' => false,
-                'message' => 'Could not encode the burial application data.',
-            ], 422);
-        }
+        $detailsRow = $this->mapBurialApplicationPayloadToDetailsRow($data);
 
         try {
-            DB::table('burial')->where('burialId', $burialId)->update([
-                'burialApplication' => $encoded,
-            ]);
+            DB::transaction(function () use ($burialId, $detailsRow) {
+                $existingDetails = DB::table('burial_details')->where('burialId', $burialId)->first();
+                if ($existingDetails) {
+                    DB::table('burial_details')
+                        ->where('burialDetailsId', $existingDetails->burialDetailsId)
+                        ->update(array_merge($detailsRow, [
+                            'updated_at' => now(),
+                        ]));
+                } else {
+                    DB::table('burial_details')->insert(array_merge($detailsRow, [
+                        'burialId' => $burialId,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]));
+                }
+            });
         } catch (QueryException $e) {
             report($e);
 
@@ -554,6 +566,78 @@ class BurialController extends Controller
         ]);
     }
 
+    public function burialCertificationForm(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'burial_id' => ['required', 'integer', 'min:1'],
+            'reference_code' => ['nullable', 'string', 'max:255'],
+            'client' => ['nullable', 'string', 'max:255'],
+            'contact_number' => ['nullable', 'string', 'max:50'],
+            'top_address' => ['nullable', 'string', 'max:500'],
+            'date_issued' => ['nullable', 'date'],
+        ]);
+
+        $burialId = (int) $validated['burial_id'];
+        $burial = DB::table('burial')->where('burialId', $burialId)->first();
+        if ($burial === null) {
+            return response()->json(['message' => 'Burial record not found.'], 404);
+        }
+
+        $resolvedReferenceCode = trim((string) ($validated['reference_code'] ?? ''));
+        if ($resolvedReferenceCode === '') {
+            $resolvedReferenceCode = trim((string) ($burial->referenceCode ?? ''));
+        }
+
+        $resolvedClient = trim((string) ($validated['client'] ?? ''));
+        if ($resolvedClient === '') {
+            $resolvedClient = trim(implode(' ', array_filter([
+                trim((string) ($burial->clientFName ?? '')),
+                trim((string) ($burial->clientMName ?? '')),
+                trim((string) ($burial->clientLName ?? '')),
+            ], fn ($part) => $part !== '')));
+        }
+
+        $resolvedAddress = trim((string) ($validated['top_address'] ?? ''));
+        if ($resolvedAddress === '') {
+            $resolvedAddress = trim((string) ($burial->address ?? ''));
+        }
+
+        $resolvedContact = trim((string) ($validated['contact_number'] ?? ''));
+        if ($resolvedContact === '') {
+            $resolvedContact = trim((string) ($burial->contactNum ?? ''));
+        }
+
+        $resolvedDate = $this->nullableDate($validated['date_issued'] ?? null);
+        if ($resolvedDate === null) {
+            $resolvedDate = now()->format('Y-m-d');
+        }
+
+        try {
+            DB::table('certification_details')->insert([
+                'referenceCode' => $this->nullableText($resolvedReferenceCode),
+                'client' => $this->nullableText($resolvedClient),
+                'address' => $this->nullableText($resolvedAddress),
+                'sex' => $this->nullableText($burial->sex ?? null),
+                'contactNumber' => $this->nullableText($resolvedContact),
+                'date' => $resolvedDate,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } catch (QueryException $e) {
+            report($e);
+
+            return response()->json([
+                'ok' => false,
+                'message' => 'Could not save certification. If this persists, run database migrations and try again.',
+            ], 422);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Certification record saved.',
+        ]);
+    }
+
     public function deleteBurialRecord(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -589,22 +673,112 @@ class BurialController extends Controller
         ]);
     }
 
-    private function decodeBurialApplication(object $row): array
+    private function mapBurialDetailsRowToApplicationPayload(?object $details): array
     {
-        $raw = $row->burialApplication ?? null;
-        if ($raw === null || $raw === '') {
+        if ($details === null) {
             return [];
         }
-        if (is_string($raw)) {
-            $decoded = json_decode($raw, true);
 
-            return is_array($decoded) ? $decoded : [];
-        }
-        if (is_array($raw)) {
-            return $raw;
-        }
+        return [
+            'deceased_name' => (string) ($details->deceasedName ?? ''),
+            'deceased_age' => (string) ($details->deceasedAge ?? ''),
+            'marital_status' => (string) ($details->maritalStatus ?? ''),
+            'spouse_name' => (string) ($details->spouseName ?? ''),
+            'deceased_address' => (string) ($details->deceasedAddress ?? ''),
+            'kinamatyan' => (string) ($details->kinamatyan ?? ''),
+            'occupation' => (string) ($details->occupation ?? ''),
+            'claimant_name' => (string) ($details->claimantName ?? ''),
+            'claimant_relation' => (string) ($details->claimantRelation ?? ''),
+            'claimant_place' => (string) ($details->claimantPlace ?? ''),
+            'church_obligation' => (string) ($details->churchObligation ?? ''),
+            'parish_bec' => (string) ($details->parishBec ?? ''),
+            'bec_selda' => (string) ($details->becSelda ?? ''),
+            'stewardship' => (string) ($details->stewardship ?? ''),
+            'baptized_sacrament' => (string) ($details->baptizedSacrament ?? ''),
+            'baptism_date' => $this->dateForForm($details->baptismDate ?? null),
+            'death_date' => $this->dateForForm($details->deathDate ?? null),
+            'burial_date' => $this->dateForForm($details->burialDate ?? null),
+            'burial_time' => $details->burialTime !== null ? substr((string) $details->burialTime, 0, 5) : '',
+            'burial_permit_no' => (string) ($details->burialPermitNo ?? ''),
+            'minor_father_name' => (string) ($details->minorFatherName ?? ''),
+            'minor_mother_name' => (string) ($details->minorMotherName ?? ''),
+            'ceremony_type' => (string) ($details->ceremonyType ?? ''),
+            'interment_type' => (string) ($details->intermentType ?? ''),
+            'niche_no' => (string) ($details->nicheNo ?? ''),
+            'ar_panteon_amount' => $details->arPanteonAmount !== null ? (string) $details->arPanteonAmount : '',
+            'ar_panteon_remarks' => (string) ($details->arPanteonRemarks ?? ''),
+            'ar_land_amount' => $details->arLandAmount !== null ? (string) $details->arLandAmount : '',
+            'ar_land_remarks' => (string) ($details->arLandRemarks ?? ''),
+            'ar_kalkal_amount' => $details->arKalkalAmount !== null ? (string) $details->arKalkalAmount : '',
+            'ar_kalkal_remarks' => (string) ($details->arKalkalRemarks ?? ''),
+            'ar_cemetery_amount' => $details->arCemeteryAmount !== null ? (string) $details->arCemeteryAmount : '',
+            'ar_cemetery_remarks' => (string) ($details->arCemeteryRemarks ?? ''),
+            'ar_mass_amount' => $details->arMassAmount !== null ? (string) $details->arMassAmount : '',
+            'ar_mass_remarks' => (string) ($details->arMassRemarks ?? ''),
+            'ar_proroga_amount' => $details->arProrogaAmount !== null ? (string) $details->arProrogaAmount : '',
+            'ar_proroga_remarks' => (string) ($details->arProrogaRemarks ?? ''),
+            'ar_others_amount' => $details->arOthersAmount !== null ? (string) $details->arOthersAmount : '',
+            'ar_others_remarks' => (string) ($details->arOthersRemarks ?? ''),
+            'ar_extra_1_amount' => $details->arExtra1Amount !== null ? (string) $details->arExtra1Amount : '',
+            'ar_extra_1_remarks' => (string) ($details->arExtra1Remarks ?? ''),
+            'ar_extra_2_amount' => $details->arExtra2Amount !== null ? (string) $details->arExtra2Amount : '',
+            'ar_extra_2_remarks' => (string) ($details->arExtra2Remarks ?? ''),
+            'noted_bpc_chairman' => (string) ($details->notedByBpcChairman ?? ''),
+            'noted_parish_fiscal' => (string) ($details->notedByParishFiscalSecretary ?? ''),
+            'approved_parish_priest' => (string) ($details->approvedByParishPriest ?? ''),
+        ];
+    }
 
-        return [];
+    private function mapBurialApplicationPayloadToDetailsRow(array $data): array
+    {
+        return [
+            'deceasedName' => $this->nullableText($data['deceased_name'] ?? null),
+            'deceasedAge' => $this->nullableText($data['deceased_age'] ?? null),
+            'maritalStatus' => $this->nullableText($data['marital_status'] ?? null),
+            'spouseName' => $this->nullableText($data['spouse_name'] ?? null),
+            'deceasedAddress' => $this->nullableText($data['deceased_address'] ?? null),
+            'kinamatyan' => $this->nullableText($data['kinamatyan'] ?? null),
+            'occupation' => $this->nullableText($data['occupation'] ?? null),
+            'claimantName' => $this->nullableText($data['claimant_name'] ?? null),
+            'claimantRelation' => $this->nullableText($data['claimant_relation'] ?? null),
+            'claimantPlace' => $this->nullableText($data['claimant_place'] ?? null),
+            'churchObligation' => $this->nullableText($data['church_obligation'] ?? null),
+            'parishBec' => $this->nullableText($data['parish_bec'] ?? null),
+            'becSelda' => $this->nullableText($data['bec_selda'] ?? null),
+            'stewardship' => $this->nullableText($data['stewardship'] ?? null),
+            'baptizedSacrament' => $this->nullableText($data['baptized_sacrament'] ?? null),
+            'baptismDate' => $this->nullableDate($data['baptism_date'] ?? null),
+            'deathDate' => $this->nullableDate($data['death_date'] ?? null),
+            'burialDate' => $this->nullableDate($data['burial_date'] ?? null),
+            'burialTime' => $this->nullableTime($data['burial_time'] ?? null),
+            'burialPermitNo' => $this->nullableText($data['burial_permit_no'] ?? null),
+            'minorFatherName' => $this->nullableText($data['minor_father_name'] ?? null),
+            'minorMotherName' => $this->nullableText($data['minor_mother_name'] ?? null),
+            'ceremonyType' => $this->nullableText($data['ceremony_type'] ?? null),
+            'intermentType' => $this->nullableText($data['interment_type'] ?? null),
+            'nicheNo' => $this->nullableText($data['niche_no'] ?? null),
+            'arPanteonAmount' => $this->nullableInteger($data['ar_panteon_amount'] ?? null),
+            'arPanteonRemarks' => $this->nullableText($data['ar_panteon_remarks'] ?? null),
+            'arLandAmount' => $this->nullableInteger($data['ar_land_amount'] ?? null),
+            'arLandRemarks' => $this->nullableText($data['ar_land_remarks'] ?? null),
+            'arKalkalAmount' => $this->nullableInteger($data['ar_kalkal_amount'] ?? null),
+            'arKalkalRemarks' => $this->nullableText($data['ar_kalkal_remarks'] ?? null),
+            'arCemeteryAmount' => $this->nullableInteger($data['ar_cemetery_amount'] ?? null),
+            'arCemeteryRemarks' => $this->nullableText($data['ar_cemetery_remarks'] ?? null),
+            'arMassAmount' => $this->nullableInteger($data['ar_mass_amount'] ?? null),
+            'arMassRemarks' => $this->nullableText($data['ar_mass_remarks'] ?? null),
+            'arProrogaAmount' => $this->nullableInteger($data['ar_proroga_amount'] ?? null),
+            'arProrogaRemarks' => $this->nullableText($data['ar_proroga_remarks'] ?? null),
+            'arOthersAmount' => $this->nullableInteger($data['ar_others_amount'] ?? null),
+            'arOthersRemarks' => $this->nullableText($data['ar_others_remarks'] ?? null),
+            'arExtra1Amount' => $this->nullableInteger($data['ar_extra_1_amount'] ?? null),
+            'arExtra1Remarks' => $this->nullableText($data['ar_extra_1_remarks'] ?? null),
+            'arExtra2Amount' => $this->nullableInteger($data['ar_extra_2_amount'] ?? null),
+            'arExtra2Remarks' => $this->nullableText($data['ar_extra_2_remarks'] ?? null),
+            'notedByBpcChairman' => $this->nullableText($data['noted_bpc_chairman'] ?? null),
+            'notedByParishFiscalSecretary' => $this->nullableText($data['noted_parish_fiscal'] ?? null),
+            'approvedByParishPriest' => $this->nullableText($data['approved_parish_priest'] ?? null),
+        ];
     }
 
     /**
@@ -735,5 +909,45 @@ class BurialController extends Controller
         $s = trim((string) $value);
 
         return $s === '' ? null : $s;
+    }
+
+    private function nullableDate(mixed $value): ?string
+    {
+        $s = trim((string) ($value ?? ''));
+        if ($s === '') {
+            return null;
+        }
+        try {
+            return Carbon::parse($s)->format('Y-m-d');
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    private function nullableTime(mixed $value): ?string
+    {
+        $s = trim((string) ($value ?? ''));
+        if ($s === '') {
+            return null;
+        }
+        try {
+            return Carbon::parse($s)->format('H:i:s');
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    private function nullableInteger(mixed $value): ?int
+    {
+        $s = trim((string) ($value ?? ''));
+        if ($s === '') {
+            return null;
+        }
+        $normalized = str_replace(',', '', $s);
+        if (! is_numeric($normalized)) {
+            return null;
+        }
+
+        return (int) round((float) $normalized);
     }
 }

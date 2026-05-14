@@ -283,6 +283,15 @@
                 } catch (e1) {}
             }
 
+            function isDashboardEmbeddedAppContext() {
+                try {
+                    var u = new URL(window.location.href);
+                    return (u.searchParams.get('embed') || '').trim() === '1';
+                } catch (e1) {
+                    return false;
+                }
+            }
+
             tryOpenConfirmationApplicationFromDashboardQuery();
 
             var csrf = getMetaCsrf();
@@ -1174,6 +1183,7 @@
                             fetchPostJson(confirmationArancelSaveUrl, pAr, csrf)
                                 .done(function(r2) {
                                     if (r2 && r2.ok) {
+                                        var shouldReopenFromDashboard = isDashboardEmbeddedAppContext();
                                         cnApplicationDraftsByConfirmationId[String(wn)] =
                                             serializeConfirmationApplicationFormToObject();
                                         if (typeof bootstrap !== 'undefined' && $mApp.length) {
@@ -1190,6 +1200,11 @@
                                             text: okMsg,
                                             confirmButtonText: 'OK',
                                         });
+                                        if (shouldReopenFromDashboard) {
+                                            setTimeout(function() {
+                                                $('#confirmationApplicationFormBtn').trigger('click');
+                                            }, 120);
+                                        }
                                     } else {
                                         var m2 =
                                             r2 && r2.message ? r2.message : 'Arancel could not be saved.';

@@ -137,7 +137,7 @@
     font-size: 0.95rem;
 }
 
-/* Desktop: collapsed = hide entire sidebar (logo + nav) */
+
 @media (min-width: 992px) {
     .sappc-dash--sidebar-collapsed .sappc-sidebar {
         width: 0;
@@ -161,7 +161,6 @@
     flex-direction: column;
 }
 
-/* Lock main column to one viewport height so registry UIs scroll inside the table only. */
 .sappc-dash_main:has(.sappc-registry-page) {
     height: 100vh;
     max-height: 100vh;
@@ -284,14 +283,12 @@
     color: var(--sappc-charcoal);
 }
 
-/* ——— Main content ——— */
 .sappc-content {
     flex: 1 1 auto;
     padding: 1.25rem 1.25rem 2rem;
     min-width: 0;
 }
 
-/* Registry module pages: fill viewport; only the data grid scrolls (not the whole page). */
 .sappc-content:has(.sappc-registry-page) {
     min-height: 0;
     overflow: hidden;
@@ -342,8 +339,7 @@
     max-height: none;
     overflow: auto;
     -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
-    /* Keep scroll; hide the visible scrollbar (Firefox / IE legacy / WebKit) */
+    overscroll-behavior: contain;   
     scrollbar-width: none;
     -ms-overflow-style: none;
 }
@@ -354,7 +350,6 @@
     height: 0;
 }
 
-/* No outer/page scrollbar on registry pages — only the data grid (above) may scroll, invisibly. */
 html:has(.sappc-registry-page) {
     height: 100vh;
     max-height: 100vh;
@@ -842,7 +837,6 @@ button.sappc-doc-stat_clickable:focus-visible {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
-/* Only the data grid scrolls; toolbar and pagination stay fixed above/below. */
 .sappc-table-panel .sappc-table-panel_scroll {
     max-height: min(38rem, calc(100vh - 11.5rem));
     overflow: auto;
@@ -1192,7 +1186,7 @@ button.sappc-doc-stat_clickable:focus-visible {
     z-index: 2000;
     display: flex;
     flex-direction: column;
-    background: #ececec;
+    background: rgba(0, 0, 0, 0.35);
     box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
 }
 
@@ -1237,11 +1231,57 @@ button.sappc-doc-stat_clickable:focus-visible {
     background: #f5f5f5;
 }
 
+.sappc-dash-app-shell_float-close {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.45);
+    color: #fff;
+    cursor: pointer;
+}
+
+.sappc-dash-app-shell_float-close:hover {
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.sappc-dash-app-modal-dialog {
+    max-width: min(1100px, calc(100vw - 2rem));
+}
+
+.sappc-dash-app-modal-content {
+    min-height: min(90vh, 900px);
+    display: flex;
+    flex-direction: column;
+}
+
+.sappc-dash-app-modal-header {
+    padding: 0.4rem 0.65rem;
+    border-bottom: 1px solid var(--sappc-border);
+}
+
+.sappc-dash-app-modal-content .modal-body {
+    height: calc(min(90vh, 900px) - 3rem);
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.sappc-dash-app-modal-content .modal-body .sappc-dash-app-shell_iframe {
+    display: block;
+    height: 100%;
+}
+
 body.sappc-dash-app-shell-open {
     overflow: hidden;
 }
 
-/* Inside iframe (?embed=1): hide admin chrome and registry UI; only application modal remains. */
 body.sappc-dash--registry-embed #sappcSidebar,
 body.sappc-dash--registry-embed header.sappc-topbar,
 body.sappc-dash--registry-embed footer.sappc-site-footer {

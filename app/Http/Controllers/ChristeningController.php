@@ -39,9 +39,118 @@ class ChristeningController extends Controller
         ]);
     }
 
-    public function certificationPage(): View
+    public function certificationPage(Request $request): View
     {
-        return view('certification.view.certification');
+        $certReportMonth = $this->resolveCertificationReportMonth($request->input('month'));
+        $certReportLabel = Carbon::createFromFormat('Y-m', $certReportMonth)->translatedFormat('F Y');
+
+        return view('certification.view.certification', [
+            'certReportMonth' => $certReportMonth,
+            'certReportLabel' => $certReportLabel,
+        ]);
+    }
+
+    public function certificationReportWindow(Request $request): View
+    {
+        $validated = $request->validate([
+            'report_type' => ['nullable', 'string', 'in:christening,wedding'],
+            'month' => ['nullable', 'string'],
+        ]);
+        $reportType = (string) ($validated['report_type'] ?? '');
+        $month = $this->resolveCertificationReportMonth($validated['month'] ?? null);
+        $reportLabel = Carbon::createFromFormat('Y-m', $month)->translatedFormat('F Y');
+
+        return view('certification.view.certificationReportWindow', [
+            'reportType' => $reportType,
+            'reportMonth' => $month,
+            'reportLabel' => $reportLabel,
+            'serviceHeading' => $reportType === 'wedding' ? 'WEDDING CERTIFICATION' : 'CHRISTENING CERTIFICATION',
+            'rows' => $this->buildCertificationRowsFromDetailsTable($reportType, $month),
+        ]);
+    }
+
+    public function certificationRecords(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'report_type' => ['nullable', 'string', 'in:christening,wedding'],
+            'month' => ['nullable', 'string'],
+        ]);
+
+        $reportType = (string) ($validated['report_type'] ?? '');
+        $month = $this->resolveCertificationReportMonth($validated['month'] ?? null);
+        $out = $this->buildCertificationRowsFromDetailsTable($reportType, $month);
+        $reportLabel = Carbon::createFromFormat('Y-m', $month)->translatedFormat('F Y');
+        $serviceHeading = $reportType === 'wedding' ? 'WEDDING CERTIFICATION' : 'CHRISTENING CERTIFICATION';
+
+        return response()->json([
+            'ok' => true,
+            'rows' => $out,
+            'report_type' => $reportType,
+            'month' => $month,
+            'report_label' => $reportLabel,
+            'service_heading' => $serviceHeading,
+        ]);
+    }
+
+    /**
+     * @return array<int, array<string, string|int>>
+     */
+    private function buildCertificationRowsFromDetailsTable(string $reportType, ?string $monthYm = null): array
+    {
+        $rowsQuery = DB::table('certification_details')
+            ->orderByDesc('date')
+            ->orderByDesc('certificationDetailsId');
+
+        if ($reportType !== '') {
+            $suffixMap = [
+                'christening' => '-'.self::CHRISTENING_REFERENCE_SUFFIX,
+                'wedding' => '-W',
+            ];
+            $suffix = $suffixMap[$reportType] ?? '';
+            if ($suffix !== '') {
+                $rowsQuery->where('referenceCode', 'like', '%'.$suffix);
+            }
+        }
+
+        $resolvedMonth = $monthYm !== null && $monthYm !== '' ? $this->resolveCertificationReportMonth($monthYm) : null;
+        if ($resolvedMonth !== null) {
+            try {
+                $carbon = Carbon::createFromFormat('Y-m', $resolvedMonth)->startOfMonth();
+                $rowsQuery->whereYear('date', $carbon->year)
+                    ->whereMonth('date', $carbon->month);
+            } catch (\Throwable) {
+                // ignore invalid month; return unfiltered rows for the chosen report type
+            }
+        }
+
+        $rows = $rowsQuery->get();
+        $out = [];
+        $n = 1;
+        foreach ($rows as $row) {
+            $out[] = [
+                'no' => $n++,
+                'reference_code' => trim((string) ($row->referenceCode ?? '')),
+                'client' => trim((string) ($row->client ?? '')),
+                'address' => trim((string) ($row->address ?? '')),
+                'sex' => trim((string) ($row->sex ?? '')),
+                'contact_number' => trim((string) ($row->contactNumber ?? '')),
+                'date' => ClientNameDisplay::formatDateCreated($row->date ?? null),
+            ];
+        }
+
+        return $out;
+    }
+
+    private function resolveCertificationReportMonth(?string $value): string
+    {
+        if ($value === null || $value === '') {
+            return now()->format('Y-m');
+        }
+        try {
+            return Carbon::createFromFormat('Y-m', $value)->format('Y-m');
+        } catch (\Throwable) {
+            return now()->format('Y-m');
+        }
     }
 
     private function generateUniqueChristeningReferenceCode(): string
@@ -957,9 +1066,10 @@ class ChristeningController extends Controller
         }
 
         $certRow = $this->mapCertificationRequestToCertificationTableRow($request);
+        $certificationDetailsRow = $this->mapCertificationRequestToCertificationDetailsRow($request, $christening);
 
         try {
-            DB::transaction(function () use ($christeningId, $certRow) {
+            DB::transaction(function () use ($christeningId, $certRow, $certificationDetailsRow) {
                 $existing = DB::table('christening_certification')->where('christeningId', $christeningId)->first();
 
                 if ($existing) {
@@ -974,6 +1084,8 @@ class ChristeningController extends Controller
                     ]);
                     DB::table('christening_certification')->insert($insert);
                 }
+
+                DB::table('certification_details')->insert($certificationDetailsRow);
             });
         } catch (QueryException $e) {
             report($e);
@@ -1197,6 +1309,54 @@ class ChristeningController extends Controller
             'certBookNo' => $this->nullableText($request->input('book_no')),
             'certRegisterNo' => $this->nullableText($request->input('register_no')),
             'certPageNo' => $this->nullableText($request->input('page_no')),
+            'updated_at' => now(),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function mapCertificationRequestToCertificationDetailsRow(Request $request, object $christening): array
+    {
+        $resolvedReferenceCode = trim((string) ($request->input('reference_code') ?? ''));
+        if ($resolvedReferenceCode === '') {
+            $resolvedReferenceCode = trim((string) ($christening->referenceCode ?? ''));
+        }
+
+        $resolvedClient = trim((string) ($request->input('client') ?? ''));
+        if ($resolvedClient === '') {
+            $resolvedClient = trim(implode(' ', array_filter([
+                trim((string) ($christening->clientFName ?? '')),
+                trim((string) ($christening->clientMName ?? '')),
+                trim((string) ($christening->clientLName ?? '')),
+            ], fn ($part) => $part !== '')));
+        }
+
+        $resolvedAddress = trim((string) ($request->input('top_address') ?? ''));
+        if ($resolvedAddress === '') {
+            $resolvedAddress = trim((string) ($christening->address ?? ''));
+        }
+
+        $resolvedSex = trim((string) ($christening->sex ?? ''));
+        $resolvedContact = trim((string) ($request->input('contact_number') ?? ''));
+        if ($resolvedContact === '') {
+            $resolvedContact = trim((string) ($christening->contactNum ?? ''));
+        }
+
+        $rawDate = $request->input('date_issued');
+        $resolvedDate = $this->parseFlexibleDate($rawDate);
+        if ($resolvedDate === null) {
+            $resolvedDate = now()->format('Y-m-d');
+        }
+
+        return [
+            'referenceCode' => $this->nullableText($resolvedReferenceCode),
+            'client' => $this->nullableText($resolvedClient),
+            'address' => $this->nullableText($resolvedAddress),
+            'sex' => $this->nullableText($resolvedSex),
+            'contactNumber' => $this->nullableText($resolvedContact),
+            'date' => $resolvedDate,
+            'created_at' => now(),
             'updated_at' => now(),
         ];
     }

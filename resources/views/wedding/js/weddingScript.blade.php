@@ -49,8 +49,8 @@
         }
 
         function sappcWdSwal(cfg) {
-            if (typeof Swal !== 'undefined') {
-                return Swal.fire(cfg);
+            if (typeof window !== 'undefined' && typeof window.Swal !== 'undefined') {
+                return window.Swal.fire(cfg);
             }
             var msg = '';
             if (cfg && cfg.text != null && String(cfg.text) !== '') {
@@ -66,8 +66,8 @@
 
         function sappcWdConfirm(cfg) {
             cfg = cfg || {};
-            if (typeof Swal !== 'undefined') {
-                return Swal.fire({
+            if (typeof window !== 'undefined' && typeof window.Swal !== 'undefined') {
+                return window.Swal.fire({
                     icon: cfg.icon || 'warning',
                     title: cfg.title || '',
                     text: cfg.text || '',
@@ -298,6 +298,15 @@
                 } catch (e1) {}
             }
 
+            function isDashboardEmbeddedAppContext() {
+                try {
+                    var u = new URL(window.location.href);
+                    return (u.searchParams.get('embed') || '').trim() === '1';
+                } catch (e1) {
+                    return false;
+                }
+            }
+
             tryOpenWeddingApplicationFromDashboardQuery();
 
             var state = {
@@ -510,6 +519,28 @@
                 }).then(function(r) {
                     if (r.isConfirmed) runDelete();
                 });
+            });
+
+            $('#weddingTableBody').on('click', '.sappc-icon-action--view, .sappc-icon-action--edit', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var id = ($(this).attr('data-record-id') || '').trim();
+                if (!id) {
+                    return;
+                }
+                if (!marriageAppDetailsUrl) {
+                    sappcWdSwal({
+                        icon: 'warning',
+                        title: 'Not configured',
+                        text: 'Marriage application is not configured.',
+                    });
+                    return;
+                }
+                $('#wdScheduleWeddingId').val(id);
+                $('#wdMarriageAppWeddingId').val(id);
+                $('#weddingTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                $(this).closest('tr').addClass('is-schedule-selected');
+                $('#weddingApplicationFormBtn').trigger('click');
             });
 
             fetchRecords();
@@ -890,6 +921,15 @@
                     return $f.find('[name="' + String(n).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"]');
                 }
 
+                function isDashboardEmbeddedAppContextLocal() {
+                    try {
+                        var u = new URL(window.location.href);
+                        return (u.searchParams.get('embed') || '').trim() === '1';
+                    } catch (e1) {
+                        return false;
+                    }
+                }
+
                 function applyMarriageApplicationData(data) {
                     if (!data || typeof data !== 'object') {
                         return;
@@ -1050,11 +1090,8 @@
                         });
                 });
 
-                $('#weddingMarriageAppSaveBtn').on('click', function() {
+                function saveWeddingMarriageApplication() {
                     if (!marriageAppSaveUrl) {
-                        return;
-                    }
-                    if (typeof bootstrap === 'undefined') {
                         return;
                     }
                     var wid = ($('#wdMarriageAppWeddingId').val() || '').trim() || ($('#wdScheduleWeddingId').val() ||
@@ -1071,23 +1108,57 @@
                     var payload = collectMarriageApplicationPayload();
                     payload.wedding_id = wn;
                     var $saveBtn = $('#weddingMarriageAppSaveBtn');
-                    var marriageBsModal = bootstrap.Modal.getOrCreateInstance($marriageAppModal[0]);
+                    var marriageBsModal =
+                        (typeof bootstrap !== 'undefined' && $marriageAppModal.length) ?
+                        bootstrap.Modal.getOrCreateInstance($marriageAppModal[0]) :
+                        null;
+
+                    function showWeddingApplicationSavedMessage(messageText) {
+                        var msg = messageText || 'Marriage application saved.';
+                        sappcWdSwal({
+                            icon: 'success',
+                            title: 'Saved',
+                            text: msg,
+                            confirmButtonText: 'OK',
+                        });
+                    }
+
                     $saveBtn.prop('disabled', true);
                     fetchPostJson(marriageAppSaveUrl, payload, csrf)
-                        .done(function(res) {
-                            if (res && res.ok) {
-                                marriageBsModal.hide();
-                                var msg = (res && res.message) ? res.message : 'Marriage application saved.';
-                                if (typeof Swal !== 'undefined') {
-                                    Swal.fire({
-                                        icon: 'success',
-                                        title: 'Saved',
-                                        text: msg,
-                                        confirmButtonText: 'OK',
-                                    });
-                                } else {
-                                    window.alert(msg);
+                        .done(function(res, textStatus, jqXhr) {
+                            var isHttpOk = !!(jqXhr && jqXhr.status >= 200 && jqXhr.status < 300);
+                            var isBusinessOk = !!(res && (res.ok === true || String(res.status || '').toLowerCase() === 'success'));
+                            if (!isHttpOk || !isBusinessOk) {
+                                var failMsg = (res && res.message) ? String(res.message) : 'Could not save marriage application.';
+                                sappcWdSwal({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: failMsg,
+                                });
+                                return;
+                            }
+
+                            var shouldReopenFromDashboard = isDashboardEmbeddedAppContextLocal();
+                            var msg = (res && res.message) ? res.message : 'Marriage application saved.';
+                            var didNotifySaved = false;
+                            function notifySavedOnce() {
+                                if (didNotifySaved) {
+                                    return;
                                 }
+                                didNotifySaved = true;
+                                showWeddingApplicationSavedMessage(msg);
+                                if (shouldReopenFromDashboard) {
+                                    setTimeout(function() {
+                                        $('#weddingApplicationFormBtn').trigger('click');
+                                    }, 120);
+                                }
+                            }
+                            notifySavedOnce();
+                            if ($marriageAppModal.length && marriageBsModal) {
+                                $marriageAppModal.one('hidden.bs.modal', function() {
+                                    notifySavedOnce();
+                                });
+                                marriageBsModal.hide();
                             }
                         })
                         .fail(function(xhr) {
@@ -1114,6 +1185,16 @@
                         .always(function() {
                             $saveBtn.prop('disabled', false);
                         });
+                }
+
+                $marriageAppForm.on('submit', function(e) {
+                    e.preventDefault();
+                    saveWeddingMarriageApplication();
+                });
+
+                $('#weddingMarriageAppSaveBtn').on('click', function(e) {
+                    e.preventDefault();
+                    saveWeddingMarriageApplication();
                 });
             })();
 

@@ -563,42 +563,51 @@
                 };
             }
 
-            var dashAppShellEl = document.getElementById('sappcDashApplicationShell');
-            var dashAppIframe = document.getElementById('sappcDashApplicationIframe');
-            var dashAppCloseBtn = document.getElementById('sappcDashApplicationClose');
+            function openDashboardInlineApplication(ctx) {
+                var docType = (ctx.documentType || '').trim();
+                var id = (ctx.recordId || '').trim();
+                if (!docType || !id) {
+                    return false;
+                }
 
-            function closeDashApplicationShell() {
-                if (dashAppIframe) {
-                    dashAppIframe.setAttribute('src', 'about:blank');
+                if (docType === 'Christening') {
+                    var chIdEl = document.getElementById('chScheduleChristeningId');
+                    var chBtn = document.getElementById('christeningApplicationFormBtn');
+                    if (!chIdEl || !chBtn) return false;
+                    chIdEl.value = id;
+                    chBtn.click();
+                    return true;
                 }
-                if (dashAppShellEl) {
-                    dashAppShellEl.hidden = true;
+
+                if (docType === 'Confirmation') {
+                    var cnIdEl = document.getElementById('cnScheduleConfirmationId');
+                    var cnBtn = document.getElementById('confirmationApplicationFormBtn');
+                    if (!cnIdEl || !cnBtn) return false;
+                    cnIdEl.value = id;
+                    cnBtn.click();
+                    return true;
                 }
-                document.body.classList.remove('sappc-dash-app-shell-open');
+
+                if (docType === 'Wedding') {
+                    var wdIdEl = document.getElementById('wdScheduleWeddingId');
+                    var wdBtn = document.getElementById('weddingApplicationFormBtn');
+                    if (!wdIdEl || !wdBtn) return false;
+                    wdIdEl.value = id;
+                    wdBtn.click();
+                    return true;
+                }
+
+                if (docType === 'Burial') {
+                    var brIdEl = document.getElementById('brScheduleBurialId');
+                    var brBtn = document.getElementById('burialApplicationFormBtn');
+                    if (!brIdEl || !brBtn) return false;
+                    brIdEl.value = id;
+                    brBtn.click();
+                    return true;
+                }
+
+                return false;
             }
-
-            function openDashApplicationShell(openUrlStr) {
-                if (!dashAppShellEl || !dashAppIframe) {
-                    return;
-                }
-                dashAppIframe.setAttribute('src', openUrlStr);
-                dashAppShellEl.hidden = false;
-                document.body.classList.add('sappc-dash-app-shell-open');
-            }
-
-            if (dashAppCloseBtn) {
-                dashAppCloseBtn.addEventListener('click', closeDashApplicationShell);
-            }
-
-            document.addEventListener('keydown', function(ev) {
-                if (ev.key !== 'Escape') {
-                    return;
-                }
-                if (!document.body.classList.contains('sappc-dash-app-shell-open')) {
-                    return;
-                }
-                closeDashApplicationShell();
-            });
 
             var tbody = document.getElementById('sappcTableBody');
             if (tbody) {
@@ -697,38 +706,17 @@
                 }
 
                 if (editBtn) {
-                    var target = dashboardModuleUrl(ctx.documentType);
-                    if (!target) {
+                    if (!openDashboardInlineApplication(ctx)) {
                         if (typeof Swal !== 'undefined') {
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Cannot open',
-                                text: 'No module URL is configured for this document type.',
+                                text: 'Application modal is not available for this document type.',
                             });
                         } else {
-                            window.alert('No module URL for this document type.');
+                            window.alert('Application modal is not available for this document type.');
                         }
-                        return;
                     }
-                    if (!dashAppShellEl || !dashAppIframe) {
-                        if (typeof Swal !== 'undefined') {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Cannot open',
-                                text: 'Application editor is not available on this page.',
-                            });
-                        }
-                        return;
-                    }
-                    var openUrl;
-                    try {
-                        openUrl = new URL(target, window.location.href);
-                    } catch (err1) {
-                        openUrl = new URL(String(target), window.location.origin);
-                    }
-                    openUrl.searchParams.set('sappc_dash_app', ctx.recordId);
-                    openUrl.searchParams.set('embed', '1');
-                    openDashApplicationShell(openUrl.toString());
                     return;
                 }
 

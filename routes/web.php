@@ -55,12 +55,15 @@ Route::middleware('auth')->group(function () {
     Route::post('/burial/record/delete', [BurialController::class, 'deleteBurialRecord'])->name('admin.burial.record-delete');
     Route::get('/burial/application', [BurialController::class, 'burialApplicationDetails'])->name('admin.burial.application-details');
     Route::post('/burial/application', [BurialController::class, 'burialApplicationSave'])->name('admin.burial.application-save');
+    Route::post('/burial/certification-form', [BurialController::class, 'burialCertificationForm'])->name('admin.burial.certification-form');
     Route::get('/burial/certification-details', [BurialController::class, 'burialCertificationDetails'])->name('admin.burial.certification-details');
     Route::get('/document', [DocumentationController::class, 'document'])->name('admin.document');
     Route::get('/document/report-window', [DocumentationController::class, 'reportWindow'])->name('admin.document.report-window');
     Route::get('/document/application-form-report', [DocumentationController::class, 'applicationFormReport'])->name('admin.document.application-form-report');
     Route::get('/document/burial-report', [DocumentationController::class, 'burialReport'])->name('admin.document.burial-report');
     Route::get('/certification', [ChristeningController::class, 'certificationPage'])->name('admin.certification');
+    Route::get('/certification/report-window', [ChristeningController::class, 'certificationReportWindow'])->name('admin.certification.report-window');
+    Route::get('/certification/records', [ChristeningController::class, 'certificationRecords'])->name('admin.certification.records');
     Route::post('/christening/schedule-request', [ChristeningController::class, 'scheduleChristening'])->name('admin.christening.schedule-request');
     Route::get('/christening/schedule-details', [ChristeningController::class, 'christeningScheduleDetails'])->name('admin.christening.schedule-details');
     Route::post('/christening/application-form', [ChristeningController::class, 'christeningApplicationForm'])->name('admin.christening.application-form');

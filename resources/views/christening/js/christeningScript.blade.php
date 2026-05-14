@@ -901,6 +901,7 @@
         var applicationDetailsUrl = ($panel.attr('data-application-details-url') || '').trim();
         var paymentDetailsUrl = ($panel.attr('data-payment-details-url') || '').trim();
         var paymentSaveUrl = ($panel.attr('data-payment-save-url') || '').trim();
+        var certificationSaveUrl = ($panel.attr('data-certification-save-url') || '').trim();
         var certificationDetailsUrl = ($panel.attr('data-certification-details-url') || '').trim();
         var christeningDeleteUrl = ($panel.attr('data-christening-delete-url') || '').trim();
         var scheduleDetailsUrl = ($panel.attr('data-schedule-details-url') || '').trim();
@@ -1319,6 +1320,57 @@
             return printBaptismCertificationSheet(printWin || baptismPrintWindow, false);
         };
 
+        function saveChristeningCertificationRecord() {
+            var cid = ($('#chScheduleChristeningId').val() || '').trim();
+            if (!cid) {
+                sappcSwalSelectChristeningRowFirst();
+                return $.Deferred().reject({
+                    responseJSON: {
+                        message: 'Please select a christening record first.'
+                    }
+                }).promise();
+            }
+            if (!certificationSaveUrl) {
+                return $.Deferred().reject({
+                    responseJSON: {
+                        message: 'Certification save is not configured.'
+                    }
+                }).promise();
+            }
+
+            var payload = {
+                christening_id: parseInt(cid, 10),
+                reference_code: chCertFieldValue('#chCertRefCode'),
+                client: chCertFieldValue('#chCertClient'),
+                contact_number: sappcPhMobileDigitsOnly(chCertFieldValue('#chCertContact')),
+                top_address: chCertFieldValue('#chCertTopAddress'),
+                child_first_name: chCertFieldValue('#chCertChildFirst'),
+                child_middle_name: chCertFieldValue('#chCertChildMiddle'),
+                child_last_name: chCertFieldValue('#chCertChildLast'),
+                birthday: chCertFieldValue('#chCertBirthday'),
+                birthplace: chCertFieldValue('#chCertBirthplace'),
+                father_first_name: chCertFieldValue('#chCertFatherFirst'),
+                father_middle_name: chCertFieldValue('#chCertFatherMiddle'),
+                father_last_name: chCertFieldValue('#chCertFatherLast'),
+                mother_first_name: chCertFieldValue('#chCertMotherFirst'),
+                mother_middle_name: chCertFieldValue('#chCertMotherMiddle'),
+                mother_last_name: chCertFieldValue('#chCertMotherLast'),
+                barangay: chCertFieldValue('#chCertBarangay'),
+                municipality: chCertFieldValue('#chCertMunicipality'),
+                province: chCertFieldValue('#chCertProvince'),
+                date_received: chCertFieldValue('#chCertDateReceived'),
+                priest: chCertFieldValue('#chCertPriest'),
+                sponsors: chCertFieldValue('#chCertSponsors'),
+                purpose: chCertFieldValue('#chCertPurpose'),
+                book_no: chCertFieldValue('#chCertBookNo'),
+                register_no: chCertFieldValue('#chCertRegisterNo'),
+                page_no: chCertFieldValue('#chCertPageNo'),
+                date_issued: chCertFieldValue('#chCertDateIssued'),
+            };
+
+            return fetchPostJson(certificationSaveUrl, payload, csrf);
+        }
+
         $(document)
             .off('submit.sappcBaptismPrint', '#christeningCertificationForm')
             .on('submit.sappcBaptismPrint', '#christeningCertificationForm', function(e) {
@@ -1330,7 +1382,44 @@
             .off('click.sappcBaptismPrint', '#chCertAddRecordBtn')
             .on('click.sappcBaptismPrint', '#chCertAddRecordBtn', function(e) {
                 e.preventDefault();
-                printBaptismCertificationSheet();
+                var $btn = $(this);
+                $btn.prop('disabled', true);
+                saveChristeningCertificationRecord()
+                    .done(function(res) {
+                        printBaptismCertificationSheet();
+                        var msg = (res && res.message) ? res.message : 'Certification record saved.';
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Saved',
+                                text: msg
+                            });
+                        }
+                    })
+                    .fail(function(xhr) {
+                        var msg = 'Certification could not be saved.';
+                        var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                        if (data && data.errors) {
+                            var vals = Object.values(data.errors);
+                            if (vals.length && Array.isArray(vals[0]) && vals[0][0]) {
+                                msg = vals[0][0];
+                            }
+                        } else if (data && data.message) {
+                            msg = data.message;
+                        }
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: msg
+                            });
+                        } else {
+                            window.alert(msg);
+                        }
+                    })
+                    .always(function() {
+                        $btn.prop('disabled', false);
+                    });
             });
 
         if ($certModal.length && $certBtn.length && typeof bootstrap !== 'undefined') {

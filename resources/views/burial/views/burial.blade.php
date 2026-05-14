@@ -201,6 +201,7 @@
         data-burial-delete-url="{{ route('admin.burial.record-delete') }}"
         data-burial-application-details-url="{{ route('admin.burial.application-details') }}"
         data-burial-application-save-url="{{ route('admin.burial.application-save') }}"
+        data-certification-save-url="{{ route('admin.burial.certification-form') }}"
         data-certification-details-url="{{ route('admin.burial.certification-details') }}"
         data-schedule-details-url="{{ route('admin.burial.schedule-details') }}"
         aria-label="Burial records"

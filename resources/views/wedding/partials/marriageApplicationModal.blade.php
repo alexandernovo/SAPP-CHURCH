@@ -1,4 +1,3 @@
-{{-- Aplikasyon sa Kasal — layout matched to parish printed form (NOBYO | NOBYA, Pre-Cana, sponsors) --}}
 @php
     $kasalSpouseCols = [
         ['prefix' => 'groom', 'title' => 'NOBYO', 'pfirst' => 'Groom'],
@@ -14,6 +13,9 @@
         'Orientation for Confession',
     ];
 @endphp
+@once
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@endonce
 <div class="modal fade" id="weddingMarriageApplicationModal" tabindex="-1"
     aria-labelledby="weddingMarriageApplicationModalTitle" aria-hidden="true">
     <div
@@ -290,7 +292,7 @@
                 </form>
             </div>
             <div class="modal-footer sappcChristeningAppModalFooter">
-                <button type="button" class="sappcChristeningAppModalBtn sappcChristeningAppModalBtnSave" id="weddingMarriageAppSaveBtn">Save</button>
+                <button type="submit" form="weddingMarriageApplicationForm" class="sappcChristeningAppModalBtn sappcChristeningAppModalBtnSave" id="weddingMarriageAppSaveBtn">Save</button>
                 <button type="button" class="sappcChristeningAppModalBtn sappcChristeningAppModalBtnCancel" data-bs-dismiss="modal">Cancel</button>
             </div>
         </div>
