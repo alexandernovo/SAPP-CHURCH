@@ -84,6 +84,23 @@
             });
         }
 
+        function sappcWdConfirmDeleteDocument(firstCfg, onFinalConfirm) {
+            sappcWdConfirm(firstCfg).then(function(r) {
+                if (!r.isConfirmed) {
+                    return;
+                }
+                sappcWdConfirm({
+                    title: 'Are you sure?',
+                    text: 'Do you really want to delete this document? This action cannot be undone.',
+                    confirmButtonText: 'Yes, delete document',
+                }).then(function(r2) {
+                    if (r2.isConfirmed && typeof onFinalConfirm === 'function') {
+                        onFinalConfirm();
+                    }
+                });
+            });
+        }
+
         function paymentStatusCell(raw) {
             var s = String(raw == null ? '' : raw).trim();
             var lower = s.toLowerCase();
@@ -512,13 +529,11 @@
                         });
                 }
 
-                sappcWdConfirm({
+                sappcWdConfirmDeleteDocument({
                     title: 'Delete wedding record?',
                     text: 'This permanently deletes this wedding row from the registry (including schedule and marriage application data).',
                     confirmButtonText: 'Yes, delete',
-                }).then(function(r) {
-                    if (r.isConfirmed) runDelete();
-                });
+                }, runDelete);
             });
 
             $('#weddingTableBody').on('click', '.sappc-icon-action--view, .sappc-icon-action--edit', function(e) {

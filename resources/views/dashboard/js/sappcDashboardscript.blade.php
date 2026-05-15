@@ -48,6 +48,40 @@
             }
         }
 
+        function sappcDashConfirmDelete(firstOpts, onFinalConfirm) {
+            var secondOpts = {
+                title: 'Are you sure?',
+                text: 'Do you really want to delete this document? This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete document',
+                cancelButtonText: 'Cancel',
+                focusCancel: true,
+            };
+            if (typeof Swal === 'undefined') {
+                var firstMsg = (firstOpts && firstOpts.text) || (firstOpts && firstOpts.title) || 'Delete this record?';
+                if (!window.confirm(firstMsg)) {
+                    return;
+                }
+                if (window.confirm(secondOpts.text)) {
+                    if (typeof onFinalConfirm === 'function') {
+                        onFinalConfirm();
+                    }
+                }
+                return;
+            }
+            Swal.fire(firstOpts).then(function(res) {
+                if (!res.isConfirmed) {
+                    return;
+                }
+                Swal.fire(secondOpts).then(function(res2) {
+                    if (res2.isConfirmed && typeof onFinalConfirm === 'function') {
+                        onFinalConfirm();
+                    }
+                });
+            });
+        }
+
         whenDomReady(function() {
             var csrf = getMetaCsrf();
             var jsonHeaders = {
@@ -545,7 +579,7 @@
 
             function dashboardActionRowContext(btn) {
                 var tr = btn.closest('tr');
-                if (!tr || !tr.classList.contains('is-schedule-selected')) {
+                if (!tr) {
                     return null;
                 }
                 var rid = (btn.getAttribute('data-record-id') || '').trim();
@@ -701,7 +735,6 @@
                 var btn = delBtn || editBtn;
                 var ctx = dashboardActionRowContext(btn);
                 if (!ctx) {
-                    swalSelectDashboardRowFirst();
                     return;
                 }
 
@@ -723,25 +756,17 @@
                 if (!deleteUrl) {
                     return;
                 }
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({
-                        title: 'Delete this record?',
-                        text: 'This action cannot be undone.',
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonText: 'Delete',
-                        cancelButtonText: 'Cancel',
-                        focusCancel: true,
-                    }).then(function(res) {
-                        if (res.isConfirmed) {
-                            deleteRegistryRow(ctx.recordId, ctx.documentType);
-                        }
-                    });
-                } else if (
-                    window.confirm('Delete this record? This action cannot be undone.')
-                ) {
+                sappcDashConfirmDelete({
+                    title: 'Delete this record?',
+                    text: 'This action cannot be undone.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Delete',
+                    cancelButtonText: 'Cancel',
+                    focusCancel: true,
+                }, function() {
                     deleteRegistryRow(ctx.recordId, ctx.documentType);
-                }
+                });
             });
         });
 

@@ -84,6 +84,23 @@
             });
         }
 
+        function sappcCnConfirmDeleteDocument(firstCfg, onFinalConfirm) {
+            sappcCnConfirm(firstCfg).then(function(r) {
+                if (!r.isConfirmed) {
+                    return;
+                }
+                sappcCnConfirm({
+                    title: 'Are you sure?',
+                    text: 'Do you really want to delete this document? This action cannot be undone.',
+                    confirmButtonText: 'Yes, delete document',
+                }).then(function(r2) {
+                    if (r2.isConfirmed && typeof onFinalConfirm === 'function') {
+                        onFinalConfirm();
+                    }
+                });
+            });
+        }
+
         function sappcSwalSelectConfirmationRowFirst() {
             sappcCnSwal({
                 icon: 'warning',
@@ -1807,15 +1824,11 @@
                         });
                 }
 
-                sappcCnConfirm({
+                sappcCnConfirmDeleteDocument({
                     title: 'Delete confirmation record?',
                     text: 'This permanently deletes this confirmation row from the registry and removes related rows in confirmation details.',
                     confirmButtonText: 'Yes, delete',
-                }).then(function(r) {
-                    if (r.isConfirmed) {
-                        runDelete();
-                    }
-                });
+                }, runDelete);
             });
 
             fetchRecords();

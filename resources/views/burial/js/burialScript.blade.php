@@ -75,6 +75,23 @@
             });
         }
 
+        function sappcBrConfirmDeleteDocument(firstCfg, onFinalConfirm) {
+            sappcBrConfirm(firstCfg).then(function(r) {
+                if (!r.isConfirmed) {
+                    return;
+                }
+                sappcBrConfirm({
+                    title: 'Are you sure?',
+                    text: 'Do you really want to delete this document? This action cannot be undone.',
+                    confirmButtonText: 'Yes, delete document',
+                }).then(function(r2) {
+                    if (r2.isConfirmed && typeof onFinalConfirm === 'function') {
+                        onFinalConfirm();
+                    }
+                });
+            });
+        }
+
         function fetchJson(url, headers) {
             return $.ajax({
                 url: url,
@@ -1486,13 +1503,11 @@
                         });
                 }
 
-                sappcBrConfirm({
+                sappcBrConfirmDeleteDocument({
                     title: 'Delete burial record?',
                     text: 'This permanently deletes this burial row from the registry (including schedule and payment data).',
                     confirmButtonText: 'Yes, delete',
-                }).then(function(r) {
-                    if (r.isConfirmed) runDelete();
-                });
+                }, runDelete);
             });
 
             $('#burialTableBody').on('click', '.sappc-icon-action--view, .sappc-icon-action--edit', function(e) {

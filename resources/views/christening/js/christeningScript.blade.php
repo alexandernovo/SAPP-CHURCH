@@ -133,6 +133,23 @@
             });
         }
 
+        function sappcChConfirmDeleteDocument(firstCfg, onFinalConfirm) {
+            sappcChConfirm(firstCfg).then(function(r) {
+                if (!r.isConfirmed) {
+                    return;
+                }
+                sappcChConfirm({
+                    title: 'Are you sure?',
+                    text: 'Do you really want to delete this document? This action cannot be undone.',
+                    confirmButtonText: 'Yes, delete document',
+                }).then(function(r2) {
+                    if (r2.isConfirmed && typeof onFinalConfirm === 'function') {
+                        onFinalConfirm();
+                    }
+                });
+            });
+        }
+
         function sappcSwalSelectChristeningRowFirst() {
             sappcChSwal({
                 icon: 'warning',
@@ -1631,13 +1648,11 @@
                     });
             }
 
-            sappcChConfirm({
+            sappcChConfirmDeleteDocument({
                 title: 'Delete christening record?',
                 text: 'This permanently deletes this christening row from the registry and removes related certification and application detail rows.',
                 confirmButtonText: 'Yes, delete',
-            }).then(function(r) {
-                if (r.isConfirmed) runDelete();
-            });
+            }, runDelete);
         });
 
         function fetchQueryParams() {
