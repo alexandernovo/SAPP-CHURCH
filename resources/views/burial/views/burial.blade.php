@@ -35,13 +35,6 @@
                 Schedule Request
             </button>
             <button type="button" class="sappc-registry-toolbar_btn sappc-registry-toolbar_btn--outline"
-                id="burialCertificationBtn" title="Burial certification"
-                aria-label="Open burial certification form" aria-expanded="false"
-                aria-controls="burialCertificationModal">
-                <i class="fa-solid fa-certificate" aria-hidden="true"></i>
-                Certification
-            </button>
-            <button type="button" class="sappc-registry-toolbar_btn sappc-registry-toolbar_btn--outline"
                 id="burialPaymentFeeBtn" title="Payment fee" aria-label="Open payment fee" aria-expanded="false"
                 aria-controls="burialPaymentFeeModal">
                 <i class="fa-solid fa-money-bill-wave" aria-hidden="true"></i>

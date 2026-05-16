@@ -554,19 +554,6 @@
 
             var deleteUrl = panel.getAttribute('data-delete-url');
 
-            function swalSelectDashboardRowFirst() {
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Select a record',
-                        text: 'Click a table row to highlight it, then use Edit or Delete.',
-                        confirmButtonText: 'OK',
-                    });
-                } else {
-                    window.alert('Select a table row first.');
-                }
-            }
-
             function dashboardModuleUrl(documentType) {
                 var map = {
                     Christening: panel.getAttribute('data-url-christening'),
@@ -641,30 +628,6 @@
                 }
 
                 return false;
-            }
-
-            var tbody = document.getElementById('sappcTableBody');
-            if (tbody) {
-                tbody.addEventListener('click', function(e) {
-                    if (e.target.closest('a,button')) {
-                        return;
-                    }
-                    var tr = e.target.closest('tr');
-                    if (!tr || tr.closest('#sappcTableBody') !== tbody) {
-                        return;
-                    }
-                    if (tr.classList.contains('sappc-table-empty') || tr.classList.contains('sappc-table-loading')) {
-                        return;
-                    }
-                    if (tr.classList.contains('is-schedule-selected')) {
-                        tr.classList.remove('is-schedule-selected');
-                        return;
-                    }
-                    tbody.querySelectorAll('tr.is-schedule-selected').forEach(function(x) {
-                        x.classList.remove('is-schedule-selected');
-                    });
-                    tr.classList.add('is-schedule-selected');
-                });
             }
 
             function deleteRegistryRow(recordId, documentType) {

@@ -253,11 +253,12 @@
 }
 
 .sappc-topbar_dropdown-menu {
-    min-width: 11rem;
+    min-width: 13.5rem;
     margin-top: 0.35rem !important;
     border: 1px solid var(--sappc-border);
     border-radius: 0.35rem;
     box-shadow: 0 0.35rem 1rem rgba(0, 0, 0, 0.15);
+    padding: 0.35rem;
 }
 
 .sappc-topbar_logout-form {
@@ -267,14 +268,20 @@
 .sappc-topbar_logout-item {
     display: flex;
     align-items: center;
+    gap: 0.5rem;
     width: 100%;
     font-weight: 600;
-    font-size: 0.875rem;
-    padding: 0.5rem 1rem;
+    font-size: 1.05rem;
+    padding: 0.75rem 1.15rem;
     border: none;
     background: transparent;
     text-align: left;
     cursor: pointer;
+    border-radius: 0.25rem;
+}
+
+.sappc-topbar_logout-item i {
+    font-size: 1.15rem;
 }
 
 .sappc-topbar_logout-item:hover,
@@ -1151,14 +1158,6 @@ button.sappc-doc-stat_clickable:focus-visible {
     vertical-align: middle;
     border-color: #e0e0e0;
     background: #fff;
-}
-
-.sappc-data-table tbody tr.is-schedule-selected td {
-    background-color: rgba(178, 137, 28, 0.14);
-}
-
-.sappc-data-table tbody tr.is-schedule-selected td:first-child {
-    box-shadow: inset 5px 0 0 rgba(201, 162, 45, 0.92);
 }
 
 .sappc-action-edit {

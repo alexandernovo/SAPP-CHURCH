@@ -1,4 +1,4 @@
-@extends('layouts.adminDashboard')
+﻿@extends('layouts.adminDashboard')
 
 @section('title', 'Wedding — ' . config('app.name', 'SAPP Church'))
 

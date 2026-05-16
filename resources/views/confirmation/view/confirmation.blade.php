@@ -35,13 +35,6 @@
                 Schedule Request
             </button>
             <button type="button" class="sappc-registry-toolbar_btn sappc-registry-toolbar_btn--outline"
-                id="confirmationCertificationBtn" title="Confirmation certification (select a table row first)"
-                aria-label="Open confirmation certification form" aria-expanded="false"
-                aria-controls="confirmationCertificationModal">
-                <i class="fa-solid fa-certificate" aria-hidden="true"></i>
-                Certification
-            </button>
-            <button type="button" class="sappc-registry-toolbar_btn sappc-registry-toolbar_btn--outline"
                 id="confirmationPaymentFeeBtn" title="Payment fee" aria-label="Open payment fee" aria-expanded="false"
                 aria-controls="confirmationPaymentFeeModal">
                 <i class="fa-solid fa-money-bill-wave" aria-hidden="true"></i>
