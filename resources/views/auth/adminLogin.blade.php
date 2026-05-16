@@ -79,6 +79,71 @@
 
 @push('scripts')
     <script>
+        (function () {
+            var form = document.querySelector('.admin-login-form');
+            var userInput = document.getElementById('admin-username');
+            var passInput = document.getElementById('admin-password');
+            if (!form || !userInput || !passInput) return;
+
+            function trimmed(el) {
+                return (el.value || '').trim();
+            }
+
+            function bothComplete() {
+                return trimmed(userInput) !== '' && trimmed(passInput) !== '';
+            }
+
+            form.addEventListener('keydown', function (e) {
+                if (e.key !== 'Enter') return;
+                if (e.target === userInput) {
+                    e.preventDefault();
+                    if (!trimmed(userInput)) {
+                        userInput.setCustomValidity('Please enter your username.');
+                        userInput.reportValidity();
+                        userInput.setCustomValidity('');
+                        return;
+                    }
+                    passInput.focus();
+                    return;
+                }
+                if (e.target === passInput) {
+                    if (!trimmed(userInput)) {
+                        e.preventDefault();
+                        userInput.setCustomValidity('Please enter your username.');
+                        userInput.reportValidity();
+                        userInput.setCustomValidity('');
+                        userInput.focus();
+                        return;
+                    }
+                    if (!trimmed(passInput)) {
+                        e.preventDefault();
+                        passInput.setCustomValidity('Please enter your password.');
+                        passInput.reportValidity();
+                        passInput.setCustomValidity('');
+                        return;
+                    }
+                    /* Both fields filled — allow default submit */
+                }
+            });
+
+            form.addEventListener('submit', function (e) {
+                if (!bothComplete()) {
+                    e.preventDefault();
+                    if (!trimmed(userInput)) {
+                        userInput.setCustomValidity('Please enter your username.');
+                        userInput.reportValidity();
+                        userInput.setCustomValidity('');
+                        userInput.focus();
+                    } else {
+                        passInput.setCustomValidity('Please enter your password.');
+                        passInput.reportValidity();
+                        passInput.setCustomValidity('');
+                        passInput.focus();
+                    }
+                }
+            });
+        })();
+
         document.querySelector('.admin-login-toggle-pw')?.addEventListener('click', function () {
             const input = document.getElementById('admin-password');
             const icon = this.querySelector('i');

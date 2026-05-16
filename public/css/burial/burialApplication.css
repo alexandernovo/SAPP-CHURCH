@@ -406,11 +406,16 @@
 
 #burialApplicationFormModal .sappcBurialAppSignCol .sappcBurialAppIn {
     margin-bottom: 0.25rem;
+    text-align: center;
+    padding-left: 0.15rem;
+    padding-right: 0.15rem;
 }
 
 #burialApplicationFormModal .sappcBurialAppSignCap {
     font-size: 0.82rem;
     font-weight: 600;
+    text-align: center;
+    display: block;
 }
 
 #burialApplicationFormModal .sappcBurialAppSignApproved {
@@ -421,6 +426,8 @@
 
 #burialApplicationFormModal .sappcBurialAppSignApproved .sappcBurialAppIn {
     text-align: center;
+    padding-left: 0.15rem;
+    padding-right: 0.15rem;
 }
 
 #burialApplicationFormModal .sappcBurialAppPahanumdom {

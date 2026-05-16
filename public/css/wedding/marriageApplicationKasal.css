@@ -473,6 +473,9 @@
 
 #weddingMarriageApplicationModal .sappcKasalApprovalBlock .sappcKasalLineIn {
     min-height: 1.4rem;
+    text-align: center;
+    padding-left: 0.15rem;
+    padding-right: 0.15rem;
 }
 
 #weddingMarriageApplicationModal .sappcKasalApprovalCap {
@@ -482,6 +485,7 @@
     line-height: 1.1;
     margin-top: 0.15rem;
     text-transform: uppercase;
+    text-align: center;
     color: #000;
 }
 
@@ -489,6 +493,12 @@
     max-width: 16rem;
     margin: 0.25rem auto 0;
     text-align: center;
+}
+
+#weddingMarriageApplicationModal .sappcKasalApprovalBottom .sappcKasalLineIn {
+    text-align: center;
+    padding-left: 0.15rem;
+    padding-right: 0.15rem;
 }
 
 #weddingMarriageApplicationModal .sappcKasalApp .modal-header .btn-close {
