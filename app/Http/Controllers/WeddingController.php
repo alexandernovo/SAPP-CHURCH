@@ -491,6 +491,23 @@ class WeddingController extends Controller
             ->orderByDesc('weddingDetailsId')
             ->first();
 
+        $brideDefault = [
+            'first_name' => '',
+            'middle_name' => '',
+            'family_name' => '',
+            'date_of_birth' => '',
+            'place_of_birth' => '',
+            'father_first_name' => '',
+            'father_middle_name' => '',
+            'father_last_name' => '',
+            'mother_first_name' => '',
+            'mother_middle_name' => '',
+            'mother_last_name' => '',
+            'barangay' => '',
+            'municipality' => '',
+            'province' => 'Antique',
+        ];
+
         $data = [
             'first_name' => '',
             'middle_name' => '',
@@ -514,6 +531,26 @@ class WeddingController extends Controller
             'priest' => '',
             'sponsors' => '',
             'purpose' => '',
+            'bride' => $brideDefault,
+            'marriage' => [
+                'place' => '',
+                'date' => '',
+                'time' => '',
+            ],
+            'registry_header' => [
+                'province' => 'Antique',
+                'city_municipality' => 'Barbaza',
+            ],
+            'groom_sex' => 'Male',
+            'bride_sex' => 'Female',
+            'groom_age' => '',
+            'bride_age' => '',
+            'groom_citizenship' => 'Filipino',
+            'bride_citizenship' => 'Filipino',
+            'groom_religion' => '',
+            'bride_religion' => '',
+            'groom_civil_status' => '',
+            'bride_civil_status' => '',
         ];
 
         if ($details !== null) {
@@ -551,6 +588,57 @@ class WeddingController extends Controller
                 trim((string) ($details->sponsorsLine2 ?? '')),
                 trim((string) ($details->sponsorsLine3 ?? '')),
             ], fn ($s) => $s !== '')));
+
+            $bride = $this->splitFullNameThreeParts($details->brideFullName ?? '');
+            $data['bride']['first_name'] = $bride['first'];
+            $data['bride']['middle_name'] = $bride['middle'];
+            $data['bride']['family_name'] = $bride['last'];
+            $data['bride']['date_of_birth'] = $this->dateForForm($details->brideDateOfBirth ?? null);
+            $data['bride']['place_of_birth'] = (string) ($details->bridePlaceOfBirth ?? '');
+
+            $brideFather = $this->splitFullNameThreeParts($details->brideFather ?? '');
+            $data['bride']['father_first_name'] = $brideFather['first'];
+            $data['bride']['father_middle_name'] = $brideFather['middle'];
+            $data['bride']['father_last_name'] = $brideFather['last'];
+
+            $brideMother = $this->splitFullNameThreeParts($details->brideMotherMaiden ?? '');
+            $data['bride']['mother_first_name'] = $brideMother['first'];
+            $data['bride']['mother_middle_name'] = $brideMother['middle'];
+            $data['bride']['mother_last_name'] = $brideMother['last'];
+
+            $brideAddr = array_values(array_filter(array_map('trim', explode(',', (string) ($details->bridePresentAddress ?? ''))), fn ($s) => $s !== ''));
+            if (isset($brideAddr[0])) {
+                $data['bride']['barangay'] = $brideAddr[0];
+            }
+            if (isset($brideAddr[1])) {
+                $data['bride']['municipality'] = $brideAddr[1];
+            }
+            if (count($brideAddr) > 2) {
+                $data['bride']['province'] = implode(', ', array_slice($brideAddr, 2));
+            }
+
+            $data['marriage']['place'] = trim((string) ($details->churchWeddingPlace ?? ''));
+            $data['marriage']['date'] = $this->dateForForm($details->churchWeddingDate ?? null);
+            $data['marriage']['time'] = '';
+
+            if ($details->groomAge !== null) {
+                $data['groom_age'] = (string) $details->groomAge;
+            }
+            if ($details->brideAge !== null) {
+                $data['bride_age'] = (string) $details->brideAge;
+            }
+
+            $data['groom_religion'] = trim((string) ($details->groomReligion ?? ''));
+            $data['bride_religion'] = trim((string) ($details->brideReligion ?? ''));
+
+            $mun = trim((string) ($data['municipality'] ?? ''));
+            if ($mun !== '') {
+                $data['registry_header']['city_municipality'] = $mun;
+            }
+            $prov = trim((string) ($data['province'] ?? ''));
+            if ($prov !== '') {
+                $data['registry_header']['province'] = $prov;
+            }
         } else {
             $data['first_name'] = trim((string) ($row->clientFName ?? ''));
             $data['middle_name'] = trim((string) ($row->clientMName ?? ''));
@@ -561,6 +649,14 @@ class WeddingController extends Controller
             'ok' => true,
             'data' => $data,
         ]);
+    }
+
+    public function weddingCertificationForm(): JsonResponse
+    {
+        return response()->json([
+            'ok' => false,
+            'message' => 'Certification persistence is not configured for wedding. Use print from the certification modal.',
+        ], 501);
     }
 
     public function deleteWeddingRecord(Request $request): JsonResponse

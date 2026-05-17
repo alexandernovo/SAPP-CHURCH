@@ -871,6 +871,290 @@
                     $('#wdCertPurpose').val(data.purpose != null ? String(data.purpose) : '');
                 }
 
+                function stashWeddingCertPrintExtras(data) {
+                    if (!data || typeof data !== 'object') return;
+                    var bride = data.bride && typeof data.bride === 'object' ? data.bride : {};
+                    var marriage = data.marriage && typeof data.marriage === 'object' ? data.marriage : {};
+                    var rh = data.registry_header && typeof data.registry_header === 'object' ? data.registry_header : {};
+                    $panel.data('weddingCertPrintExtra', {
+                        bride: bride,
+                        marriage: marriage,
+                        registry_header: rh,
+                        groom_sex: data.groom_sex || 'Male',
+                        bride_sex: data.bride_sex || 'Female',
+                        groom_citizenship: data.groom_citizenship || 'Filipino',
+                        bride_citizenship: data.bride_citizenship || 'Filipino',
+                        groom_age: data.groom_age || '',
+                        bride_age: data.bride_age || '',
+                        groom_religion: data.groom_religion || '',
+                        bride_religion: data.bride_religion || '',
+                        groom_civil_status: data.groom_civil_status || '',
+                        bride_civil_status: data.bride_civil_status || '',
+                    });
+                }
+
+                function wdCertField(sel) {
+                    return ($(sel).val() || '').toString().trim();
+                }
+
+                function wdCertJoinThree(selF, selM, selL) {
+                    return [wdCertField(selF), wdCertField(selM), wdCertField(selL)].filter(function(p) {
+                        return p !== '';
+                    }).join(' ');
+                }
+
+                function wdCertJoinNameObj(o) {
+                    o = o || {};
+                    return [o.first_name, o.middle_name, o.family_name].map(function(x) {
+                        return x != null ? String(x).trim() : '';
+                    }).filter(function(x) {
+                        return x !== '';
+                    }).join(' ');
+                }
+
+                function wdCertJoinAddr(b, mu, pr) {
+                    return [b, mu, pr].map(function(x) {
+                        return x != null ? String(x).trim() : '';
+                    }).filter(function(x) {
+                        return x !== '';
+                    }).join(', ');
+                }
+
+                function wdCertFormatLongDate(iso) {
+                    if (!iso || String(iso).length < 10) return '';
+                    var p = String(iso).slice(0, 10).split('-');
+                    if (p.length !== 3) return '';
+                    var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                    var mi = parseInt(p[1], 10) - 1;
+                    var mon = (mi >= 0 && mi < 12) ? months[mi] : p[1];
+                    return mon + ' ' + String(parseInt(p[2], 10)) + ', ' + p[0];
+                }
+
+                function wdCertComputeAge(iso) {
+                    if (!iso || String(iso).length < 10) return '';
+                    var p = String(iso).slice(0, 10).split('-');
+                    if (p.length !== 3) return '';
+                    var y = parseInt(p[0], 10),
+                        mo = parseInt(p[1], 10),
+                        d = parseInt(p[2], 10);
+                    if (isNaN(y) || isNaN(mo) || isNaN(d)) return '';
+                    var bd = new Date(y, mo - 1, d);
+                    var now = new Date();
+                    var age = now.getFullYear() - bd.getFullYear();
+                    var dm = now.getMonth() - bd.getMonth();
+                    if (dm < 0 || (dm === 0 && now.getDate() < bd.getDate())) {
+                        age--;
+                    }
+                    if (age < 0 || age > 120) return '';
+                    return String(age);
+                }
+
+                var marriagePrintWindow = null;
+                var marriagePrintBlobUrl = '';
+
+                function applyMarriagePrintDataToClone(root, printData) {
+                    function set(id, val) {
+                        var el = root.querySelector('#' + id);
+                        if (el) {
+                            el.textContent = val != null ? String(val) : '';
+                        }
+                    }
+                    set('mcHdrProvince', printData.hdr_province);
+                    set('mcHdrCity', printData.hdr_city);
+                    set('mcHdrRegistry', printData.hdr_registry);
+                    set('mcHName', printData.h_name);
+                    set('mcWName', printData.w_name);
+                    set('mcHDob', printData.h_dob);
+                    set('mcWDob', printData.w_dob);
+                    set('mcHAge', printData.h_age ? 'Age: ' + printData.h_age : '');
+                    set('mcWAge', printData.w_age ? 'Age: ' + printData.w_age : '');
+                    set('mcHPob', printData.h_pob);
+                    set('mcWPob', printData.w_pob);
+                    set('mcHSex', printData.h_sex);
+                    set('mcWSex', printData.w_sex);
+                    set('mcHCitz', printData.h_citz);
+                    set('mcWCitz', printData.w_citz);
+                    set('mcHRes', printData.h_res);
+                    set('mcWRes', printData.w_res);
+                    set('mcHRel', printData.h_rel);
+                    set('mcWRel', printData.w_rel);
+                    set('mcHCivil', printData.h_civil);
+                    set('mcWCivil', printData.w_civil);
+                    set('mcHFather', printData.h_father);
+                    set('mcWFather', printData.w_father);
+                    set('mcHFatherCitz', printData.h_father_citz);
+                    set('mcWFatherCitz', printData.w_father_citz);
+                    set('mcHMother', printData.h_mother);
+                    set('mcWMother', printData.w_mother);
+                    set('mcHMotherCitz', printData.h_mother_citz);
+                    set('mcWMotherCitz', printData.w_mother_citz);
+                    set('mcHConsentName', printData.h_consent_name);
+                    set('mcWConsentName', printData.w_consent_name);
+                    set('mcHConsentRel', printData.h_consent_rel);
+                    set('mcWConsentRel', printData.w_consent_rel);
+                    set('mcHConsentRes', printData.h_consent_res);
+                    set('mcWConsentRes', printData.w_consent_res);
+                    set('mcPlaceMarriage', printData.marriage_place);
+                    set('mcDateMarriage', printData.marriage_date);
+                    set('mcTimeMarriage', printData.marriage_time);
+                    set('mcSolemnizer', printData.solemnizer);
+                    set('mc18HName', printData.h_name);
+                    set('mc18WName', printData.w_name);
+                    (function fillWitnessLines(raw) {
+                        var s = raw != null ? String(raw) : '';
+                        var parts = s.split(/\r\n|\r|\n|;/g).map(function (x) {
+                            return x.trim();
+                        }).filter(Boolean);
+                        var i;
+                        for (i = 0; i < 4; i++) {
+                            set('mcWitness' + (i + 1), parts[i] || '');
+                        }
+                    })(printData.witnesses);
+                    set('mcBookNo', printData.book_no);
+                    set('mcPageNo', printData.page_no);
+                    set('mcRegisterNo', printData.register_no);
+                    set('mcDateIssued', printData.date_issued);
+                    set('mcPurpose', printData.purpose);
+                    set('mcRefCode', printData.ref_code);
+                }
+
+                function collectMarriageCertificatePrintData() {
+                    var extra = $panel.data('weddingCertPrintExtra') || {};
+                    var bride = extra.bride || {};
+                    var marriage = extra.marriage || {};
+                    var rh = extra.registry_header || {};
+                    var hDobIso = wdCertField('#wdCertBirthday');
+                    var wDobIso = (bride.date_of_birth != null ? String(bride.date_of_birth) : '').slice(0, 10);
+                    var hAge = extra.groom_age ? String(extra.groom_age) : wdCertComputeAge(hDobIso);
+                    var wAge = extra.bride_age ? String(extra.bride_age) : wdCertComputeAge(wDobIso);
+                    var marriageDateStr = marriage.date ? wdCertFormatLongDate(marriage.date) : '';
+                    if (!marriageDateStr) marriageDateStr = wdCertFormatLongDate(wdCertField('#wdCertDateReceived'));
+
+                    return {
+                        hdr_province: (rh.province || '').trim() || wdCertField('#wdCertProvince') || 'Antique',
+                        hdr_city: (rh.city_municipality || '').trim() || wdCertField('#wdCertMunicipality') || '',
+                        hdr_registry: wdCertField('#wdCertRegisterNo'),
+                        h_name: wdCertJoinThree('#wdCertChildFirst', '#wdCertChildMiddle', '#wdCertChildLast'),
+                        w_name: wdCertJoinNameObj(bride),
+                        h_dob: wdCertFormatLongDate(hDobIso),
+                        w_dob: wdCertFormatLongDate(wDobIso),
+                        h_age: hAge,
+                        w_age: wAge,
+                        h_pob: wdCertField('#wdCertBirthplace'),
+                        w_pob: (bride.place_of_birth != null ? String(bride.place_of_birth) : '').trim(),
+                        h_sex: extra.groom_sex || 'Male',
+                        w_sex: extra.bride_sex || 'Female',
+                        h_citz: extra.groom_citizenship || 'Filipino',
+                        w_citz: extra.bride_citizenship || 'Filipino',
+                        h_res: wdCertJoinAddr(wdCertField('#wdCertBarangay'), wdCertField('#wdCertMunicipality'), wdCertField('#wdCertProvince')),
+                        w_res: wdCertJoinAddr(bride.barangay, bride.municipality, bride.province),
+                        h_rel: extra.groom_religion || '',
+                        w_rel: extra.bride_religion || '',
+                        h_civil: extra.groom_civil_status || '',
+                        w_civil: extra.bride_civil_status || '',
+                        h_father: wdCertJoinThree('#wdCertFatherFirst', '#wdCertFatherMiddle', '#wdCertFatherLast'),
+                        w_father: wdCertJoinNameObj({
+                            first_name: bride.father_first_name,
+                            middle_name: bride.father_middle_name,
+                            family_name: bride.father_last_name,
+                        }),
+                        h_mother: wdCertJoinThree('#wdCertMotherFirst', '#wdCertMotherMiddle', '#wdCertMotherLast'),
+                        w_mother: wdCertJoinNameObj({
+                            first_name: bride.mother_first_name,
+                            middle_name: bride.mother_middle_name,
+                            family_name: bride.mother_last_name,
+                        }),
+                        h_father_citz: 'Filipino',
+                        w_father_citz: 'Filipino',
+                        h_mother_citz: 'Filipino',
+                        w_mother_citz: 'Filipino',
+                        h_consent_name: '',
+                        w_consent_name: '',
+                        h_consent_rel: '',
+                        w_consent_rel: '',
+                        h_consent_res: '',
+                        w_consent_res: '',
+                        marriage_place: (marriage.place != null ? String(marriage.place) : '').trim(),
+                        marriage_date: marriageDateStr,
+                        marriage_time: (marriage.time != null ? String(marriage.time) : '').trim(),
+                        solemnizer: wdCertField('#wdCertPriest'),
+                        witnesses: wdCertField('#wdCertSponsors'),
+                        book_no: wdCertField('#wdCertBookNo'),
+                        page_no: wdCertField('#wdCertPageNo'),
+                        register_no: wdCertField('#wdCertRegisterNo'),
+                        date_issued: wdCertFormatLongDate(wdCertField('#wdCertDateIssued')),
+                        purpose: wdCertField('#wdCertPurpose'),
+                        ref_code: wdCertField('#wdCertRefCode'),
+                    };
+                }
+
+                function printMarriageCertificateSheet(printWin, shouldPrint) {
+                    var tplNode = document.getElementById('marriageCertificatePrintableTemplate');
+                    if (!tplNode || !tplNode.content) {
+                        window.alert('Print template not found.');
+                        return false;
+                    }
+                    var tplStyleNode = tplNode.content.querySelector('style');
+                    var tplWrapNode = tplNode.content.querySelector('.mc-wrap');
+                    if (!tplStyleNode || !tplWrapNode) {
+                        window.alert('Print template is incomplete.');
+                        return false;
+                    }
+                    var openedHere = false;
+                    if (!printWin && marriagePrintWindow && !marriagePrintWindow.closed) {
+                        printWin = marriagePrintWindow;
+                    }
+                    if (!printWin || printWin.closed) {
+                        printWin = window.open('', 'sappcMarriageCertificatePrint');
+                        openedHere = true;
+                    }
+                    if (!printWin) {
+                        window.alert('Pop-up blocked. Please allow pop-ups to print the certificate.');
+                        return false;
+                    }
+                    marriagePrintWindow = printWin;
+                    shouldPrint = shouldPrint !== false;
+                    var printData = collectMarriageCertificatePrintData();
+                    var tplWrapClone = tplWrapNode.cloneNode(true);
+                    applyMarriagePrintDataToClone(tplWrapClone, printData);
+                    var html = '<!doctype html><html><head><meta charset="utf-8"><title>Certificate of Marriage</title><style>' +
+                        (tplStyleNode.textContent || '') +
+                        '</style></head><body>' + (tplWrapClone.outerHTML || '') + '</body></html>';
+                    if (marriagePrintBlobUrl) {
+                        try {
+                            URL.revokeObjectURL(marriagePrintBlobUrl);
+                        } catch (eRev) {}
+                    }
+                    marriagePrintBlobUrl = URL.createObjectURL(new Blob([html], {
+                        type: 'text/html',
+                    }));
+                    var didPrint = false;
+
+                    function populateAndPrint() {
+                        if (didPrint) return;
+                        didPrint = true;
+                        printWin.focus();
+                        if (shouldPrint) {
+                            setTimeout(function() {
+                                printWin.print();
+                            }, 150);
+                        }
+                    }
+                    printWin.onload = populateAndPrint;
+                    printWin.location.href = marriagePrintBlobUrl;
+                    setTimeout(populateAndPrint, openedHere ? 900 : 700);
+                    return true;
+                }
+
+                window.sappcReloadMarriagePrintWindow = function(printWin) {
+                    return printMarriageCertificateSheet(printWin || marriagePrintWindow, false);
+                };
+
+                $certForm.on('submit', function(e) {
+                    e.preventDefault();
+                    printMarriageCertificateSheet(null, true);
+                });
+
                 $certModal.on('shown.bs.modal', function() {
                     $certBtn.attr('aria-expanded', 'true');
                 });
@@ -904,6 +1188,7 @@
                         }
                         if (cert && cert.ok && cert.data) {
                             applyWeddingCertificationFromDetails(cert.data);
+                            stashWeddingCertPrintExtras(cert.data);
                         }
                         certBsModal.show();
                     }).fail(function(xhr) {

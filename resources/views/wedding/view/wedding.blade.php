@@ -567,6 +567,9 @@
         </div>
     </div>
     </div>
+
+    {{-- Printable Certificate of Marriage: A4-optimized markup/CSS in partial (Form 97 style) --}}
+    @include('wedding.partials.marriageCertificatePrintable')
 @endsection
 
 @push('scripts')
