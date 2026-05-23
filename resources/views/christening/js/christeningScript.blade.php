@@ -1238,7 +1238,7 @@
                 priest: chCertFieldValue('#chCertPriest'),
                 sponsors: sponsors.line1,
                 sponsors_extra: sponsors.line2,
-                purpose: chCertFieldValue('#chCertPurpose') || 'FOR ALL LEGAL PURPOSES',
+                purpose: chCertFieldValue('#chCertPurpose'),
                 book_no: chCertFieldValue('#chCertBookNo'),
                 page_no: chCertFieldValue('#chCertPageNo'),
                 register_no: chCertFieldValue('#chCertRegisterNo'),
@@ -1282,8 +1282,27 @@
             function setCloneVal(id, value) {
                 var el = tplWrapClone.querySelector('#' + id);
                 if (!el) return;
-                el.setAttribute('value', value || '');
-                el.value = value || '';
+                var v = value || '';
+                if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                    el.setAttribute('value', v);
+                    el.value = v;
+                } else {
+                    el.textContent = v;
+                }
+            }
+
+            function setClonePurpose(value) {
+                var el = tplWrapClone.querySelector('#bapPurpose');
+                if (!el) return;
+                var v = String(value || '').trim();
+                var isDefault = !v || v.toUpperCase() === 'FOR ALL LEGAL PURPOSES';
+                if (isDefault) {
+                    el.textContent = '';
+                    el.classList.add('is-hidden');
+                    return;
+                }
+                el.textContent = v;
+                el.classList.remove('is-hidden');
             }
 
             setCloneVal('bapFullName', printData.full_name);
@@ -1300,7 +1319,7 @@
             setCloneVal('bapPriestName', printData.priest);
             setCloneVal('bapSponsors', printData.sponsors);
             setCloneVal('bapSponsorsExtra', printData.sponsors_extra);
-            setCloneVal('bapPurpose', printData.purpose);
+            setClonePurpose(printData.purpose);
             setCloneVal('bapBookNo', printData.book_no);
             setCloneVal('bapPageNo', printData.page_no);
             setCloneVal('bapRegisterNo', printData.register_no);
@@ -1321,7 +1340,7 @@
                 if (shouldPrint) {
                     setTimeout(function() {
                         printWin.print();
-                    }, 150);
+                    }, 350);
                 }
             }
 
@@ -1329,7 +1348,7 @@
             printWin.location.href = baptismPrintBlobUrl;
             setTimeout(function() {
                 populateAndPrint();
-            }, openedHere ? 900 : 700);
+            }, openedHere ? 1100 : 900);
             return true;
         }
 

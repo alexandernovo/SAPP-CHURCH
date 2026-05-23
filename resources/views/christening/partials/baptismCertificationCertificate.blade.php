@@ -1,75 +1,215 @@
 <template id="baptismCertificatePrintableTemplate">
     <style>
-        .bap-wrap { min-height: 100vh; display: grid; place-items: center; background: #ececec; padding: 1rem; }
-        .bap-sheet { width: min(96vw, 48.5rem); aspect-ratio: 1164 / 1800; position: relative; background: #fff; box-shadow: 0 4px 18px rgba(0,0,0,.2); overflow: hidden; }
-        .bap-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
-        .bap-field { position: absolute; z-index: 1; box-sizing: border-box; border: 0; background: transparent; color: #0e285c; font: 600 1.03rem Arial, sans-serif; letter-spacing: .025em; line-height: 1.05; padding: .05rem .15rem; overflow: hidden; text-overflow: clip; white-space: nowrap; }
-        .bap-field:focus { outline: none; }
-        .bap-field--center { text-align: center; }
-        .bap-name { left: 21%; top: 37.8%; width: 67%; font-size: 1.16rem; letter-spacing: .035em; text-align: center; }
-        .bap-birth-day { left: 24%; top: 44.6%; width: 11%; text-align: center; }
-        .bap-birth-month-year { left: 45%; top: 44.6%; width: 28%; text-align: center; }
-        .bap-birth-year { left: 78%; top: 44.6%; width: 10%; text-align: center; }
-        .bap-birthplace { left: 14%; top: 47.1%; width: 74%; }
-        .bap-father { left: 24%; top: 49.5%; width: 64%; }
-        .bap-mother { left: 24%; top: 51.9%; width: 64%; }
-        .bap-address { left: 21%; top: 54.3%; width: 67%; }
-        .bap-baptism-day { left: 18%; top: 62.7%; width: 12%; text-align: center; }
-        .bap-baptism-month-year { left: 39%; top: 62.7%; width: 34%; text-align: center; }
-        .bap-baptism-year { left: 78%; top: 62.7%; width: 10%; text-align: center; }
-        .bap-priest { left: 25%; top: 65.2%; width: 63%; }
-        .bap-sponsors { left: 34%; top: 67.4%; width: 52%; }
-        .bap-sponsors-extra { left: 11%; top: 69.8%; width: 75%; }
-        .bap-purpose { left: 32%; top: 77.4%; width: 43%; text-align: center; }
-        .bap-book-no { left: 72%; top: 83.8%; width: 17%; }
-        .bap-page-no { left: 72%; top: 85.6%; width: 17%; }
-        .bap-register-no { left: 73%; top: 87.4%; width: 16%; }
-        .bap-date-issued { left: 73%; top: 89.2%; width: 16%; }
-        .bap-print-action { text-align: center; margin-top: .75rem; }
-        .bap-print-btn { border: 0; background: #0e285c; color: #fff; padding: .5rem .95rem; border-radius: .25rem; cursor: pointer; }
-        .bap-reload-btn { border: 0; background: #6c757d; color: #fff; padding: .5rem .95rem; border-radius: .25rem; cursor: pointer; margin-left: .5rem; }
-        @page { size: A4 portrait; margin: 0; }
+        .bap-wrap {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            background: #ececec;
+            padding: 1rem;
+            gap: 0.75rem;
+        }
+
+        .bap-scale {
+            width: 210mm;
+            height: 297mm;
+            flex-shrink: 0;
+        }
+
+        @media screen {
+            .bap-scale {
+                transform: scale(min(1, calc((100vw - 2rem) / 210mm), calc((100vh - 8rem) / 297mm)));
+                transform-origin: top center;
+            }
+        }
+
+        .bap-sheet {
+            width: 210mm;
+            height: 297mm;
+            position: relative;
+            background: #fff;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, .2);
+            overflow: hidden;
+        }
+
+        .bap-bg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: fill;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .bap-field {
+            position: absolute;
+            z-index: 1;
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0 0.4mm;
+            border: 0;
+            background: transparent;
+            color: #0e285c;
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: 600;
+            font-size: 3.45mm;
+            letter-spacing: .02em;
+            line-height: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: block;
+        }
+
+        .bap-field.is-hidden { display: none !important; }
+
+        .bap-field-line {
+            line-height: 1.05;
+        }
+
+        .bap-name {
+            left: 10%;
+            top: 37.05%;
+            width: 80%;
+            font-size: 3.85mm;
+            letter-spacing: .03em;
+            text-align: center;
+        }
+
+        .bap-birth-day { left: 26%; top: 43.05%; width: 9%; text-align: center; }
+        .bap-birth-month-year { left: 44%; top: 43.05%; width: 24%; text-align: center; }
+        .bap-birth-year { left: 73%; top: 43.05%; width: 11%; text-align: center; }
+        .bap-birthplace { left: 15%; top: 45.4%; width: 70%; }
+        .bap-father { left: 29%; top: 47.7%; width: 63%; }
+        .bap-mother { left: 29%; top: 49.75%; width: 63%; }
+        .bap-address { left: 28%; top: 53.15%; width: 64%; }
+        .bap-baptism-day { left: 21.5%; top: 61.2%; width: 9%; text-align: center; }
+        .bap-baptism-month-year { left: 42%; top: 61.2%; width: 26%; text-align: center; }
+        .bap-baptism-year { left: 73%; top: 61.2%; width: 11%; text-align: center; }
+        .bap-priest { left: 28%; top: 63.25%; width: 60%; }
+        .bap-sponsors { left: 38%; top: 65.55%; width: 54%; }
+        .bap-sponsors-extra { left: 10%; top: 67.95%; width: 76%; }
+        .bap-purpose { left: 38%; top: 74.25%; width: 44%; font-size: 3.3mm; }
+        .bap-book-no { left: 74.5%; top: 78.25%; width: 20%; text-align: left; }
+        .bap-page-no { left: 74.5%; top: 80%; width: 20%; text-align: left; }
+        .bap-register-no { left: 74.5%; top: 81.75%; width: 20%; text-align: left; }
+        .bap-date-issued { left: 74.5%; top: 83.5%; width: 20%; font-size: 3.2mm; text-align: left; }
+
+        .bap-print-action { text-align: center; }
+
+        .bap-print-btn {
+            border: 0;
+            background: #0e285c;
+            color: #fff;
+            padding: .5rem .95rem;
+            border-radius: .25rem;
+            cursor: pointer;
+        }
+
+        .bap-reload-btn {
+            border: 0;
+            background: #6c757d;
+            color: #fff;
+            padding: .5rem .95rem;
+            border-radius: .25rem;
+            cursor: pointer;
+            margin-left: .5rem;
+        }
+
+        @page {
+            size: A4 portrait;
+            margin: 0;
+        }
+
         @media print {
-            html, body { margin: 0 !important; padding: 0 !important; width: 210mm; height: 297mm; }
-            .bap-wrap { background: #fff; padding: 0; min-height: 0; width: 210mm; height: 297mm; }
-            .bap-sheet {
-                width: 210mm;
-                height: 297mm;
-                box-shadow: none;
-                page-break-inside: avoid;
+            html, body {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 210mm !important;
+                height: 297mm !important;
+                overflow: hidden !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
-            .bap-field { border: 0 !important; }
-            .bap-print-action { display: none; }
+
+            .bap-wrap {
+                display: block !important;
+                background: #fff !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                min-height: 0 !important;
+                width: 210mm !important;
+                height: 297mm !important;
+                gap: 0 !important;
+            }
+
+            .bap-scale {
+                transform: none !important;
+                width: 210mm !important;
+                height: 297mm !important;
+                margin: 0 !important;
+            }
+
+            .bap-sheet {
+                width: 210mm !important;
+                height: 297mm !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                page-break-inside: avoid;
+                break-inside: avoid;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .bap-bg {
+                object-fit: fill !important;
+                width: 100% !important;
+                height: 100% !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .bap-field,
+            .bap-field-line {
+                display: block !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .bap-print-action { display: none !important; }
         }
     </style>
     <div class="bap-wrap">
-        <div class="bap-sheet" id="bapPrintArea">
-            <img class="bap-bg" src="{{ asset('assets/certificates/baptismCert.jpg') }}" alt="">
-            <input class="bap-field bap-name" id="bapFullName">
-            <input class="bap-field bap-birth-day" id="bapBirthDay">
-            <input class="bap-field bap-birth-month-year" id="bapBirthMonthYear">
-            <input class="bap-field bap-birth-year" id="bapBirthYear">
-            <input class="bap-field bap-birthplace" id="bapBirthplace">
-            <input class="bap-field bap-father" id="bapFatherName">
-            <input class="bap-field bap-mother" id="bapMotherName">
-            <input class="bap-field bap-address" id="bapAddress">
-            <input class="bap-field bap-baptism-day" id="bapBaptismDay">
-            <input class="bap-field bap-baptism-month-year" id="bapBaptismMonthYear">
-            <input class="bap-field bap-baptism-year" id="bapBaptismYear">
-            <input class="bap-field bap-priest" id="bapPriestName">
-            <input class="bap-field bap-sponsors" id="bapSponsors">
-            <input class="bap-field bap-sponsors-extra" id="bapSponsorsExtra">
-            <input class="bap-field bap-purpose" id="bapPurpose">
-            <input class="bap-field bap-book-no" id="bapBookNo">
-            <input class="bap-field bap-page-no" id="bapPageNo">
-            <input class="bap-field bap-register-no" id="bapRegisterNo">
-            <input class="bap-field bap-date-issued" id="bapDateIssued">
+        <div class="bap-scale">
+            <div class="bap-sheet" id="bapPrintArea">
+                <img class="bap-bg" src="{{ asset('assets/certificates/baptismCert.jpg') }}" alt="">
+                <span class="bap-field bap-field-line bap-name" id="bapFullName"></span>
+                <span class="bap-field bap-field-line bap-birth-day" id="bapBirthDay"></span>
+                <span class="bap-field bap-field-line bap-birth-month-year" id="bapBirthMonthYear"></span>
+                <span class="bap-field bap-field-line bap-birth-year" id="bapBirthYear"></span>
+                <span class="bap-field bap-field-line bap-birthplace" id="bapBirthplace"></span>
+                <span class="bap-field bap-field-line bap-father" id="bapFatherName"></span>
+                <span class="bap-field bap-field-line bap-mother" id="bapMotherName"></span>
+                <span class="bap-field bap-field-line bap-address" id="bapAddress"></span>
+                <span class="bap-field bap-field-line bap-baptism-day" id="bapBaptismDay"></span>
+                <span class="bap-field bap-field-line bap-baptism-month-year" id="bapBaptismMonthYear"></span>
+                <span class="bap-field bap-field-line bap-baptism-year" id="bapBaptismYear"></span>
+                <span class="bap-field bap-field-line bap-priest" id="bapPriestName"></span>
+                <span class="bap-field bap-field-line bap-sponsors" id="bapSponsors"></span>
+                <span class="bap-field bap-field-line bap-sponsors-extra" id="bapSponsorsExtra"></span>
+                <span class="bap-field bap-field-line bap-purpose is-hidden" id="bapPurpose"></span>
+                <span class="bap-field bap-field-line bap-book-no" id="bapBookNo"></span>
+                <span class="bap-field bap-field-line bap-page-no" id="bapPageNo"></span>
+                <span class="bap-field bap-field-line bap-register-no" id="bapRegisterNo"></span>
+                <span class="bap-field bap-field-line bap-date-issued" id="bapDateIssued"></span>
+            </div>
         </div>
         <div class="bap-print-action">
             <button type="button" class="bap-print-btn" onclick="window.print()">Print Certificate</button>
-            <button type="button" class="bap-reload-btn" onclick="window.opener && window.opener.sappcReloadBaptismPrintWindow ? window.opener.sappcReloadBaptismPrintWindow(window) : window.location.reload()">Reload Certificate</button>
+            <button type="button" class="bap-reload-btn"
+                onclick="window.opener && window.opener.sappcReloadBaptismPrintWindow ? window.opener.sappcReloadBaptismPrintWindow(window) : window.location.reload()">Reload Certificate</button>
         </div>
     </div>
 </template>

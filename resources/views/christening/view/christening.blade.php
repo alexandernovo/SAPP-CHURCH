@@ -749,7 +749,8 @@
                                 <label class="sappcCertModalLabel sappcCertModalLabel--block"
                                     for="chCertPurpose">Purpose</label>
                                 <input type="text" class="sappcCertModalInput sappcCertModalInput--center"
-                                    id="chCertPurpose" name="purpose" placeholder="">
+                                    id="chCertPurpose" name="purpose"
+                                    placeholder="Leave blank for FOR ALL LEGAL PURPOSES">
                             </div>
 
                             <div class="sappcCertModalTrackingGrid">
