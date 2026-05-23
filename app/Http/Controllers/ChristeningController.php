@@ -92,13 +92,10 @@ class ChristeningController extends Controller
         ]);
     }
 
-    /**
-     * @return array<int, array<string, string|int>>
-     */
     private function buildCertificationRowsFromDetailsTable(string $reportType, ?string $monthYm = null): array
     {
         $rowsQuery = DB::table('certification_details')
-            ->orderByDesc('date')
+            ->orderByDesc('created_at')
             ->orderByDesc('certificationDetailsId');
 
         if ($reportType !== '') {
@@ -119,7 +116,6 @@ class ChristeningController extends Controller
                 $rowsQuery->whereYear('date', $carbon->year)
                     ->whereMonth('date', $carbon->month);
             } catch (\Throwable) {
-                // ignore invalid month; return unfiltered rows for the chosen report type
             }
         }
 
@@ -134,7 +130,7 @@ class ChristeningController extends Controller
                 'address' => trim((string) ($row->address ?? '')),
                 'sex' => trim((string) ($row->sex ?? '')),
                 'contact_number' => trim((string) ($row->contactNumber ?? '')),
-                'date' => ClientNameDisplay::formatDateCreated($row->date ?? null),
+                'date' => ClientNameDisplay::formatDateTimeCreated($row->created_at ?? $row->date ?? null),
             ];
         }
 
@@ -508,7 +504,6 @@ class ChristeningController extends Controller
         return $digits === '' ? '' : (strlen($digits) > 11 ? substr($digits, -11) : $digits);
     }
 
-
     private function defaultChristeningPaymentFeeRows(): array
     {
         return [
@@ -519,7 +514,6 @@ class ChristeningController extends Controller
             ['label' => 'Others:', 'paid' => false, 'date_paid' => null],
         ];
     }
-
 
     private function mapChristeningRowToPaymentFormFields(object $row): array
     {
@@ -1360,5 +1354,4 @@ class ChristeningController extends Controller
             'updated_at' => now(),
         ];
     }
-
 }

@@ -7,6 +7,7 @@ use Carbon\CarbonInterface;
 
 final class ClientNameDisplay
 {
+    private const DISPLAY_TIMEZONE = 'Asia/Taipei';
     public static function middleInitial(?string $m): string
     {
         if ($m === null || trim($m) === '') {
@@ -47,6 +48,27 @@ final class ClientNameDisplay
 
         try {
             return Carbon::parse($value)->format('F j, Y');
+        } catch (\Throwable) {
+            return '—';
+        }
+    }
+
+    public static function formatDateTimeCreated(mixed $value, ?string $timezone = self::DISPLAY_TIMEZONE): string
+    {
+        if ($value === null || $value === '') {
+            return '—';
+        }
+
+        try {
+            $dt = $value instanceof CarbonInterface
+                ? $value->copy()
+                : Carbon::parse($value, config('app.timezone', 'UTC'));
+
+            if ($timezone !== null && $timezone !== '') {
+                $dt = $dt->timezone($timezone);
+            }
+
+            return $dt->format('F j, Y g:i A');
         } catch (\Throwable) {
             return '—';
         }

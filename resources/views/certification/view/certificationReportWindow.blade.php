@@ -39,7 +39,7 @@
                         <th scope="col">ADDRESS</th>
                         <th scope="col">SEX</th>
                         <th scope="col">CONTACT NUMBER</th>
-                        <th scope="col">DATE</th>
+                        <th scope="col">DATE &amp; TIME</th>
                     </tr>
                 </thead>
                 <tbody>
