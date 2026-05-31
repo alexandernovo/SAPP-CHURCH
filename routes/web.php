@@ -43,7 +43,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/wedding/payment-save', [WeddingController::class, 'weddingPaymentSave'])->name('admin.wedding.payment-save');
     Route::get('/wedding/marriage-application', [WeddingController::class, 'weddingMarriageApplicationDetails'])->name('admin.wedding.marriage-application-details');
     Route::post('/wedding/marriage-application', [WeddingController::class, 'weddingMarriageApplicationSave'])->name('admin.wedding.marriage-application-save');
-    Route::get('/wedding/marriage/certification-form', [WeddingController::class, 'weddingCertificationForm'])->name('admin.wedding.certification-form');
+    Route::post('/wedding/marriage/certification-form', [WeddingController::class, 'weddingCertificationForm'])->name('admin.wedding.certification-form');
     Route::get('/wedding/marriage/certification-details', [WeddingController::class, 'weddingCertificationDetails'])->name('admin.wedding.certification-details');
     Route::post('/wedding/record/delete', [WeddingController::class, 'deleteWeddingRecord'])->name('admin.wedding.record-delete');
     Route::get('/burial', [BurialController::class, 'index'])->name('admin.burial');

@@ -73,4 +73,30 @@ final class ClientNameDisplay
             return '—';
         }
     }
+
+    /**
+     * UTC bounds for filtering report rows by calendar month in the display timezone.
+     *
+     * @return array{0: CarbonInterface, 1: CarbonInterface}|null
+     */
+    public static function monthBoundsUtcForDisplayTimezone(string $monthYm, ?string $timezone = self::DISPLAY_TIMEZONE): ?array
+    {
+        try {
+            $start = Carbon::createFromFormat('Y-m', $monthYm, $timezone)->startOfMonth()->utc();
+            $end = Carbon::createFromFormat('Y-m', $monthYm, $timezone)->endOfMonth()->utc();
+
+            return [$start, $end];
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    public static function formatMonthYearLabel(string $monthYm, ?string $timezone = self::DISPLAY_TIMEZONE): string
+    {
+        try {
+            return Carbon::createFromFormat('Y-m', $monthYm, $timezone)->translatedFormat('F Y');
+        } catch (\Throwable) {
+            return '';
+        }
+    }
 }

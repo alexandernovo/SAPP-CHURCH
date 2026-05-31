@@ -201,6 +201,7 @@
         data-payment-save-url="{{ route('admin.wedding.payment-save') }}"
         data-marriage-application-details-url="{{ route('admin.wedding.marriage-application-details') }}"
         data-marriage-application-save-url="{{ route('admin.wedding.marriage-application-save') }}"
+        data-certification-save-url="{{ route('admin.wedding.certification-form') }}"
         data-certification-details-url="{{ route('admin.wedding.certification-details') }}"
         data-wedding-delete-url="{{ route('admin.wedding.record-delete') }}"
         data-schedule-details-url="{{ route('admin.wedding.schedule-details') }}"
@@ -523,7 +524,7 @@
                                 <label class="sappcCertModalLabel sappcCertModalLabel--block"
                                     for="wdCertPurpose">Purpose</label>
                                 <input type="text" class="sappcCertModalInput sappcCertModalInput--center"
-                                    id="wdCertPurpose" name="purpose" placeholder="">
+                                    id="wdCertPurpose" name="purpose" value="For all legal purposes">
                             </div>
 
                             <div class="sappcCertModalTrackingGrid">
@@ -553,7 +554,7 @@
                         </form>
                     </div>
                     <div class="modal-footer sappcChristeningAppModalFooter">
-                        <button type="submit" form="weddingCertificationForm"
+                        <button type="button"
                             class="sappcChristeningAppModalBtn sappcChristeningAppModalBtnSave" id="wdCertAddRecordBtn">
                             Add Record
                         </button>

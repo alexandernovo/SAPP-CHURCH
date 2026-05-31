@@ -344,6 +344,8 @@
             ph('#chCertPurpose', 'e.g. school enrollment, passport');
         }
 
+        var DEFAULT_CERT_PURPOSE = 'For all legal purposes';
+
         function syncChristeningApplicationNameGridMetrics() {
             ['chAppCellsFirst', 'chAppCellsMiddle', 'chAppCellsFamily'].forEach(function(wrapId) {
                 var wrap = document.getElementById(wrapId);
@@ -922,7 +924,6 @@
         var certificationDetailsUrl = ($panel.attr('data-certification-details-url') || '').trim();
         var christeningDeleteUrl = ($panel.attr('data-christening-delete-url') || '').trim();
         var scheduleDetailsUrl = ($panel.attr('data-schedule-details-url') || '').trim();
-        if (!url) return;
 
         function isDashboardEmbeddedAppContext() {
             try {
@@ -1117,7 +1118,11 @@
             $('#chCertRegisterNo').val(data.register_no != null ? String(data.register_no) : '');
             $('#chCertPageNo').val(data.page_no != null ? String(data.page_no) : '');
             $('#chCertSponsors').val(data.sponsors != null ? String(data.sponsors) : '');
-            $('#chCertPurpose').val(data.purpose != null ? String(data.purpose) : '');
+            $('#chCertPurpose').val(
+                data.purpose != null && String(data.purpose).trim() !== ''
+                    ? String(data.purpose)
+                    : DEFAULT_CERT_PURPOSE
+            );
         }
 
         function chCertFieldValue(sel) {
@@ -1407,55 +1412,72 @@
             return fetchPostJson(certificationSaveUrl, payload, csrf);
         }
 
+        function runChristeningCertificationSaveAndPrint($btn) {
+            $btn = ($btn && $btn.length) ? $btn : $('#chCertAddRecordBtn');
+            $btn.prop('disabled', true);
+            return saveChristeningCertificationRecord()
+                .done(function(res) {
+                    if (!res || res.ok === false) {
+                        var badMsg = (res && res.message) ? res.message : 'Certification could not be saved.';
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: badMsg
+                            });
+                        } else {
+                            window.alert(badMsg);
+                        }
+                        return;
+                    }
+                    printBaptismCertificationSheet();
+                    var msg = (res && res.message) ? res.message : 'Certification record saved.';
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Saved',
+                            text: msg
+                        });
+                    }
+                })
+                .fail(function(xhr) {
+                    var msg = 'Certification could not be saved.';
+                    var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                    if (data && data.errors) {
+                        var vals = Object.values(data.errors);
+                        if (vals.length && Array.isArray(vals[0]) && vals[0][0]) {
+                            msg = vals[0][0];
+                        }
+                    } else if (data && data.message) {
+                        msg = data.message;
+                    }
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: msg
+                        });
+                    } else {
+                        window.alert(msg);
+                    }
+                })
+                .always(function() {
+                    $btn.prop('disabled', false);
+                });
+        }
+
         $(document)
             .off('submit.sappcBaptismPrint', '#christeningCertificationForm')
             .on('submit.sappcBaptismPrint', '#christeningCertificationForm', function(e) {
                 e.preventDefault();
-                printBaptismCertificationSheet();
+                runChristeningCertificationSaveAndPrint($('#chCertAddRecordBtn'));
             });
 
         $(document)
             .off('click.sappcBaptismPrint', '#chCertAddRecordBtn')
             .on('click.sappcBaptismPrint', '#chCertAddRecordBtn', function(e) {
                 e.preventDefault();
-                var $btn = $(this);
-                $btn.prop('disabled', true);
-                saveChristeningCertificationRecord()
-                    .done(function(res) {
-                        printBaptismCertificationSheet();
-                        var msg = (res && res.message) ? res.message : 'Certification record saved.';
-                        if (typeof Swal !== 'undefined') {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Saved',
-                                text: msg
-                            });
-                        }
-                    })
-                    .fail(function(xhr) {
-                        var msg = 'Certification could not be saved.';
-                        var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
-                        if (data && data.errors) {
-                            var vals = Object.values(data.errors);
-                            if (vals.length && Array.isArray(vals[0]) && vals[0][0]) {
-                                msg = vals[0][0];
-                            }
-                        } else if (data && data.message) {
-                            msg = data.message;
-                        }
-                        if (typeof Swal !== 'undefined') {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error',
-                                text: msg
-                            });
-                        } else {
-                            window.alert(msg);
-                        }
-                    })
-                    .always(function() {
-                        $btn.prop('disabled', false);
-                    });
+                runChristeningCertificationSaveAndPrint($(this));
             });
 
         if ($certModal.length && $certBtn.length && typeof bootstrap !== 'undefined') {
@@ -1712,6 +1734,9 @@
         }
 
         function fetchRecords() {
+            if (!url) {
+                return;
+            }
             $('#christeningTableBody').html('<tr class="sappc-table-loading"><td colspan="9" class="text-center text-muted py-4">Loading…</td></tr>');
             var reqUrl = buildQueryUrl(url, fetchQueryParams());
             fetchJson(reqUrl, jsonHeaders)

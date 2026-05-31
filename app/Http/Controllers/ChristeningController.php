@@ -22,6 +22,8 @@ class ChristeningController extends Controller
 
     private const CHRISTENING_REFERENCE_CHARSET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
+    private const DEFAULT_CERT_PURPOSE = 'For all legal purposes';
+
     public function index(Request $request): View
     {
 
@@ -42,7 +44,7 @@ class ChristeningController extends Controller
     public function certificationPage(Request $request): View
     {
         $certReportMonth = $this->resolveCertificationReportMonth($request->input('month'));
-        $certReportLabel = Carbon::createFromFormat('Y-m', $certReportMonth)->translatedFormat('F Y');
+        $certReportLabel = ClientNameDisplay::formatMonthYearLabel($certReportMonth);
 
         return view('certification.view.certification', [
             'certReportMonth' => $certReportMonth,
@@ -58,7 +60,7 @@ class ChristeningController extends Controller
         ]);
         $reportType = (string) ($validated['report_type'] ?? '');
         $month = $this->resolveCertificationReportMonth($validated['month'] ?? null);
-        $reportLabel = Carbon::createFromFormat('Y-m', $month)->translatedFormat('F Y');
+        $reportLabel = ClientNameDisplay::formatMonthYearLabel($month);
 
         return view('certification.view.certificationReportWindow', [
             'reportType' => $reportType,
@@ -79,7 +81,7 @@ class ChristeningController extends Controller
         $reportType = (string) ($validated['report_type'] ?? '');
         $month = $this->resolveCertificationReportMonth($validated['month'] ?? null);
         $out = $this->buildCertificationRowsFromDetailsTable($reportType, $month);
-        $reportLabel = Carbon::createFromFormat('Y-m', $month)->translatedFormat('F Y');
+        $reportLabel = ClientNameDisplay::formatMonthYearLabel($month);
         $serviceHeading = $reportType === 'wedding' ? 'WEDDING CERTIFICATION' : 'CHRISTENING CERTIFICATION';
 
         return response()->json([
@@ -111,11 +113,13 @@ class ChristeningController extends Controller
 
         $resolvedMonth = $monthYm !== null && $monthYm !== '' ? $this->resolveCertificationReportMonth($monthYm) : null;
         if ($resolvedMonth !== null) {
-            try {
-                $carbon = Carbon::createFromFormat('Y-m', $resolvedMonth)->startOfMonth();
-                $rowsQuery->whereYear('date', $carbon->year)
-                    ->whereMonth('date', $carbon->month);
-            } catch (\Throwable) {
+            $bounds = ClientNameDisplay::monthBoundsUtcForDisplayTimezone($resolvedMonth);
+            if ($bounds !== null) {
+                [$startUtc, $endUtc] = $bounds;
+                $rowsQuery->whereBetween('created_at', [
+                    $startUtc->format('Y-m-d H:i:s'),
+                    $endUtc->format('Y-m-d H:i:s'),
+                ]);
             }
         }
 
@@ -139,13 +143,21 @@ class ChristeningController extends Controller
 
     private function resolveCertificationReportMonth(?string $value): string
     {
-        if ($value === null || $value === '') {
-            return now()->format('Y-m');
+        $tz = 'Asia/Taipei';
+
+        if ($value === null || trim((string) $value) === '') {
+            return now($tz)->format('Y-m');
         }
+
+        $value = trim((string) $value);
+        if (preg_match('/^(\d{4})-(\d{1,2})$/', $value, $parts)) {
+            return sprintf('%04d-%02d', (int) $parts[1], (int) $parts[2]);
+        }
+
         try {
-            return Carbon::createFromFormat('Y-m', $value)->format('Y-m');
+            return Carbon::createFromFormat('Y-m', $value, $tz)->format('Y-m');
         } catch (\Throwable) {
-            return now()->format('Y-m');
+            return now($tz)->format('Y-m');
         }
     }
 
@@ -1146,6 +1158,10 @@ class ChristeningController extends Controller
             $overlay[$k] = $v;
         }
 
+        $overlay['purpose'] = trim((string) ($overlay['purpose'] ?? '')) !== ''
+            ? trim((string) $overlay['purpose'])
+            : self::DEFAULT_CERT_PURPOSE;
+
         return response()->json([
             'ok' => true,
             'has_saved_cert' => $certRow !== null,
@@ -1200,7 +1216,7 @@ class ChristeningController extends Controller
             'register_no' => '',
             'page_no' => '',
             'sponsors' => $sponsors,
-            'purpose' => '',
+            'purpose' => self::DEFAULT_CERT_PURPOSE,
         ];
     }
 

@@ -52,7 +52,7 @@
             border: 0;
             background: transparent;
             color: #0e285c;
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: Arial;
             font-weight: 600;
             font-size: 3.45mm;
             letter-spacing: .02em;
@@ -71,9 +71,10 @@
 
         .bap-name {
             left: 10%;
-            top: 37.05%;
+            top: 38.45%;
             width: 80%;
-            font-size: 3.85mm;
+            font-size: 4.85mm;
+            font-weight: 700;
             letter-spacing: .03em;
             text-align: center;
         }
@@ -84,18 +85,18 @@
         .bap-birthplace { left: 15%; top: 45.4%; width: 70%; }
         .bap-father { left: 29%; top: 47.7%; width: 63%; }
         .bap-mother { left: 29%; top: 49.75%; width: 63%; }
-        .bap-address { left: 28%; top: 53.15%; width: 64%; }
+        .bap-address { left: 28%; top: 51.75%; width: 64%; }
         .bap-baptism-day { left: 21.5%; top: 61.2%; width: 9%; text-align: center; }
         .bap-baptism-month-year { left: 42%; top: 61.2%; width: 26%; text-align: center; }
         .bap-baptism-year { left: 73%; top: 61.2%; width: 11%; text-align: center; }
-        .bap-priest { left: 28%; top: 63.25%; width: 60%; }
+        .bap-priest { left: 28%; top: 64%; width: 60%; }
         .bap-sponsors { left: 38%; top: 65.55%; width: 54%; }
         .bap-sponsors-extra { left: 10%; top: 67.95%; width: 76%; }
         .bap-purpose { left: 38%; top: 74.25%; width: 44%; font-size: 3.3mm; }
-        .bap-book-no { left: 74.5%; top: 78.25%; width: 20%; text-align: left; }
-        .bap-page-no { left: 74.5%; top: 80%; width: 20%; text-align: left; }
-        .bap-register-no { left: 74.5%; top: 81.75%; width: 20%; text-align: left; }
-        .bap-date-issued { left: 74.5%; top: 83.5%; width: 20%; font-size: 3.2mm; text-align: left; }
+        .bap-book-no { right: 14.5%; left: auto; top: 78.25%; width: 18%; text-align: right; padding-right: 0; }
+        .bap-page-no { right: 14.5%; left: auto; top: 80%; width: 18%; text-align: right; padding-right: 0; }
+        .bap-register-no { right: 14.5%; left: auto; top: 81.75%; width: 18%; text-align: right; padding-right: 0; }
+        .bap-date-issued { right: 14.5%; left: auto; top: 83.5%; width: 18%; font-size: 3.2mm; text-align: right; padding-right: 0; }
 
         .bap-print-action { text-align: center; }
 
@@ -119,7 +120,7 @@
         }
 
         @page {
-            size: A4 portrait;
+            size: A4 portrait; 
             margin: 0;
         }
 

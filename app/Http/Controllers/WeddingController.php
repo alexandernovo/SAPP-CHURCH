@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class WeddingController extends Controller
@@ -17,6 +18,8 @@ class WeddingController extends Controller
     private const WEDDING_REFERENCE_SUFFIX = 'W';
 
     private const WEDDING_REFERENCE_CHARSET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+    private const DEFAULT_CERT_PURPOSE = 'For all legal purposes';
 
     public function index(Request $request): View
     {
@@ -455,9 +458,12 @@ class WeddingController extends Controller
         }
 
         try {
-            DB::table('wedding')->where('weddingId', $weddingId)->update([
-                'marriageApplication' => $encoded,
-            ]);
+            DB::transaction(function () use ($weddingId, $encoded, $data) {
+                DB::table('wedding')->where('weddingId', $weddingId)->update([
+                    'marriageApplication' => $encoded,
+                ]);
+                $this->upsertWeddingDetailsFromMarriageApplication($weddingId, $data);
+            });
         } catch (QueryException $e) {
             report($e);
 
@@ -491,172 +497,139 @@ class WeddingController extends Controller
             ->orderByDesc('weddingDetailsId')
             ->first();
 
-        $brideDefault = [
-            'first_name' => '',
-            'middle_name' => '',
-            'family_name' => '',
-            'date_of_birth' => '',
-            'place_of_birth' => '',
-            'father_first_name' => '',
-            'father_middle_name' => '',
-            'father_last_name' => '',
-            'mother_first_name' => '',
-            'mother_middle_name' => '',
-            'mother_last_name' => '',
-            'barangay' => '',
-            'municipality' => '',
-            'province' => 'Antique',
-        ];
+        $app = $this->decodeMarriageApplication($row);
+        $fromDetails = $details !== null
+            ? $this->mapWeddingDetailsRowToCertificationData($details)
+            : $this->emptyWeddingCertificationData();
+        $fromApp = $this->mapMarriageApplicationToCertificationData($app);
+        $data = $this->mergeWeddingCertificationData($fromDetails, $fromApp);
 
-        $data = [
-            'first_name' => '',
-            'middle_name' => '',
-            'family_name' => '',
-            'date_of_birth' => '',
-            'place_of_birth' => '',
-            'father_first_name' => '',
-            'father_middle_name' => '',
-            'father_last_name' => '',
-            'mother_first_name' => '',
-            'mother_middle_name' => '',
-            'mother_last_name' => '',
-            'barangay' => '',
-            'municipality' => '',
-            'province' => 'Antique',
-            'date_received' => '',
-            'date_issued' => '',
-            'book_no' => '',
-            'register_no' => '',
-            'page_no' => '',
-            'priest' => '',
-            'sponsors' => '',
-            'purpose' => '',
-            'bride' => $brideDefault,
-            'marriage' => [
-                'place' => '',
-                'date' => '',
-                'time' => '',
-            ],
-            'registry_header' => [
-                'province' => 'Antique',
-                'city_municipality' => 'Barbaza',
-            ],
-            'groom_sex' => 'Male',
-            'bride_sex' => 'Female',
-            'groom_age' => '',
-            'bride_age' => '',
-            'groom_citizenship' => 'Filipino',
-            'bride_citizenship' => 'Filipino',
-            'groom_religion' => '',
-            'bride_religion' => '',
-            'groom_civil_status' => '',
-            'bride_civil_status' => '',
-        ];
-
-        if ($details !== null) {
-            $groom = $this->splitFullNameThreeParts($details->groomFullName ?? '');
-            $data['first_name'] = $groom['first'];
-            $data['middle_name'] = $groom['middle'];
-            $data['family_name'] = $groom['last'];
-            $data['date_of_birth'] = $this->dateForForm($details->groomDateOfBirth ?? null);
-            $data['place_of_birth'] = (string) ($details->groomPlaceOfBirth ?? '');
-
-            $father = $this->splitFullNameThreeParts($details->groomFather ?? '');
-            $data['father_first_name'] = $father['first'];
-            $data['father_middle_name'] = $father['middle'];
-            $data['father_last_name'] = $father['last'];
-
-            $mother = $this->splitFullNameThreeParts($details->groomMotherMaiden ?? '');
-            $data['mother_first_name'] = $mother['first'];
-            $data['mother_middle_name'] = $mother['middle'];
-            $data['mother_last_name'] = $mother['last'];
-
-            $addrBits = array_values(array_filter(array_map('trim', explode(',', (string) ($details->groomPresentAddress ?? ''))), fn ($s) => $s !== ''));
-            if (isset($addrBits[0])) {
-                $data['barangay'] = $addrBits[0];
-            }
-            if (isset($addrBits[1])) {
-                $data['municipality'] = $addrBits[1];
-            }
-            if (count($addrBits) > 2) {
-                $data['province'] = implode(', ', array_slice($addrBits, 2));
-            }
-
-            $data['priest'] = (string) ($details->officiatingPriest ?? '');
-            $data['sponsors'] = implode('; ', array_values(array_filter([
-                trim((string) ($details->sponsorsLine1 ?? '')),
-                trim((string) ($details->sponsorsLine2 ?? '')),
-                trim((string) ($details->sponsorsLine3 ?? '')),
-            ], fn ($s) => $s !== '')));
-
-            $bride = $this->splitFullNameThreeParts($details->brideFullName ?? '');
-            $data['bride']['first_name'] = $bride['first'];
-            $data['bride']['middle_name'] = $bride['middle'];
-            $data['bride']['family_name'] = $bride['last'];
-            $data['bride']['date_of_birth'] = $this->dateForForm($details->brideDateOfBirth ?? null);
-            $data['bride']['place_of_birth'] = (string) ($details->bridePlaceOfBirth ?? '');
-
-            $brideFather = $this->splitFullNameThreeParts($details->brideFather ?? '');
-            $data['bride']['father_first_name'] = $brideFather['first'];
-            $data['bride']['father_middle_name'] = $brideFather['middle'];
-            $data['bride']['father_last_name'] = $brideFather['last'];
-
-            $brideMother = $this->splitFullNameThreeParts($details->brideMotherMaiden ?? '');
-            $data['bride']['mother_first_name'] = $brideMother['first'];
-            $data['bride']['mother_middle_name'] = $brideMother['middle'];
-            $data['bride']['mother_last_name'] = $brideMother['last'];
-
-            $brideAddr = array_values(array_filter(array_map('trim', explode(',', (string) ($details->bridePresentAddress ?? ''))), fn ($s) => $s !== ''));
-            if (isset($brideAddr[0])) {
-                $data['bride']['barangay'] = $brideAddr[0];
-            }
-            if (isset($brideAddr[1])) {
-                $data['bride']['municipality'] = $brideAddr[1];
-            }
-            if (count($brideAddr) > 2) {
-                $data['bride']['province'] = implode(', ', array_slice($brideAddr, 2));
-            }
-
-            $data['marriage']['place'] = trim((string) ($details->churchWeddingPlace ?? ''));
-            $data['marriage']['date'] = $this->dateForForm($details->churchWeddingDate ?? null);
-            $data['marriage']['time'] = '';
-
-            if ($details->groomAge !== null) {
-                $data['groom_age'] = (string) $details->groomAge;
-            }
-            if ($details->brideAge !== null) {
-                $data['bride_age'] = (string) $details->brideAge;
-            }
-
-            $data['groom_religion'] = trim((string) ($details->groomReligion ?? ''));
-            $data['bride_religion'] = trim((string) ($details->brideReligion ?? ''));
-
-            $mun = trim((string) ($data['municipality'] ?? ''));
-            if ($mun !== '') {
-                $data['registry_header']['city_municipality'] = $mun;
-            }
-            $prov = trim((string) ($data['province'] ?? ''));
-            if ($prov !== '') {
-                $data['registry_header']['province'] = $prov;
-            }
-        } else {
+        if (trim(implode('', [
+            $data['first_name'] ?? '',
+            $data['middle_name'] ?? '',
+            $data['family_name'] ?? '',
+        ])) === '') {
             $data['first_name'] = trim((string) ($row->clientFName ?? ''));
             $data['middle_name'] = trim((string) ($row->clientMName ?? ''));
             $data['family_name'] = trim((string) ($row->clientLName ?? ''));
         }
 
+        if (trim((string) ($data['date_received'] ?? '')) === '' && trim((string) ($data['marriage']['date'] ?? '')) !== '') {
+            $data['date_received'] = (string) $data['marriage']['date'];
+        }
+
+        $data['purpose'] = trim((string) ($data['purpose'] ?? '')) !== ''
+            ? trim((string) $data['purpose'])
+            : self::DEFAULT_CERT_PURPOSE;
+
+        if (Schema::hasTable('wedding_certification')) {
+            $certRow = DB::table('wedding_certification')->where('weddingId', $weddingId)->first();
+            $certFields = $this->mapWeddingCertificationRowToCertificationData($certRow);
+            foreach ($certFields as $k => $v) {
+                if ($v === null || $v === '') {
+                    continue;
+                }
+                if (is_array($v) && isset($data[$k]) && is_array($data[$k])) {
+                    $data[$k] = $this->mergeWeddingCertificationData($data[$k], $v);
+                } else {
+                    $data[$k] = $v;
+                }
+            }
+            if (trim((string) ($data['purpose'] ?? '')) === '') {
+                $data['purpose'] = self::DEFAULT_CERT_PURPOSE;
+            }
+        } else {
+            $certRow = null;
+        }
+
         return response()->json([
             'ok' => true,
+            'has_saved_cert' => $certRow !== null,
             'data' => $data,
         ]);
     }
 
-    public function weddingCertificationForm(): JsonResponse
+    public function weddingCertificationForm(Request $request): JsonResponse
     {
+        $validated = $request->validate([
+            'wedding_id' => ['required', 'integer', 'min:1'],
+            'reference_code' => ['nullable', 'string', 'max:255'],
+            'client' => ['nullable', 'string', 'max:255'],
+            'contact_number' => ['nullable', 'string', 'max:50'],
+            'top_address' => ['nullable', 'string', 'max:500'],
+            'child_first_name' => ['nullable', 'string', 'max:255'],
+            'child_middle_name' => ['nullable', 'string', 'max:255'],
+            'child_last_name' => ['nullable', 'string', 'max:255'],
+            'birthday' => ['nullable', 'date'],
+            'birthplace' => ['nullable', 'string', 'max:500'],
+            'father_first_name' => ['nullable', 'string', 'max:255'],
+            'father_middle_name' => ['nullable', 'string', 'max:255'],
+            'father_last_name' => ['nullable', 'string', 'max:255'],
+            'mother_first_name' => ['nullable', 'string', 'max:255'],
+            'mother_middle_name' => ['nullable', 'string', 'max:255'],
+            'mother_last_name' => ['nullable', 'string', 'max:255'],
+            'barangay' => ['nullable', 'string', 'max:255'],
+            'municipality' => ['nullable', 'string', 'max:255'],
+            'province' => ['nullable', 'string', 'max:255'],
+            'date_received' => ['nullable', 'date'],
+            'priest' => ['nullable', 'string', 'max:500'],
+            'sponsors' => ['nullable', 'string', 'max:2000'],
+            'purpose' => ['nullable', 'string', 'max:2000'],
+            'book_no' => ['nullable', 'string', 'max:120'],
+            'register_no' => ['nullable', 'string', 'max:120'],
+            'page_no' => ['nullable', 'string', 'max:120'],
+            'date_issued' => ['nullable', 'date'],
+        ]);
+
+        $weddingId = (int) $validated['wedding_id'];
+        $wedding = DB::table('wedding')->where('weddingId', $weddingId)->first();
+        if ($wedding === null) {
+            return response()->json(['message' => 'Wedding record not found.'], 404);
+        }
+
+        if (! Schema::hasTable('wedding_certification')) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Certification table is missing. Run database migrations and try again.',
+            ], 422);
+        }
+
+        $certRow = $this->mapWeddingCertificationRequestToTableRow($request);
+        $certificationDetailsRow = $this->mapWeddingCertificationRequestToCertificationDetailsRow($request, $wedding);
+
+        try {
+            DB::transaction(function () use ($weddingId, $certRow, $certificationDetailsRow) {
+                $existing = DB::table('wedding_certification')->where('weddingId', $weddingId)->first();
+
+                if ($existing) {
+                    DB::table('wedding_certification')
+                        ->where('weddingCertificationId', $existing->weddingCertificationId)
+                        ->update($certRow);
+                } else {
+                    DB::table('wedding_certification')->insert(array_merge($certRow, [
+                        'weddingId' => $weddingId,
+                        'created_at' => now(),
+                    ]));
+                }
+
+                DB::table('certification_details')->insert($certificationDetailsRow);
+            });
+        } catch (QueryException $e) {
+            report($e);
+
+            return response()->json([
+                'ok' => false,
+                'message' => 'Could not save certification. If this persists, run database migrations and try again.',
+            ], 422);
+        }
+
         return response()->json([
-            'ok' => false,
-            'message' => 'Certification persistence is not configured for wedding. Use print from the certification modal.',
-        ], 501);
+            'ok' => true,
+            'message' => 'Certification record saved.',
+            'data' => [
+                'wedding_id' => $weddingId,
+            ],
+        ]);
     }
 
     public function deleteWeddingRecord(Request $request): JsonResponse
@@ -840,5 +813,507 @@ class WeddingController extends Controller
         $s = trim((string) $value);
 
         return $s === '' ? null : $s;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function emptyWeddingCertificationData(): array
+    {
+        return [
+            'first_name' => '',
+            'middle_name' => '',
+            'family_name' => '',
+            'date_of_birth' => '',
+            'place_of_birth' => '',
+            'father_first_name' => '',
+            'father_middle_name' => '',
+            'father_last_name' => '',
+            'mother_first_name' => '',
+            'mother_middle_name' => '',
+            'mother_last_name' => '',
+            'barangay' => '',
+            'municipality' => '',
+            'province' => 'Antique',
+            'date_received' => '',
+            'date_issued' => '',
+            'book_no' => '',
+            'register_no' => '',
+            'page_no' => '',
+            'priest' => '',
+            'sponsors' => '',
+            'purpose' => '',
+            'bride' => [
+                'first_name' => '',
+                'middle_name' => '',
+                'family_name' => '',
+                'date_of_birth' => '',
+                'place_of_birth' => '',
+                'father_first_name' => '',
+                'father_middle_name' => '',
+                'father_last_name' => '',
+                'mother_first_name' => '',
+                'mother_middle_name' => '',
+                'mother_last_name' => '',
+                'barangay' => '',
+                'municipality' => '',
+                'province' => 'Antique',
+            ],
+            'marriage' => [
+                'place' => '',
+                'date' => '',
+                'time' => '',
+            ],
+            'registry_header' => [
+                'province' => 'Antique',
+                'city_municipality' => 'Barbaza',
+            ],
+            'groom_sex' => 'Male',
+            'bride_sex' => 'Female',
+            'groom_age' => '',
+            'bride_age' => '',
+            'groom_citizenship' => 'Filipino',
+            'bride_citizenship' => 'Filipino',
+            'groom_religion' => '',
+            'bride_religion' => '',
+            'groom_civil_status' => '',
+            'bride_civil_status' => '',
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function mapWeddingDetailsRowToCertificationData(object $details): array
+    {
+        $data = $this->emptyWeddingCertificationData();
+
+        $groom = $this->splitPersonName($details->groomFullName ?? '');
+        $data['first_name'] = $groom['first'];
+        $data['middle_name'] = $groom['middle'];
+        $data['family_name'] = $groom['last'];
+        $data['date_of_birth'] = $this->dateForForm($details->groomDateOfBirth ?? null);
+        $data['place_of_birth'] = (string) ($details->groomPlaceOfBirth ?? '');
+
+        $father = $this->splitPersonName($details->groomFather ?? '');
+        $data['father_first_name'] = $father['first'];
+        $data['father_middle_name'] = $father['middle'];
+        $data['father_last_name'] = $father['last'];
+
+        $mother = $this->splitPersonName($details->groomMotherMaiden ?? '');
+        $data['mother_first_name'] = $mother['first'];
+        $data['mother_middle_name'] = $mother['middle'];
+        $data['mother_last_name'] = $mother['last'];
+
+        $addr = $this->parseAddressCommaParts((string) ($details->groomPresentAddress ?? ''));
+        $data['barangay'] = $addr['barangay'];
+        $data['municipality'] = $addr['municipality'];
+        $data['province'] = $addr['province'] !== '' ? $addr['province'] : 'Antique';
+
+        $data['priest'] = (string) ($details->officiatingPriest ?? '');
+        $data['sponsors'] = implode('; ', array_values(array_filter([
+            trim((string) ($details->sponsorsLine1 ?? '')),
+            trim((string) ($details->sponsorsLine2 ?? '')),
+            trim((string) ($details->sponsorsLine3 ?? '')),
+        ], fn ($s) => $s !== '')));
+
+        $bride = $this->splitPersonName($details->brideFullName ?? '');
+        $data['bride']['first_name'] = $bride['first'];
+        $data['bride']['middle_name'] = $bride['middle'];
+        $data['bride']['family_name'] = $bride['last'];
+        $data['bride']['date_of_birth'] = $this->dateForForm($details->brideDateOfBirth ?? null);
+        $data['bride']['place_of_birth'] = (string) ($details->bridePlaceOfBirth ?? '');
+
+        $brideFather = $this->splitPersonName($details->brideFather ?? '');
+        $data['bride']['father_first_name'] = $brideFather['first'];
+        $data['bride']['father_middle_name'] = $brideFather['middle'];
+        $data['bride']['father_last_name'] = $brideFather['last'];
+
+        $brideMother = $this->splitPersonName($details->brideMotherMaiden ?? '');
+        $data['bride']['mother_first_name'] = $brideMother['first'];
+        $data['bride']['mother_middle_name'] = $brideMother['middle'];
+        $data['bride']['mother_last_name'] = $brideMother['last'];
+
+        $brideAddr = $this->parseAddressCommaParts((string) ($details->bridePresentAddress ?? ''));
+        $data['bride']['barangay'] = $brideAddr['barangay'];
+        $data['bride']['municipality'] = $brideAddr['municipality'];
+        $data['bride']['province'] = $brideAddr['province'] !== '' ? $brideAddr['province'] : 'Antique';
+
+        $churchDate = $this->dateForForm($details->churchWeddingDate ?? null);
+        $data['marriage']['place'] = trim((string) ($details->churchWeddingPlace ?? ''));
+        $data['marriage']['date'] = $churchDate;
+        $data['date_received'] = $churchDate;
+
+        if ($details->groomAge !== null) {
+            $data['groom_age'] = (string) $details->groomAge;
+        }
+        if ($details->brideAge !== null) {
+            $data['bride_age'] = (string) $details->brideAge;
+        }
+
+        $data['groom_religion'] = trim((string) ($details->groomReligion ?? ''));
+        $data['bride_religion'] = trim((string) ($details->brideReligion ?? ''));
+
+        if ($data['municipality'] !== '') {
+            $data['registry_header']['city_municipality'] = $data['municipality'];
+        }
+        if ($data['province'] !== '') {
+            $data['registry_header']['province'] = $data['province'];
+        }
+
+        return $data;
+    }
+
+    /**
+     * @param  array<string, mixed>  $app
+     * @return array<string, mixed>
+     */
+    private function mapMarriageApplicationToCertificationData(array $app): array
+    {
+        $data = $this->emptyWeddingCertificationData();
+
+        $groom = $this->splitPersonName($app['groom_full_name'] ?? '');
+        $data['first_name'] = $groom['first'];
+        $data['middle_name'] = $groom['middle'];
+        $data['family_name'] = $groom['last'];
+        $data['date_of_birth'] = $this->dateForForm($app['groom_date_of_birth'] ?? null);
+        $data['place_of_birth'] = trim((string) ($app['groom_place_of_birth'] ?? ''));
+
+        $father = $this->splitPersonName($app['groom_father'] ?? '');
+        $data['father_first_name'] = $father['first'];
+        $data['father_middle_name'] = $father['middle'];
+        $data['father_last_name'] = $father['last'];
+
+        $mother = $this->splitPersonName($app['groom_mother_maiden'] ?? '');
+        $data['mother_first_name'] = $mother['first'];
+        $data['mother_middle_name'] = $mother['middle'];
+        $data['mother_last_name'] = $mother['last'];
+
+        $addr = $this->parseAddressCommaParts((string) ($app['groom_present_address'] ?? ''));
+        $data['barangay'] = $addr['barangay'];
+        $data['municipality'] = $addr['municipality'];
+        $data['province'] = $addr['province'] !== '' ? $addr['province'] : 'Antique';
+
+        $data['priest'] = trim((string) ($app['officiating_priest'] ?? ''));
+        $data['sponsors'] = implode('; ', array_values(array_filter([
+            trim((string) ($app['sponsors_line1'] ?? '')),
+            trim((string) ($app['sponsors_line2'] ?? '')),
+            trim((string) ($app['sponsors_line3'] ?? '')),
+        ], fn ($s) => $s !== '')));
+
+        $bride = $this->splitPersonName($app['bride_full_name'] ?? '');
+        $data['bride']['first_name'] = $bride['first'];
+        $data['bride']['middle_name'] = $bride['middle'];
+        $data['bride']['family_name'] = $bride['last'];
+        $data['bride']['date_of_birth'] = $this->dateForForm($app['bride_date_of_birth'] ?? null);
+        $data['bride']['place_of_birth'] = trim((string) ($app['bride_place_of_birth'] ?? ''));
+
+        $brideFather = $this->splitPersonName($app['bride_father'] ?? '');
+        $data['bride']['father_first_name'] = $brideFather['first'];
+        $data['bride']['father_middle_name'] = $brideFather['middle'];
+        $data['bride']['father_last_name'] = $brideFather['last'];
+
+        $brideMother = $this->splitPersonName($app['bride_mother_maiden'] ?? '');
+        $data['bride']['mother_first_name'] = $brideMother['first'];
+        $data['bride']['mother_middle_name'] = $brideMother['middle'];
+        $data['bride']['mother_last_name'] = $brideMother['last'];
+
+        $brideAddr = $this->parseAddressCommaParts((string) ($app['bride_present_address'] ?? ''));
+        $data['bride']['barangay'] = $brideAddr['barangay'];
+        $data['bride']['municipality'] = $brideAddr['municipality'];
+        $data['bride']['province'] = $brideAddr['province'] !== '' ? $brideAddr['province'] : 'Antique';
+
+        $churchDate = $this->dateForForm($app['church_wedding_date'] ?? null);
+        $data['marriage']['place'] = trim((string) ($app['church_wedding_place'] ?? ''));
+        $data['marriage']['date'] = $churchDate;
+        $data['date_received'] = $churchDate;
+        $data['date_issued'] = $this->dateForForm($app['date_of_application'] ?? null);
+
+        $groomAge = trim((string) ($app['groom_age'] ?? ''));
+        if ($groomAge !== '') {
+            $data['groom_age'] = $groomAge;
+        }
+        $brideAge = trim((string) ($app['bride_age'] ?? ''));
+        if ($brideAge !== '') {
+            $data['bride_age'] = $brideAge;
+        }
+
+        $data['groom_religion'] = trim((string) ($app['groom_religion'] ?? ''));
+        $data['bride_religion'] = trim((string) ($app['bride_religion'] ?? ''));
+
+        if ($data['municipality'] !== '') {
+            $data['registry_header']['city_municipality'] = $data['municipality'];
+        }
+        if ($data['province'] !== '') {
+            $data['registry_header']['province'] = $data['province'];
+        }
+
+        return $data;
+    }
+
+    /**
+     * @param  array<string, mixed>  $primary
+     * @param  array<string, mixed>  $fallback
+     * @return array<string, mixed>
+     */
+    private function mergeWeddingCertificationData(array $primary, array $fallback): array
+    {
+        foreach ($fallback as $key => $value) {
+            if (is_array($value)) {
+                $existing = isset($primary[$key]) && is_array($primary[$key]) ? $primary[$key] : [];
+                $primary[$key] = $this->mergeWeddingCertificationData($existing, $value);
+
+                continue;
+            }
+            $current = $primary[$key] ?? '';
+            if ($current === null || trim((string) $current) === '') {
+                $primary[$key] = $value;
+            }
+        }
+
+        return $primary;
+    }
+
+    /**
+     * @param  array<string, mixed>  $app
+     */
+    private function upsertWeddingDetailsFromMarriageApplication(int $weddingId, array $app): void
+    {
+        if (! Schema::hasTable('wedding_details')) {
+            return;
+        }
+
+        $row = $this->mapMarriageApplicationPayloadToWeddingDetailsRow($weddingId, $app);
+        $existing = DB::table('wedding_details')
+            ->where('weddingId', $weddingId)
+            ->orderByDesc('weddingDetailsId')
+            ->first();
+
+        if ($existing !== null) {
+            DB::table('wedding_details')
+                ->where('weddingDetailsId', $existing->weddingDetailsId)
+                ->update($row);
+
+            return;
+        }
+
+        $row['created_at'] = now();
+        DB::table('wedding_details')->insert($row);
+    }
+
+    /**
+     * @param  array<string, mixed>  $app
+     * @return array<string, mixed>
+     */
+    private function mapMarriageApplicationPayloadToWeddingDetailsRow(int $weddingId, array $app): array
+    {
+        $groomAge = trim((string) ($app['groom_age'] ?? ''));
+        $brideAge = trim((string) ($app['bride_age'] ?? ''));
+
+        return [
+            'weddingId' => $weddingId,
+            'groomFullName' => $this->nullableText($app['groom_full_name'] ?? null),
+            'groomAge' => $groomAge !== '' && ctype_digit($groomAge) ? (int) $groomAge : null,
+            'groomDateOfBirth' => $this->parseFlexibleDate($app['groom_date_of_birth'] ?? null),
+            'groomPlaceOfBirth' => $this->nullableText($app['groom_place_of_birth'] ?? null),
+            'groomPresentAddress' => $this->nullableText($app['groom_present_address'] ?? null),
+            'groomFather' => $this->nullableText($app['groom_father'] ?? null),
+            'groomMotherMaiden' => $this->nullableText($app['groom_mother_maiden'] ?? null),
+            'groomReligion' => $this->nullableText($app['groom_religion'] ?? null),
+            'groomBaptismDate' => $this->parseFlexibleDate($app['groom_baptism_date'] ?? null),
+            'groomBaptismPlace' => $this->nullableText($app['groom_baptism_place'] ?? null),
+            'groomConfirmationDate' => $this->nullableText($app['groom_confirmation_date'] ?? null),
+            'groomContact' => $this->nullableText($app['groom_contact'] ?? null),
+            'groomSignature' => $this->nullableText($app['groom_signature'] ?? null),
+            'brideFullName' => $this->nullableText($app['bride_full_name'] ?? null),
+            'brideAge' => $brideAge !== '' && ctype_digit($brideAge) ? (int) $brideAge : null,
+            'brideDateOfBirth' => $this->parseFlexibleDate($app['bride_date_of_birth'] ?? null),
+            'bridePlaceOfBirth' => $this->nullableText($app['bride_place_of_birth'] ?? null),
+            'bridePresentAddress' => $this->nullableText($app['bride_present_address'] ?? null),
+            'brideFather' => $this->nullableText($app['bride_father'] ?? null),
+            'brideMotherMaiden' => $this->nullableText($app['bride_mother_maiden'] ?? null),
+            'brideReligion' => $this->nullableText($app['bride_religion'] ?? null),
+            'brideBaptismDate' => $this->parseFlexibleDate($app['bride_baptism_date'] ?? null),
+            'brideBaptismPlace' => $this->nullableText($app['bride_baptism_place'] ?? null),
+            'brideConfirmationDate' => $this->nullableText($app['bride_confirmation_date'] ?? null),
+            'brideContact' => $this->nullableText($app['bride_contact'] ?? null),
+            'brideSignature' => $this->nullableText($app['bride_signature'] ?? null),
+            'civilMarriageDate' => $this->parseFlexibleDate($app['civil_marriage_date'] ?? null),
+            'civilMarriagePlace' => $this->nullableText($app['civil_marriage_place'] ?? null),
+            'prenuptialInvestigationDate' => $this->parseFlexibleDate($app['prenuptial_investigation_date'] ?? null),
+            'churchWeddingDate' => $this->parseFlexibleDate($app['church_wedding_date'] ?? null),
+            'churchWeddingPlace' => $this->nullableText($app['church_wedding_place'] ?? null),
+            'officiatingPriest' => $this->nullableText($app['officiating_priest'] ?? null),
+            'sponsorsLine1' => $this->nullableText($app['sponsors_line1'] ?? null),
+            'sponsorsLine2' => $this->nullableText($app['sponsors_line2'] ?? null),
+            'sponsorsLine3' => $this->nullableText($app['sponsors_line3'] ?? null),
+            'parishSecretaryName' => $this->nullableText($app['parish_secretary_name'] ?? null),
+            'dateOfApplication' => $this->parseFlexibleDate($app['date_of_application'] ?? null),
+            'arNumber' => $this->nullableText($app['ar_number'] ?? null),
+            'updated_at' => now(),
+        ];
+    }
+
+    /**
+     * @return array{barangay:string,municipality:string,province:string}
+     */
+    private function parseAddressCommaParts(string $address): array
+    {
+        $bits = array_values(array_filter(array_map('trim', explode(',', $address)), fn ($s) => $s !== ''));
+
+        return [
+            'barangay' => $bits[0] ?? '',
+            'municipality' => $bits[1] ?? '',
+            'province' => count($bits) > 2 ? implode(', ', array_slice($bits, 2)) : '',
+        ];
+    }
+
+    /**
+     * @return array{first:string,middle:string,last:string}
+     */
+    private function splitPersonName(mixed $value): array
+    {
+        $full = trim((string) ($value ?? ''));
+        if ($full === '') {
+            return ['first' => '', 'middle' => '', 'last' => ''];
+        }
+        if (str_contains($full, ',')) {
+            $parts = array_map('trim', explode(',', $full, 2));
+            $last = $parts[0] ?? '';
+            $rest = $this->splitFullNameThreeParts($parts[1] ?? '');
+
+            return [
+                'first' => $rest['first'],
+                'middle' => $rest['middle'],
+                'last' => $last !== '' ? $last : $rest['last'],
+            ];
+        }
+
+        return $this->splitFullNameThreeParts($full);
+    }
+
+    private function parseFlexibleDate(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        try {
+            return Carbon::parse($value)->format('Y-m-d');
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function mapWeddingCertificationRequestToTableRow(Request $request): array
+    {
+        return [
+            'groomFirstName' => $this->nullableText($request->input('child_first_name')),
+            'groomMiddleName' => $this->nullableText($request->input('child_middle_name')),
+            'groomFamilyName' => $this->nullableText($request->input('child_last_name')),
+            'dateOfBirth' => $this->parseFlexibleDate($request->input('birthday')),
+            'placeOfBirth' => $this->nullableText($request->input('birthplace')),
+            'fatherFirstName' => $this->nullableText($request->input('father_first_name')),
+            'fatherMiddleName' => $this->nullableText($request->input('father_middle_name')),
+            'fatherLastName' => $this->nullableText($request->input('father_last_name')),
+            'motherFirstName' => $this->nullableText($request->input('mother_first_name')),
+            'motherMiddleName' => $this->nullableText($request->input('mother_middle_name')),
+            'motherLastName' => $this->nullableText($request->input('mother_last_name')),
+            'addressBarangay' => $this->nullableText($request->input('barangay')),
+            'addressMunicipality' => $this->nullableText($request->input('municipality')),
+            'addressProvince' => $this->nullableText($request->input('province')),
+            'certDateReceived' => $this->parseFlexibleDate($request->input('date_received')),
+            'certDateIssued' => $this->parseFlexibleDate($request->input('date_issued')),
+            'priest' => $this->nullableText($request->input('priest')),
+            'certSponsors' => $this->nullableText($request->input('sponsors')),
+            'certPurpose' => $this->nullableText($request->input('purpose')),
+            'certBookNo' => $this->nullableText($request->input('book_no')),
+            'certRegisterNo' => $this->nullableText($request->input('register_no')),
+            'certPageNo' => $this->nullableText($request->input('page_no')),
+            'updated_at' => now(),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function mapWeddingCertificationRequestToCertificationDetailsRow(Request $request, object $wedding): array
+    {
+        $resolvedReferenceCode = trim((string) ($request->input('reference_code') ?? ''));
+        if ($resolvedReferenceCode === '') {
+            $resolvedReferenceCode = trim((string) ($wedding->referenceCode ?? ''));
+        }
+
+        $resolvedClient = trim((string) ($request->input('client') ?? ''));
+        if ($resolvedClient === '') {
+            $resolvedClient = trim(implode(' ', array_filter([
+                trim((string) ($wedding->clientFName ?? '')),
+                trim((string) ($wedding->clientMName ?? '')),
+                trim((string) ($wedding->clientLName ?? '')),
+            ], fn ($part) => $part !== '')));
+        }
+
+        $resolvedAddress = trim((string) ($request->input('top_address') ?? ''));
+        if ($resolvedAddress === '') {
+            $resolvedAddress = trim((string) ($wedding->address ?? ''));
+        }
+
+        $resolvedContact = trim((string) ($request->input('contact_number') ?? ''));
+        if ($resolvedContact === '') {
+            $resolvedContact = trim((string) ($wedding->contactNum ?? ''));
+        }
+
+        $resolvedDate = $this->parseFlexibleDate($request->input('date_issued'));
+        if ($resolvedDate === null) {
+            $resolvedDate = now()->format('Y-m-d');
+        }
+
+        return [
+            'referenceCode' => $this->nullableText($resolvedReferenceCode),
+            'client' => $this->nullableText($resolvedClient),
+            'address' => $this->nullableText($resolvedAddress),
+            'sex' => $this->nullableText('Male'),
+            'contactNumber' => $this->nullableText($resolvedContact),
+            'date' => $resolvedDate,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function mapWeddingCertificationRowToCertificationData(?object $row): array
+    {
+        if ($row === null) {
+            return [];
+        }
+
+        return [
+            'first_name' => (string) ($row->groomFirstName ?? ''),
+            'middle_name' => (string) ($row->groomMiddleName ?? ''),
+            'family_name' => (string) ($row->groomFamilyName ?? ''),
+            'date_of_birth' => $this->dateForForm($row->dateOfBirth ?? null),
+            'place_of_birth' => (string) ($row->placeOfBirth ?? ''),
+            'father_first_name' => (string) ($row->fatherFirstName ?? ''),
+            'father_middle_name' => (string) ($row->fatherMiddleName ?? ''),
+            'father_last_name' => (string) ($row->fatherLastName ?? ''),
+            'mother_first_name' => (string) ($row->motherFirstName ?? ''),
+            'mother_middle_name' => (string) ($row->motherMiddleName ?? ''),
+            'mother_last_name' => (string) ($row->motherLastName ?? ''),
+            'barangay' => (string) ($row->addressBarangay ?? ''),
+            'municipality' => (string) ($row->addressMunicipality ?? ''),
+            'province' => (string) ($row->addressProvince ?? ''),
+            'date_received' => $this->dateForForm($row->certDateReceived ?? null),
+            'date_issued' => $this->dateForForm($row->certDateIssued ?? null),
+            'book_no' => (string) ($row->certBookNo ?? ''),
+            'register_no' => (string) ($row->certRegisterNo ?? ''),
+            'page_no' => (string) ($row->certPageNo ?? ''),
+            'priest' => (string) ($row->priest ?? ''),
+            'sponsors' => (string) ($row->certSponsors ?? ''),
+            'purpose' => (string) ($row->certPurpose ?? ''),
+        ];
     }
 }

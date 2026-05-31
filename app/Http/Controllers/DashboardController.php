@@ -431,6 +431,12 @@ class DashboardController extends Controller
 
         DocumentationApplicationReportWriter::deleteFor(DocumentationApplicationReport::SERVICE_WEDDING, $weddingId);
 
+        if (DB::getSchemaBuilder()->hasTable('wedding_certification')) {
+            DB::table('wedding_certification')->where('weddingId', $weddingId)->delete();
+        }
+        if (DB::getSchemaBuilder()->hasTable('wedding_details')) {
+            DB::table('wedding_details')->where('weddingId', $weddingId)->delete();
+        }
         DB::table('wedding')->where('weddingId', $weddingId)->delete();
         $this->deleteCustomerIfOrphaned($row->customerId ?? null);
     }

@@ -216,16 +216,64 @@
                 $tbody.html(html);
             }
 
-            function loadReport() {
+            function monthLabelFromYm(ym) {
+                var parts = String(ym || '').split('-');
+                if (parts.length !== 2) {
+                    return '';
+                }
+                var year = parseInt(parts[0], 10);
+                var monthNum = parseInt(parts[1], 10);
+                if (isNaN(year) || isNaN(monthNum) || monthNum < 1 || monthNum > 12) {
+                    return '';
+                }
+                var names = [
+                    'January', 'February', 'March', 'April', 'May', 'June',
+                    'July', 'August', 'September', 'October', 'November', 'December'
+                ];
+                return names[monthNum - 1] + ' ' + year;
+            }
+
+            function updateReportLabel(monthVal) {
+                var labelText = monthLabelFromYm(monthVal);
+                if ($label.length && labelText) {
+                    $label.text(labelText.toUpperCase());
+                }
+            }
+
+            function syncMonthInputs(monthVal) {
+                if (!monthVal) {
+                    return;
+                }
+                if ($monthPicker.length) {
+                    $monthPicker.val(monthVal);
+                }
+                if ($monthToolbar.length) {
+                    $monthToolbar.val(monthVal);
+                }
+                updateReportLabel(monthVal);
+            }
+
+            function pushMonthToUrl(monthVal) {
+                if (!monthVal) {
+                    return;
+                }
+                var u = new URL(window.location.href);
+                u.searchParams.set('month', monthVal);
+                window.history.replaceState({}, '', u);
+            }
+
+            function loadReport(forcedMonth) {
                 var typeVal = ($type.val() || '').toString().trim();
-                var monthVal = ($monthPicker.val() || '').toString().trim();
+                var monthVal = (forcedMonth || '').toString().trim();
+                if (!monthVal) {
+                    monthVal = ($monthToolbar.val() || $monthPicker.val() || '').toString().trim();
+                }
                 if (!typeVal || !monthVal) {
                     return;
                 }
 
-                if ($monthToolbar.length) {
-                    $monthToolbar.val(monthVal);
-                }
+                syncMonthInputs(monthVal);
+                pushMonthToUrl(monthVal);
 
                 $tbody.html(
                     '<tr><td colspan="7" class="text-center text-muted py-3">Loading…</td></tr>'
@@ -235,7 +283,12 @@
                     url: recordsUrl,
                     type: 'GET',
                     dataType: 'json',
-                    data: { report_type: typeVal, month: monthVal },
+                    cache: false,
+                    data: {
+                        report_type: typeVal,
+                        month: monthVal,
+                        _: Date.now(),
+                    },
                     headers: {
                         Accept: 'application/json',
                         'X-Requested-With': 'XMLHttpRequest',
@@ -251,9 +304,7 @@
                         if ($service.length && res.service_heading) {
                             $service.text(String(res.service_heading).toUpperCase());
                         }
-                        if ($label.length && res.report_label) {
-                            $label.text(String(res.report_label).toUpperCase());
-                        }
+                        updateReportLabel(monthVal);
                         renderRows(res.rows || []);
                     })
                     .fail(function (xhr) {
@@ -271,22 +322,32 @@
             $type.on('change', syncViewBtn);
             syncViewBtn();
 
-            $monthToolbar.on('change', function () {
-                var v = $(this).val() || '';
-                if (v && $monthPicker.length) {
-                    $monthPicker.val(v).trigger('change');
+            var initialMonth = ($monthPicker.val() || $monthToolbar.val() || '').toString().trim();
+            if (initialMonth) {
+                syncMonthInputs(initialMonth);
+            }
+
+            $monthToolbar.on('change input', function () {
+                var v = ($(this).val() || '').toString().trim();
+                if (!v) {
+                    return;
+                }
+                syncMonthInputs(v);
+                pushMonthToUrl(v);
+                if ($sheet.is(':visible')) {
+                    loadReport(v);
                 }
             });
 
             $monthPicker.on('change', function () {
-                var m = $monthPicker.val();
-                if (m) {
-                    var u = new URL(window.location.href);
-                    u.searchParams.set('month', m);
-                    window.history.replaceState({}, '', u);
+                var m = ($(this).val() || '').toString().trim();
+                if (!m) {
+                    return;
                 }
+                syncMonthInputs(m);
+                pushMonthToUrl(m);
                 if ($sheet.is(':visible')) {
-                    loadReport();
+                    loadReport(m);
                 }
             });
 
@@ -295,8 +356,10 @@
                 if (!typeVal) {
                     return;
                 }
+                var monthVal = ($monthPicker.val() || '').toString().trim();
+                syncMonthInputs(monthVal);
                 showSheet();
-                loadReport();
+                loadReport(monthVal);
             });
 
             $('#sappcCertChangeReportBtn').on('click', function () {

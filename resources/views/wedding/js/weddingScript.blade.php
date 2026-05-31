@@ -266,6 +266,8 @@
                 ph('#wdCertPurpose', 'e.g. civil registry, visa');
             })();
 
+            var DEFAULT_CERT_PURPOSE = 'For all legal purposes';
+
             var $panel = $('#weddingRecordsPanel');
             if (!$panel.length) return;
 
@@ -287,6 +289,7 @@
             var weddingDeleteUrl = ($panel.attr('data-wedding-delete-url') || '').trim();
             var scheduleDetailsUrl = ($panel.attr('data-schedule-details-url') || '').trim();
             var certificationDetailsUrl = ($panel.attr('data-certification-details-url') || '').trim();
+            var certificationSaveUrl = ($panel.attr('data-certification-save-url') || '').trim();
 
             var fetchRecords = function() {};
 
@@ -868,7 +871,11 @@
                     $('#wdCertPageNo').val(data.page_no != null ? String(data.page_no) : '');
                     $('#wdCertPriest').val(data.priest != null ? String(data.priest) : '');
                     $('#wdCertSponsors').val(data.sponsors != null ? String(data.sponsors) : '');
-                    $('#wdCertPurpose').val(data.purpose != null ? String(data.purpose) : '');
+                    $('#wdCertPurpose').val(
+                        data.purpose != null && String(data.purpose).trim() !== ''
+                            ? String(data.purpose)
+                            : DEFAULT_CERT_PURPOSE
+                    );
                 }
 
                 function stashWeddingCertPrintExtras(data) {
@@ -1150,9 +1157,115 @@
                     return printMarriageCertificateSheet(printWin || marriagePrintWindow, false);
                 };
 
+                function saveWeddingCertificationRecord() {
+                    var wid = ($('#wdScheduleWeddingId').val() || '').trim();
+                    if (!wid) {
+                        sappcSwalSelectWeddingRowFirst();
+                        return $.Deferred().reject({
+                            responseJSON: { message: 'Select a wedding record first.' }
+                        }).promise();
+                    }
+                    if (!certificationSaveUrl) {
+                        return $.Deferred().reject({
+                            responseJSON: { message: 'Certification save is not configured.' }
+                        }).promise();
+                    }
+
+                    var payload = {
+                        wedding_id: parseInt(wid, 10),
+                        reference_code: wdCertField('#wdCertRefCode'),
+                        client: wdCertField('#wdCertClient'),
+                        contact_number: sappcPhMobileDigitsOnly(wdCertField('#wdCertContact')),
+                        top_address: wdCertField('#wdCertTopAddress'),
+                        child_first_name: wdCertField('#wdCertChildFirst'),
+                        child_middle_name: wdCertField('#wdCertChildMiddle'),
+                        child_last_name: wdCertField('#wdCertChildLast'),
+                        birthday: wdCertField('#wdCertBirthday'),
+                        birthplace: wdCertField('#wdCertBirthplace'),
+                        father_first_name: wdCertField('#wdCertFatherFirst'),
+                        father_middle_name: wdCertField('#wdCertFatherMiddle'),
+                        father_last_name: wdCertField('#wdCertFatherLast'),
+                        mother_first_name: wdCertField('#wdCertMotherFirst'),
+                        mother_middle_name: wdCertField('#wdCertMotherMiddle'),
+                        mother_last_name: wdCertField('#wdCertMotherLast'),
+                        barangay: wdCertField('#wdCertBarangay'),
+                        municipality: wdCertField('#wdCertMunicipality'),
+                        province: wdCertField('#wdCertProvince'),
+                        date_received: wdCertField('#wdCertDateReceived'),
+                        priest: wdCertField('#wdCertPriest'),
+                        sponsors: wdCertField('#wdCertSponsors'),
+                        purpose: wdCertField('#wdCertPurpose'),
+                        book_no: wdCertField('#wdCertBookNo'),
+                        register_no: wdCertField('#wdCertRegisterNo'),
+                        page_no: wdCertField('#wdCertPageNo'),
+                        date_issued: wdCertField('#wdCertDateIssued'),
+                    };
+
+                    return fetchPostJson(certificationSaveUrl, payload, csrf);
+                }
+
+                function runWeddingCertificationSaveAndPrint($btn) {
+                    $btn = ($btn && $btn.length) ? $btn : $('#wdCertAddRecordBtn');
+                    $btn.prop('disabled', true);
+                    saveWeddingCertificationRecord()
+                        .done(function(res) {
+                            if (!res || res.ok === false) {
+                                var badMsg = (res && res.message) ? res.message : 'Certification could not be saved.';
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error',
+                                        text: badMsg
+                                    });
+                                } else {
+                                    window.alert(badMsg);
+                                }
+                                return;
+                            }
+                            printMarriageCertificateSheet(null, true);
+                            var msg = (res && res.message) ? res.message : 'Certification record saved.';
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Saved',
+                                    text: msg
+                                });
+                            }
+                        })
+                        .fail(function(xhr) {
+                            var msg = 'Certification could not be saved.';
+                            var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                            if (data && data.errors) {
+                                var vals = Object.values(data.errors);
+                                if (vals.length && Array.isArray(vals[0]) && vals[0][0]) {
+                                    msg = vals[0][0];
+                                }
+                            } else if (data && data.message) {
+                                msg = data.message;
+                            }
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: msg
+                                });
+                            } else {
+                                window.alert(msg);
+                            }
+                        })
+                        .always(function() {
+                            $btn.prop('disabled', false);
+                        });
+                }
+
                 $certForm.on('submit', function(e) {
                     e.preventDefault();
-                    printMarriageCertificateSheet(null, true);
+                    runWeddingCertificationSaveAndPrint($('#wdCertAddRecordBtn'));
+                });
+
+                $('#wdCertAddRecordBtn').on('click', function(e) {
+                    e.preventDefault();
+                    runWeddingCertificationSaveAndPrint($(this));
                 });
 
                 $certModal.on('shown.bs.modal', function() {
