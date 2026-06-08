@@ -18,20 +18,48 @@ class BurialController extends Controller
 
     private const BURIAL_REFERENCE_CHARSET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
-    public function index(Request $request): View
+    public function index(Request $request)
+    {
+        return redirect()->route('admin.burial.application', $request->query());
+    }
+
+    public function scheduleIndex(Request $request): View
+    {
+        return view('burial.view.schedule', $this->burialSectionViewData($request));
+    }
+
+    public function certificationIndex(Request $request): View
+    {
+        return view('burial.view.certification', $this->burialSectionViewData($request));
+    }
+
+    public function paymentIndex(Request $request): View
+    {
+        return view('burial.view.payment', $this->burialSectionViewData($request));
+    }
+
+    public function applicationIndex(Request $request): View
+    {
+        return view('burial.view.application-form', $this->burialSectionViewData($request));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function burialSectionViewData(Request $request): array
     {
         $request->merge(['registry_type' => 'burial']);
 
         $dashboard = app(DashboardController::class);
         $data = $dashboard->registryIndexData($request);
 
-        return view('burial.views.burial', [
+        return [
             'records' => $data['records'],
             'initialTablePayload' => $data['initialTablePayload'],
             'perPageOptions' => DashboardController::perPageOptionsList(),
             'letterOptions' => range('A', 'Z'),
             'generatedReferenceCode' => $this->generateUniqueBurialReferenceCode(),
-        ]);
+        ];
     }
 
     private function generateUniqueBurialReferenceCode(): string

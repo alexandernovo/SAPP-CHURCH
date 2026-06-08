@@ -154,10 +154,10 @@
                     data-records-url="{{ route('admin.dashboard.records') }}"
                     data-delete-url="{{ route('admin.dashboard.records.delete') }}"
                     data-per-page-options="{{ json_encode($perPageOptions) }}"
-                    data-url-christening="{{ route('admin.christening') }}"
-                    data-url-confirmation="{{ route('admin.confirmation') }}"
-                    data-url-wedding="{{ route('admin.wedding') }}"
-                    data-url-burial="{{ route('admin.burial') }}">
+                    data-url-christening="{{ route('admin.christening.application') }}"
+                    data-url-confirmation="{{ route('admin.confirmation.application') }}"
+                    data-url-wedding="{{ route('admin.wedding.application') }}"
+                    data-url-burial="{{ route('admin.burial.application') }}">
                     <div class="sappc-table-toolbar">
                         <div class="sappc-table-toolbar_row sappc-table-toolbar_row--primary">
                             <div class="sappc-table-toolbar_entries">

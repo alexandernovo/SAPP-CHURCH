@@ -21,20 +21,48 @@ class WeddingController extends Controller
 
     private const DEFAULT_CERT_PURPOSE = 'For all legal purposes';
 
-    public function index(Request $request): View
+    public function index(Request $request)
+    {
+        return redirect()->route('admin.wedding.application', $request->query());
+    }
+
+    public function scheduleIndex(Request $request): View
+    {
+        return view('wedding.view.schedule', $this->weddingSectionViewData($request));
+    }
+
+    public function certificationIndex(Request $request): View
+    {
+        return view('wedding.view.certification', $this->weddingSectionViewData($request));
+    }
+
+    public function paymentIndex(Request $request): View
+    {
+        return view('wedding.view.payment', $this->weddingSectionViewData($request));
+    }
+
+    public function applicationIndex(Request $request): View
+    {
+        return view('wedding.view.application-form', $this->weddingSectionViewData($request));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function weddingSectionViewData(Request $request): array
     {
         $request->merge(['registry_type' => 'wedding']);
 
         $dashboard = app(DashboardController::class);
         $data = $dashboard->registryIndexData($request);
 
-        return view('wedding.view.wedding', [
+        return [
             'records' => $data['records'],
             'initialTablePayload' => $data['initialTablePayload'],
             'perPageOptions' => DashboardController::perPageOptionsList(),
             'letterOptions' => range('A', 'Z'),
             'generatedReferenceCode' => $this->generateUniqueWeddingReferenceCode(),
-        ]);
+        ];
     }
 
     private function generateUniqueWeddingReferenceCode(): string

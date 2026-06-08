@@ -23,7 +23,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/dashboard/stats/monthly', [DashboardController::class, 'monthlyStats'])->name('admin.dashboard.stats.monthly');
     Route::post('/admin/logout', [AuthController::class, 'logout'])->name('admin.logout');
     Route::get('/christening', [ChristeningController::class, 'index'])->name('admin.christening');
+    Route::get('/christening/schedule', [ChristeningController::class, 'scheduleIndex'])->name('admin.christening.schedule');
+    Route::get('/christening/certification', [ChristeningController::class, 'certificationIndex'])->name('admin.christening.certification');
+    Route::get('/christening/payment', [ChristeningController::class, 'paymentIndex'])->name('admin.christening.payment');
+    Route::get('/christening/application-form', [ChristeningController::class, 'applicationIndex'])->name('admin.christening.application');
     Route::get('/confirmation', [ConfirmationController::class, 'index'])->name('admin.confirmation');
+    Route::get('/confirmation/schedule', [ConfirmationController::class, 'scheduleIndex'])->name('admin.confirmation.schedule');
+    Route::get('/confirmation/certification', [ConfirmationController::class, 'certificationIndex'])->name('admin.confirmation.certification');
+    Route::get('/confirmation/payment', [ConfirmationController::class, 'paymentIndex'])->name('admin.confirmation.payment');
+    Route::get('/confirmation/application-form', [ConfirmationController::class, 'applicationIndex'])->name('admin.confirmation.application');
     Route::post('/confirmation/schedule-request', [ConfirmationController::class, 'scheduleConfirmation'])->name('admin.confirmation.schedule-request');
     Route::get('/confirmation/schedule-reserved-dates', [ConfirmationController::class, 'confirmationReservedDates'])->name('admin.confirmation.schedule-reserved-dates');
     Route::get('/confirmation/schedule-details', [ConfirmationController::class, 'confirmationScheduleDetails'])->name('admin.confirmation.schedule-details');
@@ -36,6 +44,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/confirmation/certification-details', [ConfirmationController::class, 'confirmationCertificationDetails'])->name('admin.confirmation.certification-details');
     Route::post('/confirmation/record/delete', [ConfirmationController::class, 'deleteConfirmationRecord'])->name('admin.confirmation.record-delete');
     Route::get('/wedding', [WeddingController::class, 'index'])->name('admin.wedding');
+    Route::get('/wedding/schedule', [WeddingController::class, 'scheduleIndex'])->name('admin.wedding.schedule');
+    Route::get('/wedding/certification', [WeddingController::class, 'certificationIndex'])->name('admin.wedding.certification');
+    Route::get('/wedding/payment', [WeddingController::class, 'paymentIndex'])->name('admin.wedding.payment');
+    Route::get('/wedding/application-form', [WeddingController::class, 'applicationIndex'])->name('admin.wedding.application');
     Route::post('/wedding/schedule-request', [WeddingController::class, 'scheduleWedding'])->name('admin.wedding.schedule-request');
     Route::get('/wedding/schedule-reserved-dates', [WeddingController::class, 'weddingReservedDates'])->name('admin.wedding.schedule-reserved-dates');
     Route::get('/wedding/schedule-details', [WeddingController::class, 'weddingScheduleDetails'])->name('admin.wedding.schedule-details');
@@ -47,6 +59,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/wedding/marriage/certification-details', [WeddingController::class, 'weddingCertificationDetails'])->name('admin.wedding.certification-details');
     Route::post('/wedding/record/delete', [WeddingController::class, 'deleteWeddingRecord'])->name('admin.wedding.record-delete');
     Route::get('/burial', [BurialController::class, 'index'])->name('admin.burial');
+    Route::get('/burial/schedule', [BurialController::class, 'scheduleIndex'])->name('admin.burial.schedule');
+    Route::get('/burial/certification', [BurialController::class, 'certificationIndex'])->name('admin.burial.certification');
+    Route::get('/burial/payment', [BurialController::class, 'paymentIndex'])->name('admin.burial.payment');
+    Route::get('/burial/application-form', [BurialController::class, 'applicationIndex'])->name('admin.burial.application');
     Route::post('/burial/schedule-request', [BurialController::class, 'scheduleBurial'])->name('admin.burial.schedule-request');
     Route::get('/burial/schedule-reserved-dates', [BurialController::class, 'burialReservedDates'])->name('admin.burial.schedule-reserved-dates');
     Route::get('/burial/schedule-details', [BurialController::class, 'burialScheduleDetails'])->name('admin.burial.schedule-details');

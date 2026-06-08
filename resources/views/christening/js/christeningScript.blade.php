@@ -14,8 +14,33 @@
         'use strict';
 
         var initialTablePayload = @json($initialTablePayload);
+        var activeSection = @json($activeSection ?? 'schedule');
         var chApplicationFormConfig = @json($chApplicationFormConfig);
         var christeningFixedBaptismPlace = 'Saint Anthony of Padua Parish Church';
+
+        function getSelectedChristeningId() {
+            var cid = ($('#chSelectedChristeningId').val() || '').trim();
+            if (cid) {
+                return cid;
+            }
+            cid = ($('#chScheduleChristeningId').val() || '').trim();
+            if (cid) {
+                return cid;
+            }
+            var $sel = $('#christeningTableBody tr.is-schedule-selected');
+            if ($sel.length) {
+                return ($sel.first().attr('data-record-id') || '').trim();
+            }
+            return '';
+        }
+
+        function setSelectedChristeningId(id) {
+            id = id == null ? '' : String(id).trim();
+            $('#chSelectedChristeningId').val(id);
+            if ($('#chScheduleChristeningId').length) {
+                $('#chScheduleChristeningId').val(id);
+            }
+        }
 
         function esc(s) {
             return $('<div/>').text(s == null ? '' : String(s)).html();
@@ -554,7 +579,7 @@
         }
 
         function christeningApplicationDraftKey() {
-            var cid = ($('#chScheduleChristeningId').val() || '').trim();
+            var cid = getSelectedChristeningId();
             return cid || '_none';
         }
 
@@ -623,7 +648,7 @@
                     bsModal.hide();
                     return;
                 }
-                var cid = ($('#chScheduleChristeningId').val() || '').trim();
+                var cid = getSelectedChristeningId();
                 if (!cid) {
                     sappcSwalSelectChristeningRowFirst();
                     return;
@@ -676,7 +701,7 @@
                 var $form = $(this);
                 var url = $form.attr('data-save-url') || $form.attr('action');
                 if (!url) return;
-                var cid = ($('#chScheduleChristeningId').val() || '').trim();
+                var cid = getSelectedChristeningId();
                 if (!cid) {
                     sappcSwalSelectChristeningRowFirst();
                     return;
@@ -915,6 +940,11 @@
         var $panel = $('#christeningRecordsPanel');
         if (!$panel.length) return;
 
+        var tableColspan = parseInt($panel.attr('data-table-colspan'), 10);
+        if (isNaN(tableColspan) || tableColspan < 1) {
+            tableColspan = 9;
+        }
+
         var url = $panel.attr('data-records-url');
         var registryType = ($panel.attr('data-registry-type') || '').trim();
         var applicationDetailsUrl = ($panel.attr('data-application-details-url') || '').trim();
@@ -956,7 +986,7 @@
 
             $paymentBtn.on('click', function(e) {
                 e.preventDefault();
-                var cid = ($('#chScheduleChristeningId').val() || '').trim();
+                var cid = getSelectedChristeningId();
                 if (!cid) {
                     sappcSwalSelectChristeningRowFirst();
                     return;
@@ -996,7 +1026,7 @@
                 e.preventDefault();
                 var saveUrl = ($paymentFeeForm.attr('data-save-url') || paymentSaveUrl || '').trim();
                 if (!saveUrl) return;
-                var cid = ($('#chScheduleChristeningId').val() || '').trim();
+                var cid = getSelectedChristeningId();
                 if (!cid) {
                     sappcSwalSelectChristeningRowFirst();
                     return;
@@ -1362,7 +1392,7 @@
         };
 
         function saveChristeningCertificationRecord() {
-            var cid = ($('#chScheduleChristeningId').val() || '').trim();
+            var cid = getSelectedChristeningId();
             if (!cid) {
                 sappcSwalSelectChristeningRowFirst();
                 return $.Deferred().reject({
@@ -1501,7 +1531,7 @@
 
             $certBtn.on('click', function(e) {
                 e.preventDefault();
-                var cid = ($('#chScheduleChristeningId').val() || '').trim();
+                var cid = getSelectedChristeningId();
                 if (!cid) {
                     sappcSwalSelectChristeningRowFirst();
                     return;
@@ -1564,28 +1594,55 @@
             return esc(s);
         }
 
+        function rowActionCell(recordId) {
+            return '<td class="text-center"><div class="sappc-icon-action_group">' +
+                '<a href="#" class="sappc-icon-action sappc-icon-action--view" title="View" aria-label="View record" data-record-id="' + esc(recordId) + '"><i class="fa-solid fa-eye" aria-hidden="true"></i></a>' +
+                '<a href="#" class="sappc-icon-action sappc-icon-action--edit" title="Edit" aria-label="Edit record" data-record-id="' + esc(recordId) + '"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>' +
+                '<button type="button" class="sappc-icon-action sappc-icon-action--delete" title="Delete" aria-label="Delete record" data-record-id="' + esc(recordId) + '"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>' +
+                '</div></td>';
+        }
+
         function rowHtml(row) {
-            return '' +
+            var base = '' +
                 '<tr data-record-id="' + esc(row.recordId) + '" data-document-type="' + esc(row.documentType) + '">' +
                 '<td>' + esc(row.rowNumber) + '</td>' +
                 '<td>' + esc(row.referenceCode) + '</td>' +
                 '<td>' + esc(row.client) + '</td>' +
-                '<td>' + esc(row.address) + '</td>' +
+                '<td>' + esc(row.address) + '</td>';
+
+            if (activeSection === 'certification') {
+                return base +
+                    '<td>' + esc(row.contactNum) + '</td>' +
+                    '<td>' + esc(row.dateCreated) + '</td>' +
+                    rowActionCell(row.recordId) + '</tr>';
+            }
+            if (activeSection === 'application') {
+                return base +
+                    '<td>' + esc(row.sex) + '</td>' +
+                    '<td>' + esc(row.contactNum) + '</td>' +
+                    '<td>' + esc(row.dateCreated) + '</td>' +
+                    rowActionCell(row.recordId) + '</tr>';
+            }
+            if (activeSection === 'payment') {
+                return base +
+                    '<td>' + esc(row.contactNum) + '</td>' +
+                    '<td class="text-center align-middle">' + paymentStatusCell(row.paymentStatus) + '</td>' +
+                    '<td>' + esc(row.dateCreated) + '</td>' +
+                    rowActionCell(row.recordId) + '</tr>';
+            }
+
+            return base +
                 '<td>' + esc(row.sex) + '</td>' +
                 '<td>' + esc(row.contactNum) + '</td>' +
                 '<td class="text-center align-middle">' + paymentStatusCell(row.paymentStatus) + '</td>' +
                 '<td>' + esc(row.dateCreated) + '</td>' +
-                '<td class="text-center"><div class="sappc-icon-action_group">' +
-                '<a href="#" class="sappc-icon-action sappc-icon-action--view" title="View" aria-label="View record" data-record-id="' + esc(row.recordId) + '"><i class="fa-solid fa-eye" aria-hidden="true"></i></a>' +
-                '<a href="#" class="sappc-icon-action sappc-icon-action--edit" title="Edit" aria-label="Edit record" data-record-id="' + esc(row.recordId) + '"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>' +
-                '<button type="button" class="sappc-icon-action sappc-icon-action--delete" title="Delete" aria-label="Delete record" data-record-id="' + esc(row.recordId) + '"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>' +
-                '</div></td></tr>';
+                rowActionCell(row.recordId) + '</tr>';
         }
 
         function renderTable(res) {
             var $tbody = $('#christeningTableBody');
             if (!res || !res.data || !res.data.length) {
-                $tbody.html('<tr class="sappc-table-empty"><td colspan="9" class="text-center text-muted py-4">No records found.</td></tr>');
+                $tbody.html('<tr class="sappc-table-empty"><td colspan="' + tableColspan + '" class="text-center text-muted py-4">No records found.</td></tr>');
             } else {
                 var html = '';
                 $.each(res.data, function(_, row) {
@@ -1614,14 +1671,43 @@
 
         renderTable(initialTablePayload);
 
-        $('#christeningTableBody').on('click', '.sappc-icon-action--view, .sappc-icon-action--edit', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            var id = ($(this).attr('data-record-id') || '').trim();
-            if (!id || !applicationDetailsUrl) return;
-            $('#chScheduleChristeningId').val(id);
+        function selectChristeningTableRow(id) {
+            setSelectedChristeningId(id);
             $('#christeningTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
-            $(this).closest('tr').addClass('is-schedule-selected');
+            $('#christeningTableBody tr').each(function() {
+                if (($(this).attr('data-record-id') || '').trim() === id) {
+                    $(this).addClass('is-schedule-selected');
+                    return false;
+                }
+            });
+        }
+
+        function openChristeningSectionRecord(id) {
+            if (!id) return;
+            selectChristeningTableRow(id);
+
+            if (activeSection === 'schedule') {
+                if (typeof bootstrap !== 'undefined' && $scheduleModal.length) {
+                    bootstrap.Modal.getOrCreateInstance($scheduleModal[0]).show();
+                }
+                return;
+            }
+
+            if (activeSection === 'payment') {
+                if ($paymentBtn.length) {
+                    $paymentBtn.trigger('click');
+                }
+                return;
+            }
+
+            if (activeSection === 'certification') {
+                if ($certBtn.length) {
+                    $certBtn.trigger('click');
+                }
+                return;
+            }
+
+            if (!applicationDetailsUrl) return;
             fetchJson(buildQueryUrl(applicationDetailsUrl, {
                 christening_id: id
             }), jsonHeaders)
@@ -1649,6 +1735,13 @@
                         window.alert(msg);
                     }
                 });
+        }
+
+        $('#christeningTableBody').on('click', '.sappc-icon-action--view, .sappc-icon-action--edit', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var id = ($(this).attr('data-record-id') || '').trim();
+            openChristeningSectionRecord(id);
         });
 
         $('#christeningTableBody').on('click', '.sappc-icon-action--delete', function(e) {
@@ -1665,8 +1758,8 @@
                         if (res && res.ok) {
                             delete chApplicationDraftsByChristeningId[String(id)];
                             delete chPaymentDraftsByChristeningId[String(id)];
-                            if (($('#chScheduleChristeningId').val() || '').trim() === id) {
-                                $('#chScheduleChristeningId').val('');
+                            if (getSelectedChristeningId() === id) {
+                                setSelectedChristeningId('');
                             }
                             var msg = (res && res.message) ? res.message : 'Removed.';
                             sappcChSwal({
@@ -1719,7 +1812,7 @@
                 u.searchParams.delete('sappc_dash_app');
                 var q = u.searchParams.toString();
                 window.history.replaceState({}, '', u.pathname + (q ? '?' + q : '') + u.hash);
-                $('#chScheduleChristeningId').val(id);
+                setSelectedChristeningId(id);
                 $('#christeningTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
                 $('#christeningTableBody tr').each(function() {
                     if (($(this).attr('data-record-id') || '').trim() === id) {
@@ -1737,7 +1830,7 @@
             if (!url) {
                 return;
             }
-            $('#christeningTableBody').html('<tr class="sappc-table-loading"><td colspan="9" class="text-center text-muted py-4">Loading…</td></tr>');
+            $('#christeningTableBody').html('<tr class="sappc-table-loading"><td colspan="' + tableColspan + '" class="text-center text-muted py-4">Loading…</td></tr>');
             var reqUrl = buildQueryUrl(url, fetchQueryParams());
             fetchJson(reqUrl, jsonHeaders)
                 .done(function(res) {
@@ -1746,7 +1839,7 @@
                 })
                 .fail(function(xhr) {
                     var msg = xhr && xhr.status ? xhr.status : '?';
-                    $('#christeningTableBody').html('<tr><td colspan="9" class="text-center text-danger py-3">Could not load records (' + msg + ').</td></tr>');
+                    $('#christeningTableBody').html('<tr><td colspan="' + tableColspan + '" class="text-center text-danger py-3">Could not load records (' + msg + ').</td></tr>');
                 });
         }
 
@@ -1813,6 +1906,7 @@
 
         var $scheduleForm = $('#christeningScheduleRequestForm');
         var $scheduleBtn = $('#christeningScheduleRequestBtn');
+        var $scheduleNewBtn = $('#christeningNewRecordBtn');
         var scheduleSaveUrl = $scheduleForm.attr('data-schedule-save-url') || $scheduleBtn.attr('data-schedule-save-url') || '';
         var scheduleReservedUrl = (
             $scheduleForm.attr('data-schedule-reserved-url') ||
@@ -1957,7 +2051,7 @@
 
         function resetScheduleRequestFormForNewEntry() {
             if (!$scheduleForm.length) return;
-            $('#chScheduleChristeningId').val('');
+            setSelectedChristeningId('');
             $('#chScheduleRefCode').val($scheduleForm.attr('data-default-reference-code') || '');
             $('#chScheduleContact').val('');
             $('#chScheduleClient').val('');
@@ -2034,18 +2128,26 @@
             var $tr = $(this);
             if ($tr.hasClass('sappc-table-loading') || $tr.hasClass('sappc-table-empty')) return;
             if ($tr.hasClass('is-schedule-selected')) {
-                resetScheduleRequestFormForNewEntry();
+                if ($scheduleForm.length) {
+                    resetScheduleRequestFormForNewEntry();
+                } else {
+                    $('#christeningTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                    setSelectedChristeningId('');
+                }
                 return;
             }
             $('#christeningTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
             $tr.addClass('is-schedule-selected');
             if (($tr.attr('data-document-type') || '').trim() !== 'Christening') {
-                $('#chScheduleChristeningId').val('');
+                setSelectedChristeningId('');
+                return;
+            }
+            setSelectedChristeningId($tr.attr('data-record-id') || '');
+            if (activeSection !== 'schedule' || !$scheduleForm.length) {
                 return;
             }
             var $tds = $tr.find('td');
             if ($tds.length < 6) return;
-            $('#chScheduleChristeningId').val($tr.attr('data-record-id') || '');
             $('#chScheduleRefCode').val(($tds.eq(1).text() || '').trim());
             $('#chScheduleClient').val(($tds.eq(2).text() || '').trim());
             $('#chScheduleAddress').val(($tds.eq(3).text() || '').trim());
@@ -2064,7 +2166,7 @@
         if ($scheduleForm.length && scheduleSaveUrl) {
             $scheduleForm.on('submit', function(e) {
                 e.preventDefault();
-                var cid = ($('#chScheduleChristeningId').val() || '').trim();
+                var cid = getSelectedChristeningId();
                 var payload = {
                     schedule_date: $('#chScheduleDate').val(),
                     schedule_time: $('#chScheduleTime24').val(),
@@ -2137,7 +2239,7 @@
         function applyChristeningScheduleDetailsToForm(d) {
             if (!d || typeof d !== 'object') return;
             if (d.christening_id != null && String(d.christening_id).trim() !== '') {
-                $('#chScheduleChristeningId').val(String(d.christening_id).trim());
+                setSelectedChristeningId(String(d.christening_id).trim());
             }
             $('#chScheduleRefCode').val(d.reference_code != null ? String(d.reference_code) : '');
             $('#chScheduleClient').val(d.client != null ? String(d.client) : '');
@@ -2169,15 +2271,15 @@
             renderCalendarDayGrid();
         }
 
-        $scheduleBtn.on('click', function() {
-            var cid = ($('#chScheduleChristeningId').val() || '').trim();
+        function onScheduleToolbarClick() {
+            var cid = getSelectedChristeningId();
             var $sel = $('#christeningTableBody tr.is-schedule-selected');
             if (!cid && $sel.length) {
                 var doc = ($sel.attr('data-document-type') || '').trim();
                 if (doc === 'Christening') {
                     var rid = ($sel.attr('data-record-id') || '').trim();
                     if (rid) {
-                        $('#chScheduleChristeningId').val(rid);
+                        setSelectedChristeningId(rid);
                         cid = rid;
                     }
                 }
@@ -2185,12 +2287,20 @@
             if (!cid) {
                 resetScheduleRequestFormForNewEntry();
             }
-        });
+        }
 
-        if ($scheduleBtn.length && $scheduleModal.length) {
+        $scheduleBtn.on('click', onScheduleToolbarClick);
+        $scheduleNewBtn.on('click', onScheduleToolbarClick);
+
+        if ($scheduleModal.length) {
             $scheduleModal.on('shown.bs.modal', function() {
-                $scheduleBtn.attr('aria-expanded', 'true');
-                var cid = ($('#chScheduleChristeningId').val() || '').trim();
+                if ($scheduleBtn.length) {
+                    $scheduleBtn.attr('aria-expanded', 'true');
+                }
+                if ($scheduleNewBtn.length) {
+                    $scheduleNewBtn.attr('aria-expanded', 'true');
+                }
+                var cid = getSelectedChristeningId();
                 if (cid && scheduleDetailsUrl) {
                     fetchJson(buildQueryUrl(scheduleDetailsUrl, {
                         christening_id: cid,
@@ -2224,7 +2334,12 @@
                 }
             });
             $scheduleModal.on('hidden.bs.modal', function() {
-                $scheduleBtn.attr('aria-expanded', 'false');
+                if ($scheduleBtn.length) {
+                    $scheduleBtn.attr('aria-expanded', 'false');
+                }
+                if ($scheduleNewBtn.length) {
+                    $scheduleNewBtn.attr('aria-expanded', 'false');
+                }
             });
         }
 

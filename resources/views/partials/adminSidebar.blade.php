@@ -11,19 +11,19 @@
         </a>
 
         <p class="sappc-sidebar_group-label">DOCUMENT</p>
-        <a href="{{ route('admin.christening') }}" class="sappc-sidebar_link {{ request()->routeIs('admin.christening') ? 'is-active' : '' }}" title="Christening">
+        <a href="{{ route('admin.christening.application') }}" class="sappc-sidebar_link {{ request()->routeIs('admin.christening*') ? 'is-active' : '' }}" title="Christening">
             <i class="fa-solid fa-file-lines" aria-hidden="true"></i>
             <span class="sappc-sidebar_link-text">Christening</span>
         </a>
-        <a href="{{ route('admin.confirmation') }}" class="sappc-sidebar_link {{ request()->routeIs('admin.confirmation') ? 'is-active' : '' }}" title="Confirmation">
+        <a href="{{ route('admin.confirmation.application') }}" class="sappc-sidebar_link {{ request()->routeIs('admin.confirmation*') ? 'is-active' : '' }}" title="Confirmation">
             <i class="fa-solid fa-file-lines" aria-hidden="true"></i>
             <span class="sappc-sidebar_link-text">Confirmation</span>
         </a>
-        <a href="{{ route('admin.wedding') }}" class="sappc-sidebar_link {{ request()->routeIs('admin.wedding') ? 'is-active' : '' }}" title="Wedding">
+        <a href="{{ route('admin.wedding.application') }}" class="sappc-sidebar_link {{ request()->routeIs('admin.wedding*') ? 'is-active' : '' }}" title="Wedding">
             <i class="fa-solid fa-file-lines" aria-hidden="true"></i>
             <span class="sappc-sidebar_link-text">Wedding</span>
         </a>
-        <a href="{{ route('admin.burial') }}" class="sappc-sidebar_link {{ request()->routeIs('admin.burial') ? 'is-active' : '' }}" title="Burial">
+        <a href="{{ route('admin.burial.application') }}" class="sappc-sidebar_link {{ request()->routeIs('admin.burial*') ? 'is-active' : '' }}" title="Burial">
             <i class="fa-solid fa-file-lines" aria-hidden="true"></i>
             <span class="sappc-sidebar_link-text">Burial</span>
         </a>

@@ -24,21 +24,48 @@ class ChristeningController extends Controller
 
     private const DEFAULT_CERT_PURPOSE = 'For all legal purposes';
 
-    public function index(Request $request): View
+    public function index(Request $request)
     {
+        return redirect()->route('admin.christening.application', $request->query());
+    }
 
+    public function scheduleIndex(Request $request): View
+    {
+        return view('christening.view.schedule', $this->christeningSectionViewData($request));
+    }
+
+    public function certificationIndex(Request $request): View
+    {
+        return view('christening.view.certification', $this->christeningSectionViewData($request));
+    }
+
+    public function paymentIndex(Request $request): View
+    {
+        return view('christening.view.payment', $this->christeningSectionViewData($request));
+    }
+
+    public function applicationIndex(Request $request): View
+    {
+        return view('christening.view.application-form', $this->christeningSectionViewData($request));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function christeningSectionViewData(Request $request): array
+    {
         $request->merge(['registry_type' => 'christening']);
 
         $dashboard = app(DashboardController::class);
         $data = $dashboard->registryIndexData($request);
 
-        return view('christening.view.christening', [
+        return [
             'records' => $data['records'],
             'initialTablePayload' => $data['initialTablePayload'],
             'perPageOptions' => DashboardController::perPageOptionsList(),
             'letterOptions' => range('A', 'Z'),
             'generatedReferenceCode' => $this->generateUniqueChristeningReferenceCode(),
-        ]);
+        ];
     }
 
     public function certificationPage(Request $request): View

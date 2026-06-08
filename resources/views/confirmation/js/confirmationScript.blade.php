@@ -1,6 +1,37 @@
+@php
+    $initialTablePayload = $initialTablePayload ?? null;
+    $activeSection = $activeSection ?? 'schedule';
+@endphp
 <script>
     (function() {
         'use strict';
+
+        var initialTablePayload = @json($initialTablePayload);
+        var activeSection = @json($activeSection);
+
+        function getSelectedConfirmationId() {
+            var cid = ($('#cnSelectedConfirmationId').val() || '').trim();
+            if (cid) {
+                return cid;
+            }
+            cid = ($('#cnScheduleConfirmationId').val() || '').trim();
+            if (cid) {
+                return cid;
+            }
+            var $sel = $('#confirmationTableBody tr.is-schedule-selected');
+            if ($sel.length) {
+                return ($sel.first().attr('data-record-id') || '').trim();
+            }
+            return '';
+        }
+
+        function setSelectedConfirmationId(id) {
+            id = id == null ? '' : String(id).trim();
+            $('#cnSelectedConfirmationId').val(id);
+            if ($('#cnScheduleConfirmationId').length) {
+                $('#cnScheduleConfirmationId').val(id);
+            }
+        }
 
         function esc(s) {
             var d = document.createElement('div');
@@ -111,14 +142,7 @@
         }
 
         function sappcConfirmationGetSelectedRecordIdStrict() {
-            var $row = $('#confirmationTableBody tr.is-schedule-selected').first();
-            if (!$row.length) {
-                return '';
-            }
-            if (($row.attr('data-document-type') || '').trim() !== 'Confirmation') {
-                return '';
-            }
-            var rid = ($row.attr('data-record-id') || '').trim();
+            var rid = getSelectedConfirmationId();
             if (!rid) {
                 return '';
             }
@@ -126,8 +150,8 @@
             if (isNaN(n) || n < 1 || String(n) !== rid) {
                 return '';
             }
-            var hid = ($('#cnScheduleConfirmationId').val() || '').trim();
-            if (hid !== rid) {
+            var $row = $('#confirmationTableBody tr.is-schedule-selected').first();
+            if ($row.length && ($row.attr('data-document-type') || '').trim() !== 'Confirmation') {
                 return '';
             }
             return rid;
@@ -273,6 +297,11 @@
             var $panel = $('#confirmationRecordsPanel');
             if (!$panel.length) return;
 
+            var tableColspan = parseInt($panel.attr('data-table-colspan'), 10);
+            if (isNaN(tableColspan) || tableColspan < 1) {
+                tableColspan = 8;
+            }
+
             var url = $panel.attr('data-records-url');
             if (!url) return;
 
@@ -286,7 +315,7 @@
                     u.searchParams.delete('sappc_dash_app');
                     var q = u.searchParams.toString();
                     window.history.replaceState({}, '', u.pathname + (q ? '?' + q : '') + u.hash);
-                    $('#cnScheduleConfirmationId').val(id);
+                    setSelectedConfirmationId(id);
                     $('#confirmationTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
                     $('#confirmationTableBody tr').each(function() {
                         if (($(this).attr('data-record-id') || '').trim() === id) {
@@ -318,9 +347,10 @@
                 'X-CSRF-TOKEN': csrf,
             };
 
+            var meta0 = (initialTablePayload && initialTablePayload.meta) ? initialTablePayload.meta : {};
             var state = {
-                page: 1,
-                per_page: 10,
+                page: meta0.current_page || 1,
+                per_page: meta0.per_page || 10,
                 search: '',
                 letter: '',
                 date_from: '',
@@ -336,7 +366,7 @@
                 var html = '';
                 if (!res || !res.data || !res.data.length) {
                     html =
-                        '<tr class="sappc-table-empty"><td colspan="8" class="text-center text-muted py-4">No records found.</td></tr>';
+                        '<tr class="sappc-table-empty"><td colspan="' + tableColspan + '" class="text-center text-muted py-4">No records found.</td></tr>';
                 } else {
                     res.data.forEach(function(row) {
                         html += rowHtml(row);
@@ -377,7 +407,7 @@
 
             function fetchRecords() {
                 $body.html(
-                    '<tr class="sappc-table-loading"><td colspan="8" class="text-center text-muted py-4">Loading...</td></tr>'
+                    '<tr class="sappc-table-loading"><td colspan="' + tableColspan + '" class="text-center text-muted py-4">Loading...</td></tr>'
                 );
                 var reqUrl = buildQueryUrl(url, {
                     page: state.page,
@@ -409,7 +439,7 @@
                             textStatus ||
                             '?';
                         $body.html(
-                            '<tr><td colspan="8" class="text-center text-danger py-3">Could not load records (' +
+                            '<tr><td colspan="' + tableColspan + '" class="text-center text-danger py-3">Could not load records (' +
                             esc(String(msg)) +
                             ').</td></tr>'
                         );
@@ -658,7 +688,7 @@
 
                 $paymentBtn.on('click', function(e) {
                     e.preventDefault();
-                    var cid = ($('#cnScheduleConfirmationId').val() || '').trim();
+                    var cid = getSelectedConfirmationId();
                     if (!cid) {
                         sappcSwalSelectConfirmationRowFirst();
                         return;
@@ -696,7 +726,7 @@
                     e.preventDefault();
                     var saveUrl = ($paymentFeeForm.attr('data-save-url') || paymentSaveUrlPanel || '').trim();
                     if (!saveUrl) return;
-                    var cid = ($('#cnScheduleConfirmationId').val() || '').trim();
+                    var cid = getSelectedConfirmationId();
                     if (!cid) {
                         sappcSwalSelectConfirmationRowFirst();
                         return;
@@ -750,6 +780,51 @@
                         });
                 });
             }
+
+            function selectConfirmationTableRow(id) {
+                setSelectedConfirmationId(id);
+                $('#confirmationTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                $('#confirmationTableBody tr').each(function() {
+                    if (($(this).attr('data-record-id') || '').trim() === id) {
+                        $(this).addClass('is-schedule-selected');
+                        return false;
+                    }
+                });
+            }
+
+            function openConfirmationSectionRecord(id) {
+                if (!id) {
+                    return;
+                }
+                selectConfirmationTableRow(id);
+                if (activeSection === 'schedule') {
+                    if (typeof bootstrap !== 'undefined' && $('#confirmationScheduleRequestModal').length) {
+                        bootstrap.Modal.getOrCreateInstance($('#confirmationScheduleRequestModal')[0]).show();
+                    }
+                    return;
+                }
+                if (activeSection === 'payment') {
+                    if ($('#confirmationPaymentFeeBtn').length) {
+                        $('#confirmationPaymentFeeBtn').trigger('click');
+                    }
+                    return;
+                }
+                if (activeSection === 'certification') {
+                    if ($('#confirmationCertificationBtn').length) {
+                        $('#confirmationCertificationBtn').trigger('click');
+                    }
+                    return;
+                }
+                if ($('#confirmationApplicationFormBtn').length) {
+                    $('#confirmationApplicationFormBtn').trigger('click');
+                }
+            }
+
+            $('#confirmationTableBody').on('click', '.sappc-icon-action--view, .sappc-icon-action--edit', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                openConfirmationSectionRecord(($(this).attr('data-record-id') || '').trim());
+            });
 
             (function initConfirmationKompirmaModals() {
                 var applicationFieldNames = {
@@ -925,7 +1000,7 @@
                 }
 
                 function confirmationApplicationDraftKey() {
-                    var cid = ($('#cnScheduleConfirmationId').val() || '').trim();
+                    var cid = getSelectedConfirmationId();
                     return cid || '_none';
                 }
 
@@ -1015,7 +1090,7 @@
 
                 $appFormBtn.on('click', function(e) {
                     e.preventDefault();
-                    var cid = ($('#cnScheduleConfirmationId').val() || '').trim();
+                    var cid = getSelectedConfirmationId();
                     if (!cid) {
                         sappcSwalSelectConfirmationRowFirst();
                         return;
@@ -1073,69 +1148,6 @@
                         });
                 });
 
-                $('#confirmationTableBody').on('click', '.sappc-icon-action--view, .sappc-icon-action--edit', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    var id = ($(this).attr('data-record-id') || '').trim();
-                    if (!id) {
-                        return;
-                    }
-                    if (!confirmationAppDetailsUrl || !confirmationArancelDetailsUrl) {
-                        sappcCnSwal({
-                            icon: 'warning',
-                            title: 'Not configured',
-                            text: 'Application form is not configured.',
-                        });
-                        return;
-                    }
-                    $('#cnScheduleConfirmationId').val(id);
-                    $('#confirmationTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
-                    $(this).closest('tr').addClass('is-schedule-selected');
-                    $.when(
-                        fetchJson(
-                            buildQueryUrl(confirmationAppDetailsUrl, {
-                                confirmation_id: id,
-                            }),
-                            jsonHeaders
-                        ),
-                        fetchJson(
-                            buildQueryUrl(confirmationArancelDetailsUrl, {
-                                confirmation_id: id,
-                            }),
-                            jsonHeaders
-                        )
-                    )
-                        .done(function(resA, resB) {
-                            var r1 = resA && resA[0] ? resA[0] : resA;
-                            var r2 = resB && resB[0] ? resB[0] : resB;
-                            if (r1 && r1.ok && r2 && r2.ok) {
-                                var merged = mergeApplicationPayloads(r1.data || {}, r2.data || {});
-                                applyConfirmationApplicationFormObject(merged);
-                                $('#cnApplicationConfirmationId').val(id);
-                                cnApplicationDraftsByConfirmationId[String(id)] =
-                                    serializeConfirmationApplicationFormToObject();
-                                if (typeof window.sappcConfirmationApplicationFormOpen === 'function') {
-                                    window.sappcConfirmationApplicationFormOpen(true, {});
-                                }
-                            } else {
-                                var msg = 'Could not load the form data.';
-                                sappcCnSwal({
-                                    icon: 'error',
-                                    title: 'Error',
-                                    text: msg,
-                                });
-                            }
-                        })
-                        .fail(function() {
-                            var msg = 'Could not load confirmation application and arancel.';
-                            sappcCnSwal({
-                                icon: 'error',
-                                title: 'Error',
-                                text: msg,
-                            });
-                        });
-                });
-
                 $fApp.on('submit', function(ev) {
                     ev.preventDefault();
                     if (!confirmationAppSaveUrl || !confirmationArancelSaveUrl) {
@@ -1146,7 +1158,7 @@
                         });
                         return;
                     }
-                    var cid = ($('#cnScheduleConfirmationId').val() || '').trim();
+                    var cid = getSelectedConfirmationId();
                     if (!cid) {
                         sappcSwalSelectConfirmationRowFirst();
                         return;
@@ -1324,7 +1336,7 @@
 
                 $certBtn.on('click', function(e) {
                     e.preventDefault();
-                    var cid = sappcConfirmationGetSelectedRecordIdStrict();
+                    var cid = getSelectedConfirmationId();
                     if (!cid) {
                         sappcSwalSelectConfirmationRowFirst();
                         return;
@@ -1377,7 +1389,8 @@
 
             var $scheduleForm = $('#confirmationScheduleRequestForm');
             var $scheduleBtn = $('#confirmationScheduleRequestBtn');
-            var scheduleSaveUrl = $scheduleForm.attr('data-schedule-save-url') || $scheduleBtn.attr('data-schedule-save-url') || '';
+            var $scheduleNewBtn = $('#confirmationNewRecordBtn');
+             var scheduleSaveUrl = $scheduleForm.attr('data-schedule-save-url') || $scheduleBtn.attr('data-schedule-save-url') || '';
             var scheduleReservedUrl = ($scheduleForm.attr('data-schedule-reserved-url') || '').trim();
             var calendarReservedLookup = {};
             var $scheduleModal = $('#confirmationScheduleRequestModal');
@@ -1390,7 +1403,7 @@
 
             function toIsoDate(y, m0, d) {
                 return String(y) + '-' + String(m0 + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-            }
+            }                                       
 
             function parseIsoDate(v) {
                 if (!v || typeof v !== 'string') return null;
@@ -1516,7 +1529,7 @@
 
             function resetScheduleRequestFormForNewEntry() {
                 if (!$scheduleForm.length) return;
-                $('#cnScheduleConfirmationId').val('');
+                setSelectedConfirmationId('');
                 $('#cnScheduleRefCode').val($scheduleForm.attr('data-default-reference-code') || '');
                 $('#cnScheduleContact').val('');
                 $('#cnScheduleClient').val('');
@@ -1594,18 +1607,26 @@
                 var $tr = $(this);
                 if ($tr.hasClass('sappc-table-loading') || $tr.hasClass('sappc-table-empty')) return;
                 if ($tr.hasClass('is-schedule-selected')) {
-                    resetScheduleRequestFormForNewEntry();
+                    if ($scheduleForm.length) {
+                        resetScheduleRequestFormForNewEntry();
+                    } else {
+                        $('#confirmationTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                        setSelectedConfirmationId('');
+                    }
                     return;
                 }
                 $('#confirmationTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
                 $tr.addClass('is-schedule-selected');
                 if (($tr.attr('data-document-type') || '').trim() !== 'Confirmation') {
-                    $('#cnScheduleConfirmationId').val('');
+                    setSelectedConfirmationId('');
+                    return;
+                }
+                setSelectedConfirmationId($tr.attr('data-record-id') || '');
+                if (activeSection !== 'schedule' || !$scheduleForm.length) {
                     return;
                 }
                 var $tds = $tr.find('td');
                 if ($tds.length < 6) return;
-                $('#cnScheduleConfirmationId').val($tr.attr('data-record-id') || '');
                 $('#cnScheduleRefCode').val(($tds.eq(1).text() || '').trim());
                 $('#cnScheduleClient').val(($tds.eq(2).text() || '').trim());
                 $('#cnScheduleAddress').val(($tds.eq(3).text() || '').trim());
@@ -1624,7 +1645,7 @@
             if ($scheduleForm.length && scheduleSaveUrl) {
                 $scheduleForm.on('submit', function(e) {
                     e.preventDefault();
-                    var cid = ($('#cnScheduleConfirmationId').val() || '').trim();
+                    var cid = getSelectedConfirmationId();
                     var payload = {
                         schedule_date: $('#cnScheduleDate').val(),
                         schedule_time: $('#cnScheduleTime24').val(),
@@ -1689,7 +1710,7 @@
             function applyConfirmationScheduleDetailsToForm(d) {
                 if (!d || typeof d !== 'object') return;
                 if (d.confirmation_id != null && String(d.confirmation_id).trim() !== '') {
-                    $('#cnScheduleConfirmationId').val(String(d.confirmation_id).trim());
+                    setSelectedConfirmationId(String(d.confirmation_id).trim());
                 }
                 $('#cnScheduleRefCode').val(d.reference_code != null ? String(d.reference_code) : '');
                 $('#cnScheduleClient').val(d.client != null ? String(d.client) : '');
@@ -1721,15 +1742,15 @@
                 renderCalendarDayGrid();
             }
 
-            $scheduleBtn.on('click', function() {
-                var cid = ($('#cnScheduleConfirmationId').val() || '').trim();
+            function onConfirmationScheduleToolbarClick() {
+                var cid = getSelectedConfirmationId();
                 var $sel = $('#confirmationTableBody tr.is-schedule-selected');
                 if (!cid && $sel.length) {
                     var doc = ($sel.attr('data-document-type') || '').trim();
                     if (doc === 'Confirmation') {
                         var rid = ($sel.attr('data-record-id') || '').trim();
                         if (rid) {
-                            $('#cnScheduleConfirmationId').val(rid);
+                            setSelectedConfirmationId(rid);
                             cid = rid;
                         }
                     }
@@ -1737,12 +1758,16 @@
                 if (!cid) {
                     resetScheduleRequestFormForNewEntry();
                 }
-            });
+            }
 
-            if ($scheduleBtn.length && $scheduleModal.length) {
+            $scheduleBtn.on('click', onConfirmationScheduleToolbarClick);
+            $scheduleNewBtn.on('click', onConfirmationScheduleToolbarClick);
+
+            if ($scheduleModal.length) {
                 $scheduleModal.on('shown.bs.modal', function() {
-                    $scheduleBtn.attr('aria-expanded', 'true');
-                    var cid = ($('#cnScheduleConfirmationId').val() || '').trim();
+                    if ($scheduleBtn.length) $scheduleBtn.attr('aria-expanded', 'true');
+                    if ($scheduleNewBtn.length) $scheduleNewBtn.attr('aria-expanded', 'true');
+                    var cid = getSelectedConfirmationId();
                     if (cid && scheduleDetailsUrl) {
                         fetchJson(buildQueryUrl(scheduleDetailsUrl, {
                             confirmation_id: cid,
@@ -1772,7 +1797,8 @@
                     }
                 });
                 $scheduleModal.on('hidden.bs.modal', function() {
-                    $scheduleBtn.attr('aria-expanded', 'false');
+                    if ($scheduleBtn.length) $scheduleBtn.attr('aria-expanded', 'false');
+                    if ($scheduleNewBtn.length) $scheduleNewBtn.attr('aria-expanded', 'false');
                 });
             }
 
@@ -1795,8 +1821,8 @@
                         .done(function(res) {
                             if (res && res.ok) {
                                 delete cnApplicationDraftsByConfirmationId[String(id)];
-                                if (($('#cnScheduleConfirmationId').val() || '').trim() === id) {
-                                    $('#cnScheduleConfirmationId').val('');
+                                if (getSelectedConfirmationId() === id) {
+                                    setSelectedConfirmationId('');
                                 }
                                 if (($('#cnApplicationConfirmationId').val() || '').trim() === id) {
                                     $('#cnApplicationConfirmationId').val('');
@@ -1831,7 +1857,12 @@
                 }, runDelete);
             });
 
-            fetchRecords();
+            if (initialTablePayload) {
+                renderTable(initialTablePayload);
+                tryOpenConfirmationApplicationFromDashboardQuery();
+            } else {
+                fetchRecords();
+            }
         });
     })();
 </script>

@@ -19,20 +19,48 @@ class ConfirmationController extends Controller
 
     private const CONFIRMATION_REFERENCE_CHARSET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
-    public function index(Request $request): View
+    public function index(Request $request)
+    {
+        return redirect()->route('admin.confirmation.application', $request->query());
+    }
+
+    public function scheduleIndex(Request $request): View
+    {
+        return view('confirmation.view.schedule', $this->confirmationSectionViewData($request));
+    }
+
+    public function certificationIndex(Request $request): View
+    {
+        return view('confirmation.view.certification', $this->confirmationSectionViewData($request));
+    }
+
+    public function paymentIndex(Request $request): View
+    {
+        return view('confirmation.view.payment', $this->confirmationSectionViewData($request));
+    }
+
+    public function applicationIndex(Request $request): View
+    {
+        return view('confirmation.view.application-form', $this->confirmationSectionViewData($request));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function confirmationSectionViewData(Request $request): array
     {
         $request->merge(['registry_type' => 'confirmation']);
 
         $dashboard = app(DashboardController::class);
         $data = $dashboard->registryIndexData($request);
 
-        return view('confirmation.view.confirmation', [
+        return [
             'records' => $data['records'],
             'initialTablePayload' => $data['initialTablePayload'],
             'perPageOptions' => DashboardController::perPageOptionsList(),
             'letterOptions' => range('A', 'Z'),
             'generatedReferenceCode' => $this->generateUniqueConfirmationReferenceCode(),
-        ]);
+        ];
     }
 
     private function generateUniqueConfirmationReferenceCode(): string

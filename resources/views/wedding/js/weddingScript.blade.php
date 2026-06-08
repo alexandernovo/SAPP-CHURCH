@@ -1,6 +1,37 @@
-﻿<script>
+﻿@php
+    $initialTablePayload = $initialTablePayload ?? null;
+    $activeSection = $activeSection ?? 'schedule';
+@endphp
+<script>
     (function() {
         'use strict';
+
+        var initialTablePayload = @json($initialTablePayload);
+        var activeSection = @json($activeSection);
+
+        function getSelectedWeddingId() {
+            var cid = ($('#wdSelectedWeddingId').val() || '').trim();
+            if (cid) {
+                return cid;
+            }
+            cid = ($('#wdScheduleWeddingId').val() || '').trim();
+            if (cid) {
+                return cid;
+            }
+            var $sel = $('#weddingTableBody tr.is-schedule-selected');
+            if ($sel.length) {
+                return ($sel.first().attr('data-record-id') || '').trim();
+            }
+            return '';
+        }
+
+        function setSelectedWeddingId(id) {
+            id = id == null ? '' : String(id).trim();
+            $('#wdSelectedWeddingId').val(id);
+            if ($('#wdScheduleWeddingId').length) {
+                setSelectedWeddingId(id);
+            }
+        }
 
         function esc(s) {
             var d = document.createElement('div');
@@ -167,30 +198,33 @@
             }
         });
 
+        function rowActionCell(recordId) {
+            return '<td class="text-center"><div class="sappc-icon-action_group">' +
+                '<a href="#" class="sappc-icon-action sappc-icon-action--view" title="View" aria-label="View record" data-record-id="' + esc(recordId) +
+                '"><i class="fa-solid fa-eye" aria-hidden="true"></i></a>' +
+                '<a href="#" class="sappc-icon-action sappc-icon-action--edit" title="Edit" aria-label="Edit record" data-record-id="' + esc(recordId) +
+                '"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>' +
+                '<button type="button" class="sappc-icon-action sappc-icon-action--delete" title="Delete" aria-label="Delete record" data-record-id="' + esc(recordId) +
+                '"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>' +
+                '</div></td>';
+        }
+
         function rowHtml(row) {
-            return (
-                '<tr data-record-id="' + esc(row.recordId) + '" data-document-type="' + esc(row.documentType) +
-                '">' +
+            var base = '<tr data-record-id="' + esc(row.recordId) + '" data-document-type="' + esc(row.documentType) + '">' +
                 '<td>' + esc(row.rowNumber) + '</td>' +
                 '<td>' + esc(row.referenceCode) + '</td>' +
                 '<td>' + esc(row.client) + '</td>' +
-                '<td>' + esc(row.address) + '</td>' +
-                '<td>' + esc(row.sex) + '</td>' +
-                '<td>' + esc(row.contactNum) + '</td>' +
-                '<td class="text-center align-middle">' + paymentStatusCell(row.paymentStatus) + '</td>' +
-                '<td>' + esc(row.dateCreated) + '</td>' +
-                '<td class="text-center"><div class="sappc-icon-action_group">' +
-                '<a href="#" class="sappc-icon-action sappc-icon-action--view" title="View" aria-label="View record" data-record-id="' +
-                esc(row.recordId) +
-                '"><i class="fa-solid fa-eye" aria-hidden="true"></i></a>' +
-                '<a href="#" class="sappc-icon-action sappc-icon-action--edit" title="Edit" aria-label="Edit record" data-record-id="' +
-                esc(row.recordId) +
-                '"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>' +
-                '<button type="button" class="sappc-icon-action sappc-icon-action--delete" title="Delete" aria-label="Delete record" data-record-id="' +
-                esc(row.recordId) +
-                '"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>' +
-                '</div></td></tr>'
-            );
+                '<td>' + esc(row.address) + '</td>';
+            if (activeSection === 'certification') {
+                return base + '<td>' + esc(row.contactNum) + '</td><td>' + esc(row.dateCreated) + '</td>' + rowActionCell(row.recordId) + '</tr>';
+            }
+            if (activeSection === 'application') {
+                return base + '<td>' + esc(row.sex) + '</td><td>' + esc(row.contactNum) + '</td><td>' + esc(row.dateCreated) + '</td>' + rowActionCell(row.recordId) + '</tr>';
+            }
+            if (activeSection === 'payment') {
+                return base + '<td>' + esc(row.contactNum) + '</td><td class="text-center align-middle">' + paymentStatusCell(row.paymentStatus) + '</td><td>' + esc(row.dateCreated) + '</td>' + rowActionCell(row.recordId) + '</tr>';
+            }
+            return base + '<td>' + esc(row.sex) + '</td><td>' + esc(row.contactNum) + '</td><td class="text-center align-middle">' + paymentStatusCell(row.paymentStatus) + '</td><td>' + esc(row.dateCreated) + '</td>' + rowActionCell(row.recordId) + '</tr>';
         }
 
         $(function() {
@@ -271,6 +305,11 @@
             var $panel = $('#weddingRecordsPanel');
             if (!$panel.length) return;
 
+            var tableColspan = parseInt($panel.attr('data-table-colspan'), 10);
+            if (isNaN(tableColspan) || tableColspan < 1) {
+                tableColspan = 9;
+            }
+
             var csrf = getMetaCsrf();
             var jsonHeaders = {
                 Accept: 'application/json',
@@ -304,7 +343,7 @@
                     u.searchParams.delete('sappc_dash_app');
                     var q = u.searchParams.toString();
                     window.history.replaceState({}, '', u.pathname + (q ? '?' + q : '') + u.hash);
-                    $('#wdScheduleWeddingId').val(id);
+                    setSelectedWeddingId(id);
                     $('#weddingTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
                     $('#weddingTableBody tr').each(function() {
                         if (($(this).attr('data-record-id') || '').trim() === id) {
@@ -329,9 +368,10 @@
 
             tryOpenWeddingApplicationFromDashboardQuery();
 
+            var meta0 = (initialTablePayload && initialTablePayload.meta) ? initialTablePayload.meta : {};
             var state = {
-                page: 1,
-                per_page: 10,
+                page: meta0.current_page || 1,
+                per_page: meta0.per_page || 10,
                 search: '',
                 letter: '',
                 date_from: '',
@@ -347,7 +387,7 @@
                 var html = '';
                 if (!res || !res.data || !res.data.length) {
                     html =
-                        '<tr class="sappc-table-empty"><td colspan="9" class="text-center text-muted py-4">No records found.</td></tr>';
+                        '<tr class="sappc-table-empty"><td colspan="' + tableColspan + '" class="text-center text-muted py-4">No records found.</td></tr>';
                 } else {
                     res.data.forEach(function(row) {
                         html += rowHtml(row);
@@ -388,7 +428,7 @@
 
             fetchRecords = function() {
                 $body.html(
-                    '<tr class="sappc-table-loading"><td colspan="9" class="text-center text-muted py-4">Loading...</td></tr>'
+                    '<tr class="sappc-table-loading"><td colspan="' + tableColspan + '" class="text-center text-muted py-4">Loading...</td></tr>'
                 );
                 var reqUrl = buildQueryUrl(recordsUrl, {
                     page: state.page,
@@ -420,7 +460,7 @@
                             textStatus ||
                             '?';
                         $body.html(
-                            '<tr><td colspan="9" class="text-center text-danger py-3">Could not load records (' +
+                            '<tr><td colspan="' + tableColspan + '" class="text-center text-danger py-3">Could not load records (' +
                             esc(String(msg)) +
                             ').</td></tr>'
                         );
@@ -505,8 +545,8 @@
                         )
                         .done(function(res) {
                             if (res && res.ok) {
-                                if (($('#wdScheduleWeddingId').val() || '').trim() === id) {
-                                    $('#wdScheduleWeddingId').val('');
+                                if (getSelectedWeddingId() === id) {
+                                    setSelectedWeddingId('');
                                 }
                                 if (($('#wdMarriageAppWeddingId').val() || '').trim() === id) {
                                     $('#wdMarriageAppWeddingId').val('');
@@ -539,29 +579,54 @@
                 }, runDelete);
             });
 
-            $('#weddingTableBody').on('click', '.sappc-icon-action--view, .sappc-icon-action--edit', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                var id = ($(this).attr('data-record-id') || '').trim();
-                if (!id) {
+            function selectWeddingTableRow(id) {
+                setSelectedWeddingId(id);
+                $('#wdMarriageAppWeddingId').val(id);
+                $('#weddingTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                $('#weddingTableBody tr').each(function() {
+                    if (($(this).attr('data-record-id') || '').trim() === id) {
+                        $(this).addClass('is-schedule-selected');
+                        return false;
+                    }
+                });
+            }
+
+            function openWeddingSectionRecord(id) {
+                if (!id) return;
+                selectWeddingTableRow(id);
+                if (activeSection === 'schedule') {
+                    if (typeof bootstrap !== 'undefined' && $('#weddingScheduleRequestModal').length) {
+                        bootstrap.Modal.getOrCreateInstance($('#weddingScheduleRequestModal')[0]).show();
+                    }
+                    return;
+                }
+                if (activeSection === 'payment') {
+                    $('#weddingPaymentFeeBtn').trigger('click');
+                    return;
+                }
+                if (activeSection === 'certification') {
+                    $('#weddingCertificationBtn').trigger('click');
                     return;
                 }
                 if (!marriageAppDetailsUrl) {
-                    sappcWdSwal({
-                        icon: 'warning',
-                        title: 'Not configured',
-                        text: 'Marriage application is not configured.',
-                    });
+                    sappcWdSwal({ icon: 'warning', title: 'Not configured', text: 'Marriage application is not configured.' });
                     return;
                 }
-                $('#wdScheduleWeddingId').val(id);
-                $('#wdMarriageAppWeddingId').val(id);
-                $('#weddingTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
-                $(this).closest('tr').addClass('is-schedule-selected');
                 $('#weddingApplicationFormBtn').trigger('click');
+            }
+
+            $('#weddingTableBody').on('click', '.sappc-icon-action--view, .sappc-icon-action--edit', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                openWeddingSectionRecord(($(this).attr('data-record-id') || '').trim());
             });
 
-            fetchRecords();
+            if (initialTablePayload) {
+                renderTable(initialTablePayload);
+                tryOpenWeddingApplicationFromDashboardQuery();
+            } else {
+                fetchRecords();
+            }
 
             }
 
@@ -731,7 +796,7 @@
 
                 $paymentBtn.on('click', function(e) {
                     e.preventDefault();
-                    var cid = ($('#wdScheduleWeddingId').val() || '').trim();
+                    var cid = getSelectedWeddingId();
                     if (!cid) {
                         sappcSwalSelectWeddingRowFirst();
                         return;
@@ -769,7 +834,7 @@
                     e.preventDefault();
                     var saveUrl = ($paymentFeeForm.attr('data-save-url') || paymentSaveUrlPanel || '').trim();
                     if (!saveUrl) return;
-                    var cid = ($('#wdScheduleWeddingId').val() || '').trim();
+                    var cid = getSelectedWeddingId();
                     if (!cid) {
                         sappcSwalSelectWeddingRowFirst();
                         return;
@@ -1158,7 +1223,7 @@
                 };
 
                 function saveWeddingCertificationRecord() {
-                    var wid = ($('#wdScheduleWeddingId').val() || '').trim();
+                    var wid = getSelectedWeddingId();
                     if (!wid) {
                         sappcSwalSelectWeddingRowFirst();
                         return $.Deferred().reject({
@@ -1277,7 +1342,7 @@
 
                 $certBtn.on('click', function(e) {
                     e.preventDefault();
-                    var wid = ($('#wdScheduleWeddingId').val() || '').trim();
+                    var wid = getSelectedWeddingId();
                     if (!wid) {
                         sappcSwalSelectWeddingRowFirst();
                         return;
@@ -1461,7 +1526,7 @@
                         window.alert('Bootstrap is required for this dialog.');
                         return;
                     }
-                    var cid = ($('#wdScheduleWeddingId').val() || '').trim();
+                    var cid = getSelectedWeddingId();
                     if (!cid) {
                         sappcSwalSelectWeddingRowFirst();
                         return;
@@ -1507,8 +1572,7 @@
                     if (!marriageAppSaveUrl) {
                         return;
                     }
-                    var wid = ($('#wdMarriageAppWeddingId').val() || '').trim() || ($('#wdScheduleWeddingId').val() ||
-                        '').trim();
+                    var wid = ($('#wdMarriageAppWeddingId').val() || '').trim() || getSelectedWeddingId();
                     if (!wid) {
                         sappcSwalSelectWeddingRowFirst();
                         return;
@@ -1613,6 +1677,7 @@
 
             var $scheduleForm = $('#weddingScheduleRequestForm');
             var $scheduleBtn = $('#weddingScheduleRequestBtn');
+            var $scheduleNewBtn = $('#weddingNewRecordBtn');
             var scheduleSaveUrl = $scheduleForm.attr('data-schedule-save-url') || $scheduleBtn.attr('data-schedule-save-url') || '';
             var scheduleReservedUrl = ($scheduleForm.attr('data-schedule-reserved-url') || '').trim();
             var calendarReservedLookup = {};
@@ -1752,7 +1817,7 @@
 
             function resetScheduleRequestFormForNewEntry() {
                 if (!$scheduleForm.length) return;
-                $('#wdScheduleWeddingId').val('');
+                setSelectedWeddingId('');
                 $('#wdScheduleRefCode').val($scheduleForm.attr('data-default-reference-code') || '');
                 $('#wdScheduleContact').val('');
                 $('#wdScheduleClient').val('');
@@ -1827,18 +1892,26 @@
                 var $tr = $(this);
                 if ($tr.hasClass('sappc-table-loading') || $tr.hasClass('sappc-table-empty')) return;
                 if ($tr.hasClass('is-schedule-selected')) {
-                    resetScheduleRequestFormForNewEntry();
+                    if ($scheduleForm.length) {
+                        resetScheduleRequestFormForNewEntry();
+                    } else {
+                        $('#weddingTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                        setSelectedWeddingId('');
+                    }
                     return;
                 }
                 $('#weddingTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
                 $tr.addClass('is-schedule-selected');
                 if (($tr.attr('data-document-type') || '').trim() !== 'Wedding') {
-                    $('#wdScheduleWeddingId').val('');
+                    setSelectedWeddingId('');
+                    return;
+                }
+                setSelectedWeddingId($tr.attr('data-record-id') || '');
+                if (activeSection !== 'schedule' || !$scheduleForm.length) {
                     return;
                 }
                 var $tds = $tr.find('td');
                 if ($tds.length < 6) return;
-                $('#wdScheduleWeddingId').val($tr.attr('data-record-id') || '');
                 $('#wdScheduleRefCode').val(($tds.eq(1).text() || '').trim());
                 $('#wdScheduleClient').val(($tds.eq(2).text() || '').trim());
                 $('#wdScheduleAddress').val(($tds.eq(3).text() || '').trim());
@@ -1857,7 +1930,7 @@
             if ($scheduleForm.length && scheduleSaveUrl) {
                 $scheduleForm.on('submit', function(e) {
                     e.preventDefault();
-                    var cid = ($('#wdScheduleWeddingId').val() || '').trim();
+                    var cid = getSelectedWeddingId();
                     var payload = {
                         schedule_date: $('#wdScheduleDate').val(),
                         schedule_time: $('#wdScheduleTime24').val(),
@@ -1930,7 +2003,7 @@
             function applyWeddingScheduleDetailsToForm(d) {
                 if (!d || typeof d !== 'object') return;
                 if (d.wedding_id != null && String(d.wedding_id).trim() !== '') {
-                    $('#wdScheduleWeddingId').val(String(d.wedding_id).trim());
+                    setSelectedWeddingId(String(d.wedding_id).trim());
                 }
                 $('#wdScheduleRefCode').val(d.reference_code != null ? String(d.reference_code) : '');
                 $('#wdScheduleClient').val(d.client != null ? String(d.client) : '');
@@ -1965,15 +2038,15 @@
                 renderCalendarDayGrid();
             }
 
-            $scheduleBtn.on('click', function() {
-                var cid = ($('#wdScheduleWeddingId').val() || '').trim();
+            function onWeddingScheduleToolbarClick() {
+                var cid = getSelectedWeddingId();
                 var $sel = $('#weddingTableBody tr.is-schedule-selected');
                 if (!cid && $sel.length) {
                     var doc = ($sel.attr('data-document-type') || '').trim();
                     if (doc === 'Wedding') {
                         var rid = ($sel.attr('data-record-id') || '').trim();
                         if (rid) {
-                            $('#wdScheduleWeddingId').val(rid);
+                            setSelectedWeddingId(rid);
                             cid = rid;
                         }
                     }
@@ -1981,12 +2054,16 @@
                 if (!cid) {
                     resetScheduleRequestFormForNewEntry();
                 }
-            });
+            }
 
-            if ($scheduleBtn.length && $scheduleModal.length) {
+            $scheduleBtn.on('click', onWeddingScheduleToolbarClick);
+            $scheduleNewBtn.on('click', onWeddingScheduleToolbarClick);
+
+            if ($scheduleModal.length) {
                 $scheduleModal.on('shown.bs.modal', function() {
-                    $scheduleBtn.attr('aria-expanded', 'true');
-                    var cid = ($('#wdScheduleWeddingId').val() || '').trim();
+                    if ($scheduleBtn.length) $scheduleBtn.attr('aria-expanded', 'true');
+                    if ($scheduleNewBtn.length) $scheduleNewBtn.attr('aria-expanded', 'true');
+                    var cid = getSelectedWeddingId();
                     if (cid && scheduleDetailsUrl) {
                         fetchJson(buildQueryUrl(scheduleDetailsUrl, {
                             wedding_id: cid,
@@ -2020,7 +2097,8 @@
                     }
                 });
                 $scheduleModal.on('hidden.bs.modal', function() {
-                    $scheduleBtn.attr('aria-expanded', 'false');
+                    if ($scheduleBtn.length) $scheduleBtn.attr('aria-expanded', 'false');
+                    if ($scheduleNewBtn.length) $scheduleNewBtn.attr('aria-expanded', 'false');
                 });
             }
         });

@@ -322,6 +322,7 @@
 
 .sappc-registry-page > .sappc-page-title,
 .sappc-registry-page > .sappc-page-breadcrumb,
+.sappc-registry-page > .sappc-registry-page_head,
 .sappc-registry-page > .sappc-registry-toolbar {
     flex-shrink: 0;
 }
@@ -398,6 +399,23 @@ body.sappc-dash:has(.sappc-registry-page)::-webkit-scrollbar {
     height: 100%;
     flex: 1 1 auto;
     overflow: hidden;
+}
+
+.sappc-registry-page_head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.sappc-registry-page_head-main {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.sappc-registry-page_head .sappc-page-title {
+    margin-bottom: 0.35rem;
 }
 
 .sappc-page-title {
@@ -533,6 +551,34 @@ body.sappc-dash:has(.sappc-registry-page)::-webkit-scrollbar {
 
 .sappc-registry-toolbar_btn i {
     font-size: 0.86rem;
+}
+
+a.sappc-registry-toolbar_btn {
+    text-decoration: none;
+}
+
+.sappc-registry-toolbar_btn.is-active,
+a.sappc-registry-toolbar_btn.is-active {
+    background: var(--sappc-gold);
+    border-color: var(--sappc-gold-dark);
+    color: #fff;
+}
+
+.sappc-registry-toolbar_btn.is-active:hover,
+a.sappc-registry-toolbar_btn.is-active:hover {
+    background: var(--sappc-gold-dark);
+    border-color: #7a5f08;
+    color: #fff;
+}
+
+.sappc-registry-page_actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: flex-start;
+    gap: 0.5rem;
+    flex-shrink: 0;
+    margin-left: auto;
 }
 
 @media (max-width: 1024px) and (min-width: 992px) {
