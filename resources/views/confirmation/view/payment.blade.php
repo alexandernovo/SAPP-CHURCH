@@ -13,7 +13,7 @@
             <div class="sappc-registry-page_head-main">
                 <h1 class="sappc-page-title">
                     <i class="fa-solid fa-money-bill-wave" aria-hidden="true"></i>
-                    CONFIRMATION — PAYMENT FEE
+                    CONFIRMATION
                 </h1>
                 <p class="sappc-page-breadcrumb mb-0">
                     <a href="{{ route('admin.dashboard') }}">Dashboard</a>

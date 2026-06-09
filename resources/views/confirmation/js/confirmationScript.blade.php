@@ -33,6 +33,209 @@
             }
         }
 
+        function registryWorkflowNextUrl(currentStep) {
+            var $panel = $('#confirmationRecordsPanel');
+            if (!$panel.length) {
+                return '';
+            }
+            var hasCert = ($panel.attr('data-workflow-has-certification') || '0') === '1';
+            var steps = hasCert
+                ? ['application', 'payment', 'certification', 'schedule']
+                : ['application', 'payment', 'schedule'];
+            var idx = steps.indexOf(currentStep);
+            if (idx < 0 || idx >= steps.length - 1) {
+                return '';
+            }
+            return ($panel.attr('data-workflow-' + steps[idx + 1] + '-url') || '').trim();
+        }
+
+        function advanceRegistryWorkflow(currentStep, recordId) {
+            var url = registryWorkflowNextUrl(currentStep);
+            var id = String(recordId == null ? getSelectedConfirmationId() : recordId).trim();
+            if (!url || !id) {
+                return false;
+            }
+            var sep = url.indexOf('?') >= 0 ? '&' : '?';
+            window.location.href = url + sep + 'sappc_record=' + encodeURIComponent(id);
+            return true;
+        }
+
+        function tryOpenRecordFromWorkflowQuery() {
+            try {
+                var u = new URL(window.location.href);
+                var id = (u.searchParams.get('sappc_record') || '').trim();
+                if (!id) {
+                    return;
+                }
+                u.searchParams.delete('sappc_record');
+                var q = u.searchParams.toString();
+                window.history.replaceState({}, '', u.pathname + (q ? '?' + q : '') + u.hash);
+                setTimeout(function() {
+                    if (typeof window.sappcRegistryWorkflowOpenRecord === 'function') {
+                        window.sappcRegistryWorkflowOpenRecord(id);
+                        return;
+                    }
+                    setSelectedConfirmationId(id);
+                    $('#confirmationTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                    $('#confirmationTableBody tr').each(function() {
+                        if (($(this).attr('data-record-id') || '').trim() === id) {
+                            $(this).addClass('is-schedule-selected');
+                            return false;
+                        }
+                    });
+                }, 0);
+            } catch (e1) {}
+        }
+
+        function swalRegistryApplicationRequired(messageText) {
+            var msg = messageText || 'Complete and save the application form first. A name is required before you can continue to the next step.';
+            sappcCnSwal({
+                icon: 'warning',
+                title: 'Application required',
+                text: msg,
+                confirmButtonText: 'OK',
+            });
+        }
+
+        function ensureRegistryApplicationSaved(recordId, thenFn) {
+            recordId = String(recordId == null ? '' : recordId).trim();
+            if (!recordId) {
+                sappcSwalSelectConfirmationRowFirst();
+                if (typeof thenFn === 'function') {
+                    thenFn(false);
+                }
+                return;
+            }
+            var appUrl = ($('#confirmationRecordsPanel').attr('data-confirmation-application-details-url') || '').trim();
+            if (!appUrl) {
+                if (typeof thenFn === 'function') {
+                    thenFn(true);
+                }
+                return;
+            }
+            fetchJson(buildQueryUrl(appUrl, {
+                confirmation_id: recordId,
+            }), {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            })
+                .done(function(res) {
+                    if (res && res.ok && res.application_saved === true) {
+                        if (typeof thenFn === 'function') {
+                            thenFn(true);
+                        }
+                        return;
+                    }
+                    swalRegistryApplicationRequired(res && res.message ? String(res.message) : '');
+                    if (typeof thenFn === 'function') {
+                        thenFn(false);
+                    }
+                })
+                .fail(function(xhr) {
+                    var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                    swalRegistryApplicationRequired(data && data.message ? String(data.message) : '');
+                    if (typeof thenFn === 'function') {
+                        thenFn(false);
+                    }
+                });
+        }
+
+        function swalRegistryPaymentRequired(messageText) {
+            var msg = messageText || 'Complete payment first. All fees must be marked Paid before you can continue to the next step.';
+            sappcCnSwal({
+                icon: 'warning',
+                title: 'Payment required',
+                text: msg,
+                confirmButtonText: 'OK',
+            });
+        }
+
+        function registryWorkflowHasCertification() {
+            return ($('#confirmationRecordsPanel').attr('data-workflow-has-certification') || '0') === '1';
+        }
+
+        function workflowChecksForStep(targetStep) {
+            var checks = [];
+            if (targetStep === 'payment' || targetStep === 'certification' || targetStep === 'schedule') {
+                checks.push('application');
+            }
+            if (targetStep === 'certification' || targetStep === 'schedule') {
+                checks.push('payment');
+            }
+            if (registryWorkflowHasCertification() && targetStep === 'schedule') {
+                checks.push('certification');
+            }
+            return checks;
+        }
+
+        function ensureRegistryPaymentComplete(recordId, thenFn) {
+            recordId = String(recordId == null ? '' : recordId).trim();
+            if (!recordId) {
+                if (typeof thenFn === 'function') thenFn(true);
+                return;
+            }
+            var payUrl = ($('#confirmationRecordsPanel').attr('data-payment-details-url') || '').trim();
+            if (!payUrl) {
+                if (typeof thenFn === 'function') thenFn(true);
+                return;
+            }
+            fetchJson(buildQueryUrl(payUrl, { confirmation_id: recordId }), {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            }).done(function(res) {
+                var paid = !!(res && res.ok && (res.payment_complete === true ||
+                    (res.data && String(res.data.payment_status || '').toLowerCase() === 'paid')));
+                if (paid) {
+                    if (typeof thenFn === 'function') thenFn(true);
+                    return;
+                }
+                swalRegistryPaymentRequired(res && res.message ? String(res.message) : '');
+                if (typeof thenFn === 'function') thenFn(false);
+            }).fail(function(xhr) {
+                var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                swalRegistryPaymentRequired(data && data.message ? String(data.message) : '');
+                if (typeof thenFn === 'function') thenFn(false);
+            });
+        }
+
+        function runRegistryWorkflowChecks(checks, index, recordId, thenFn) {
+            if (index >= checks.length) {
+                if (typeof thenFn === 'function') thenFn(true);
+                return;
+            }
+            var check = checks[index];
+            if (check === 'application') {
+                ensureRegistryApplicationSaved(recordId, function(ok) {
+                    if (!ok) {
+                        if (typeof thenFn === 'function') thenFn(false);
+                        return;
+                    }
+                    runRegistryWorkflowChecks(checks, index + 1, recordId, thenFn);
+                });
+                return;
+            }
+            if (check === 'payment') {
+                ensureRegistryPaymentComplete(recordId, function(ok) {
+                    if (!ok) {
+                        if (typeof thenFn === 'function') thenFn(false);
+                        return;
+                    }
+                    runRegistryWorkflowChecks(checks, index + 1, recordId, thenFn);
+                });
+                return;
+            }
+            runRegistryWorkflowChecks(checks, index + 1, recordId, thenFn);
+        }
+
+        function ensureRegistryWorkflowStep(targetStep, recordId, thenFn) {
+            recordId = String(recordId == null ? '' : recordId).trim();
+            if (!recordId || targetStep === 'application') {
+                if (typeof thenFn === 'function') thenFn(true);
+                return;
+            }
+            runRegistryWorkflowChecks(workflowChecksForStep(targetStep), 0, recordId, thenFn);
+        }
+
         function esc(s) {
             var d = document.createElement('div');
             d.textContent = s == null ? '' : String(s);
@@ -430,6 +633,7 @@
                 })
                     .done(function(res) {
                         renderTable(res);
+                        tryOpenRecordFromWorkflowQuery();
                         tryOpenConfirmationApplicationFromDashboardQuery();
                     })
                     .fail(function(xhr, textStatus, errorThrown) {
@@ -505,6 +709,20 @@
             });
 
             var $reloadBtn = $('#confirmationReloadBtn');
+            $panel.closest('.sappc-registry-page').find('.sappc-registry-toolbar a.sappc-registry-toolbar_btn[data-workflow-step]').on('click', function(e) {
+                var step = ($(this).attr('data-workflow-step') || '').trim();
+                var cid = getSelectedConfirmationId();
+                if (!cid || !step || step === 'application') {
+                    return;
+                }
+                e.preventDefault();
+                var href = $(this).attr('href');
+                ensureRegistryWorkflowStep(step, cid, function(ok) {
+                    if (ok && href) {
+                        window.location.href = href;
+                    }
+                });
+            });
             if ($reloadBtn.length) {
                 $reloadBtn.on('click', fetchRecords);
             }
@@ -690,7 +908,10 @@
                     e.preventDefault();
                     var cid = getSelectedConfirmationId();
                     if (!cid) {
-                        sappcSwalSelectConfirmationRowFirst();
+                        setSelectedConfirmationId('');
+                        $('#confirmationTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                        applyConfirmationPaymentFeeFormObject({ fee_rows: [{}] });
+                        paymentBsModal.show();
                         return;
                     }
                     if (!paymentDetailsUrl) {
@@ -701,6 +922,10 @@
                         });
                         return;
                     }
+                    ensureRegistryWorkflowStep('payment', cid, function(ok) {
+                        if (!ok) {
+                            return;
+                        }
                     fetchJson(buildQueryUrl(paymentDetailsUrl, {
                         confirmation_id: cid
                     }), jsonHeaders)
@@ -720,6 +945,7 @@
                                 text: msg,
                             });
                         });
+                    });
                 });
 
                 $paymentFeeForm.on('submit', function(e) {
@@ -751,6 +977,11 @@
                                     if (inst) inst.hide();
                                 }
                                 var msg = (res && res.message) ? res.message : 'Payment record saved.';
+                                var payStatus = (res && res.data && res.data.payment_status) ?
+                                    String(res.data.payment_status).toLowerCase() : '';
+                                if (payStatus === 'paid' && advanceRegistryWorkflow('payment', cid)) {
+                                    return;
+                                }
                                 sappcCnSwal({
                                     icon: 'success',
                                     title: 'Saved',
@@ -798,27 +1029,43 @@
                 }
                 selectConfirmationTableRow(id);
                 if (activeSection === 'schedule') {
-                    if (typeof bootstrap !== 'undefined' && $('#confirmationScheduleRequestModal').length) {
-                        bootstrap.Modal.getOrCreateInstance($('#confirmationScheduleRequestModal')[0]).show();
-                    }
+                    ensureRegistryWorkflowStep('schedule', id, function(ok) {
+                        if (!ok) {
+                            return;
+                        }
+                        if (typeof bootstrap !== 'undefined' && $('#confirmationScheduleRequestModal').length) {
+                            bootstrap.Modal.getOrCreateInstance($('#confirmationScheduleRequestModal')[0]).show();
+                        }
+                    });
                     return;
                 }
                 if (activeSection === 'payment') {
-                    if ($('#confirmationPaymentFeeBtn').length) {
-                        $('#confirmationPaymentFeeBtn').trigger('click');
-                    }
+                    ensureRegistryWorkflowStep('payment', id, function(ok) {
+                        if (!ok) {
+                            return;
+                        }
+                        if ($('#confirmationPaymentFeeBtn').length) {
+                            $('#confirmationPaymentFeeBtn').trigger('click');
+                        }
+                    });
                     return;
                 }
                 if (activeSection === 'certification') {
-                    if ($('#confirmationCertificationBtn').length) {
-                        $('#confirmationCertificationBtn').trigger('click');
-                    }
+                    ensureRegistryWorkflowStep('certification', id, function(ok) {
+                        if (!ok) {
+                            return;
+                        }
+                        if ($('#confirmationCertificationBtn').length) {
+                            $('#confirmationCertificationBtn').trigger('click');
+                        }
+                    });
                     return;
                 }
                 if ($('#confirmationApplicationFormBtn').length) {
                     $('#confirmationApplicationFormBtn').trigger('click');
                 }
             }
+            window.sappcRegistryWorkflowOpenRecord = openConfirmationSectionRecord;
 
             $('#confirmationTableBody').on('click', '.sappc-icon-action--view, .sappc-icon-action--edit', function(e) {
                 e.preventDefault();
@@ -1092,7 +1339,15 @@
                     e.preventDefault();
                     var cid = getSelectedConfirmationId();
                     if (!cid) {
-                        sappcSwalSelectConfirmationRowFirst();
+                        setSelectedConfirmationId('');
+                        $('#confirmationTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                        clearConfirmationApplicationFormFields();
+                        $('#cnApplicationConfirmationId').val('');
+                        if (typeof window.sappcConfirmationApplicationFormOpen === 'function') {
+                            window.sappcConfirmationApplicationFormOpen(true, {});
+                        } else {
+                            bsCnAppModal.show();
+                        }
                         return;
                     }
                     if (!confirmationAppDetailsUrl || !confirmationArancelDetailsUrl) {
@@ -1215,6 +1470,15 @@
                                         var shouldReopenFromDashboard = isDashboardEmbeddedAppContext();
                                         cnApplicationDraftsByConfirmationId[String(wn)] =
                                             serializeConfirmationApplicationFormToObject();
+                                        if (!shouldReopenFromDashboard && advanceRegistryWorkflow('application', wn)) {
+                                            if (typeof bootstrap !== 'undefined' && $mApp.length) {
+                                                var instM = bootstrap.Modal.getInstance($mApp[0]);
+                                                if (instM) {
+                                                    instM.hide();
+                                                }
+                                            }
+                                            return;
+                                        }
                                         if (typeof bootstrap !== 'undefined' && $mApp.length) {
                                             var instM = bootstrap.Modal.getInstance($mApp[0]);
                                             if (instM) {
@@ -1338,7 +1602,11 @@
                     e.preventDefault();
                     var cid = getSelectedConfirmationId();
                     if (!cid) {
-                        sappcSwalSelectConfirmationRowFirst();
+                        setSelectedConfirmationId('');
+                        $('#confirmationTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                        applyConfirmationCertificationTopFromPayment({});
+                        applyConfirmationCertificationFromDetails({});
+                        certBsModal.show();
                         return;
                     }
                     if (!paymentDetailsUrl || !certificationDetailsUrl) {
@@ -1349,6 +1617,10 @@
                         });
                         return;
                     }
+                    ensureRegistryWorkflowStep('certification', cid, function(ok) {
+                        if (!ok) {
+                            return;
+                        }
                     $.when(
                         fetchJson(buildQueryUrl(paymentDetailsUrl, {
                             confirmation_id: cid
@@ -1375,6 +1647,7 @@
                             title: 'Error',
                             text: msg,
                         });
+                    });
                     });
                 });
 
@@ -1764,6 +2037,24 @@
             $scheduleNewBtn.on('click', onConfirmationScheduleToolbarClick);
 
             if ($scheduleModal.length) {
+                $scheduleModal.on('show.bs.modal', function(e) {
+                    var cid = getSelectedConfirmationId();
+                    if (!cid) {
+                        return;
+                    }
+                    if ($scheduleModal.data('workflow-gate-ok')) {
+                        $scheduleModal.removeData('workflow-gate-ok');
+                        return;
+                    }
+                    e.preventDefault();
+                    ensureRegistryWorkflowStep('schedule', cid, function(ok) {
+                        if (!ok) {
+                            return;
+                        }
+                        $scheduleModal.data('workflow-gate-ok', true);
+                        bootstrap.Modal.getOrCreateInstance($scheduleModal[0]).show();
+                    });
+                });
                 $scheduleModal.on('shown.bs.modal', function() {
                     if ($scheduleBtn.length) $scheduleBtn.attr('aria-expanded', 'true');
                     if ($scheduleNewBtn.length) $scheduleNewBtn.attr('aria-expanded', 'true');
@@ -1859,6 +2150,7 @@
 
             if (initialTablePayload) {
                 renderTable(initialTablePayload);
+                tryOpenRecordFromWorkflowQuery();
                 tryOpenConfirmationApplicationFromDashboardQuery();
             } else {
                 fetchRecords();

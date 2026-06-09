@@ -29,8 +29,214 @@
             id = id == null ? '' : String(id).trim();
             $('#brSelectedBurialId').val(id);
             if ($('#brScheduleBurialId').length) {
-                setSelectedBurialId(id);
+                $('#brScheduleBurialId').val(id);
             }
+        }
+
+        function registryWorkflowNextUrl(currentStep) {
+            var $panel = $('#burialRecordsPanel');
+            if (!$panel.length) {
+                return '';
+            }
+            var hasCert = ($panel.attr('data-workflow-has-certification') || '0') === '1';
+            var steps = hasCert
+                ? ['application', 'payment', 'certification', 'schedule']
+                : ['application', 'payment', 'schedule'];
+            var idx = steps.indexOf(currentStep);
+            if (idx < 0 || idx >= steps.length - 1) {
+                return '';
+            }
+            return ($panel.attr('data-workflow-' + steps[idx + 1] + '-url') || '').trim();
+        }
+
+        function advanceRegistryWorkflow(currentStep, recordId) {
+            var url = registryWorkflowNextUrl(currentStep);
+            var id = String(recordId == null ? getSelectedBurialId() : recordId).trim();
+            if (!url || !id) {
+                return false;
+            }
+            var sep = url.indexOf('?') >= 0 ? '&' : '?';
+            window.location.href = url + sep + 'sappc_record=' + encodeURIComponent(id);
+            return true;
+        }
+
+        function tryOpenRecordFromWorkflowQuery() {
+            try {
+                var u = new URL(window.location.href);
+                var id = (u.searchParams.get('sappc_record') || '').trim();
+                if (!id) {
+                    return;
+                }
+                u.searchParams.delete('sappc_record');
+                var q = u.searchParams.toString();
+                window.history.replaceState({}, '', u.pathname + (q ? '?' + q : '') + u.hash);
+                setTimeout(function() {
+                    if (typeof window.sappcRegistryWorkflowOpenRecord === 'function') {
+                        window.sappcRegistryWorkflowOpenRecord(id);
+                        return;
+                    }
+                    setSelectedBurialId(id);
+                    $('#burialTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                    $('#burialTableBody tr').each(function() {
+                        if (($(this).attr('data-record-id') || '').trim() === id) {
+                            $(this).addClass('is-schedule-selected');
+                            return false;
+                        }
+                    });
+                }, 0);
+            } catch (e1) {}
+        }
+
+        function swalRegistryApplicationRequired(messageText) {
+            var msg = messageText || 'Complete and save the application form first. A name is required before you can continue to the next step.';
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Application required',
+                    text: msg,
+                    confirmButtonText: 'OK',
+                });
+            } else {
+                window.alert(msg);
+            }
+        }
+
+        function ensureRegistryApplicationSaved(recordId, thenFn) {
+            recordId = String(recordId == null ? '' : recordId).trim();
+            if (!recordId) {
+                sappcSwalSelectBurialRowFirst();
+                if (typeof thenFn === 'function') {
+                    thenFn(false);
+                }
+                return;
+            }
+            var appUrl = ($('#burialRecordsPanel').attr('data-burial-application-details-url') || '').trim();
+            if (!appUrl) {
+                if (typeof thenFn === 'function') {
+                    thenFn(true);
+                }
+                return;
+            }
+            fetchJson(buildQueryUrl(appUrl, {
+                burial_id: recordId,
+            }), {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            })
+                .done(function(res) {
+                    if (res && res.ok && res.application_saved === true) {
+                        if (typeof thenFn === 'function') {
+                            thenFn(true);
+                        }
+                        return;
+                    }
+                    swalRegistryApplicationRequired(res && res.message ? String(res.message) : '');
+                    if (typeof thenFn === 'function') {
+                        thenFn(false);
+                    }
+                })
+                .fail(function(xhr) {
+                    var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                    swalRegistryApplicationRequired(data && data.message ? String(data.message) : '');
+                    if (typeof thenFn === 'function') {
+                        thenFn(false);
+                    }
+                });
+        }
+
+        function swalRegistryPaymentRequired(messageText) {
+            var msg = messageText || 'Complete payment first. All fees must be marked Paid before you can continue to the next step.';
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'warning', title: 'Payment required', text: msg, confirmButtonText: 'OK' });
+            } else {
+                window.alert(msg);
+            }
+        }
+
+        function registryWorkflowHasCertification() {
+            return ($('#burialRecordsPanel').attr('data-workflow-has-certification') || '0') === '1';
+        }
+
+        function workflowChecksForStep(targetStep) {
+            var checks = [];
+            if (targetStep === 'payment' || targetStep === 'certification' || targetStep === 'schedule') {
+                checks.push('application');
+            }
+            if (targetStep === 'certification' || targetStep === 'schedule') {
+                checks.push('payment');
+            }
+            if (registryWorkflowHasCertification() && targetStep === 'schedule') {
+                checks.push('certification');
+            }
+            return checks;
+        }
+
+        function ensureRegistryPaymentComplete(recordId, thenFn) {
+            recordId = String(recordId == null ? '' : recordId).trim();
+            if (!recordId) {
+                if (typeof thenFn === 'function') thenFn(true);
+                return;
+            }
+            var payUrl = ($('#burialRecordsPanel').attr('data-payment-details-url') || '').trim();
+            if (!payUrl) {
+                if (typeof thenFn === 'function') thenFn(true);
+                return;
+            }
+            fetchJson(buildQueryUrl(payUrl, { burial_id: recordId }), {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            }).done(function(res) {
+                var paid = !!(res && res.ok && (res.payment_complete === true ||
+                    (res.data && String(res.data.payment_status || '').toLowerCase() === 'paid')));
+                if (paid) {
+                    if (typeof thenFn === 'function') thenFn(true);
+                    return;
+                }
+                swalRegistryPaymentRequired(res && res.message ? String(res.message) : '');
+                if (typeof thenFn === 'function') thenFn(false);
+            }).fail(function(xhr) {
+                var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                swalRegistryPaymentRequired(data && data.message ? String(data.message) : '');
+                if (typeof thenFn === 'function') thenFn(false);
+            });
+        }
+
+        function runRegistryWorkflowChecks(checks, index, recordId, thenFn) {
+            if (index >= checks.length) {
+                if (typeof thenFn === 'function') thenFn(true);
+                return;
+            }
+            var check = checks[index];
+            if (check === 'application') {
+                ensureRegistryApplicationSaved(recordId, function(ok) {
+                    if (!ok) {
+                        if (typeof thenFn === 'function') thenFn(false);
+                        return;
+                    }
+                    runRegistryWorkflowChecks(checks, index + 1, recordId, thenFn);
+                });
+                return;
+            }
+            if (check === 'payment') {
+                ensureRegistryPaymentComplete(recordId, function(ok) {
+                    if (!ok) {
+                        if (typeof thenFn === 'function') thenFn(false);
+                        return;
+                    }
+                    runRegistryWorkflowChecks(checks, index + 1, recordId, thenFn);
+                });
+                return;
+            }
+            runRegistryWorkflowChecks(checks, index + 1, recordId, thenFn);
+        }
+
+        function ensureRegistryWorkflowStep(targetStep, recordId, thenFn) {
+            recordId = String(recordId == null ? '' : recordId).trim();
+            if (!recordId || targetStep === 'application') {
+                if (typeof thenFn === 'function') thenFn(true);
+                return;
+            }
+            runRegistryWorkflowChecks(workflowChecksForStep(targetStep), 0, recordId, thenFn);
         }
 
         function esc(s) {
@@ -427,6 +633,7 @@
                 })
                     .done(function(res) {
                         renderTable(res);
+                        tryOpenRecordFromWorkflowQuery();
                         tryOpenBurialApplicationFromDashboardQuery();
                     })
                     .fail(function(xhr, textStatus, errorThrown) {
@@ -502,12 +709,27 @@
             });
 
             var $reloadBtn = $('#burialReloadBtn');
+            $panel.closest('.sappc-registry-page').find('.sappc-registry-toolbar a.sappc-registry-toolbar_btn[data-workflow-step]').on('click', function(e) {
+                var step = ($(this).attr('data-workflow-step') || '').trim();
+                var cid = getSelectedBurialId();
+                if (!cid || !step || step === 'application') {
+                    return;
+                }
+                e.preventDefault();
+                var href = $(this).attr('href');
+                ensureRegistryWorkflowStep(step, cid, function(ok) {
+                    if (ok && href) {
+                        window.location.href = href;
+                    }
+                });
+            });
             if ($reloadBtn.length) {
                 $reloadBtn.on('click', fetchRecords);
             }
 
             if (initialTablePayload) {
                 renderTable(initialTablePayload);
+                tryOpenRecordFromWorkflowQuery();
                 tryOpenBurialApplicationFromDashboardQuery();
             } else {
                 fetchRecords();
@@ -684,13 +906,20 @@
                     e.preventDefault();
                     var cid = getSelectedBurialId();
                     if (!cid) {
-                        sappcSwalSelectBurialRowFirst();
+                        setSelectedBurialId('');
+                        $('#burialTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                        applyConfirmationPaymentFeeFormObject({ fee_rows: [{}] });
+                        paymentBsModal.show();
                         return;
                     }
                     if (!paymentDetailsUrl) {
                         window.alert('Payment load is not configured.');
                         return;
                     }
+                    ensureRegistryWorkflowStep('payment', cid, function(ok) {
+                        if (!ok) {
+                            return;
+                        }
                     fetchJson(buildQueryUrl(paymentDetailsUrl, {
                         burial_id: cid
                     }), jsonHeaders)
@@ -714,6 +943,7 @@
                                 window.alert(msg);
                             }
                         });
+                    });
                 });
 
                 $paymentFeeForm.on('submit', function(e) {
@@ -741,6 +971,11 @@
                                     if (inst) inst.hide();
                                 }
                                 var msg = (res && res.message) ? res.message : 'Payment record saved.';
+                                var payStatus = (res && res.data && res.data.payment_status) ?
+                                    String(res.data.payment_status).toLowerCase() : '';
+                                if (payStatus === 'paid' && advanceRegistryWorkflow('payment', cid)) {
+                                    return;
+                                }
                                 if (typeof Swal !== 'undefined') {
                                     Swal.fire({
                                         icon: 'success',
@@ -839,13 +1074,21 @@
                     e.preventDefault();
                     var bid = getSelectedBurialId();
                     if (!bid) {
-                        sappcSwalSelectBurialRowFirst();
+                        setSelectedBurialId('');
+                        $('#burialTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                        applyBurialCertificationTopFromPayment({});
+                        applyBurialCertificationFromDetails({});
+                        certBsModal.show();
                         return;
                     }
                     if (!paymentDetailsUrl || !certificationDetailsUrl) {
                         window.alert('Certification load is not configured.');
                         return;
                     }
+                    ensureRegistryWorkflowStep('certification', bid, function(ok) {
+                        if (!ok) {
+                            return;
+                        }
                     $.when(
                         fetchJson(buildQueryUrl(paymentDetailsUrl, {
                             burial_id: bid
@@ -876,6 +1119,7 @@
                         } else {
                             window.alert(msg);
                         }
+                    });
                     });
                 });
 
@@ -1481,6 +1725,24 @@
             $scheduleNewBtn.on('click', onBurialScheduleToolbarClick);
 
             if ($scheduleModal.length) {
+                $scheduleModal.on('show.bs.modal', function(e) {
+                    var cid = getSelectedBurialId();
+                    if (!cid) {
+                        return;
+                    }
+                    if ($scheduleModal.data('workflow-gate-ok')) {
+                        $scheduleModal.removeData('workflow-gate-ok');
+                        return;
+                    }
+                    e.preventDefault();
+                    ensureRegistryWorkflowStep('schedule', cid, function(ok) {
+                        if (!ok) {
+                            return;
+                        }
+                        $scheduleModal.data('workflow-gate-ok', true);
+                        bootstrap.Modal.getOrCreateInstance($scheduleModal[0]).show();
+                    });
+                });
                 $scheduleModal.on('shown.bs.modal', function() {
                     if ($scheduleBtn.length) $scheduleBtn.attr('aria-expanded', 'true');
                     if ($scheduleNewBtn.length) $scheduleNewBtn.attr('aria-expanded', 'true');
@@ -1581,17 +1843,32 @@
                 if (!id) return;
                 selectBurialTableRow(id);
                 if (activeSection === 'schedule') {
-                    if (typeof bootstrap !== 'undefined' && $('#burialScheduleRequestModal').length) {
-                        bootstrap.Modal.getOrCreateInstance($('#burialScheduleRequestModal')[0]).show();
-                    }
+                    ensureRegistryWorkflowStep('schedule', id, function(ok) {
+                        if (!ok) {
+                            return;
+                        }
+                        if (typeof bootstrap !== 'undefined' && $('#burialScheduleRequestModal').length) {
+                            bootstrap.Modal.getOrCreateInstance($('#burialScheduleRequestModal')[0]).show();
+                        }
+                    });
                     return;
                 }
                 if (activeSection === 'payment') {
-                    $('#burialPaymentFeeBtn').trigger('click');
+                    ensureRegistryWorkflowStep('payment', id, function(ok) {
+                        if (!ok) {
+                            return;
+                        }
+                        $('#burialPaymentFeeBtn').trigger('click');
+                    });
                     return;
                 }
                 if (activeSection === 'certification') {
-                    $('#burialCertificationBtn').trigger('click');
+                    ensureRegistryWorkflowStep('certification', id, function(ok) {
+                        if (!ok) {
+                            return;
+                        }
+                        $('#burialCertificationBtn').trigger('click');
+                    });
                     return;
                 }
                 if (!burialAppDetailsUrl) {
@@ -1600,6 +1877,7 @@
                 }
                 $('#burialApplicationFormBtn').trigger('click');
             }
+            window.sappcRegistryWorkflowOpenRecord = openBurialSectionRecord;
 
             $('#burialTableBody').on('click', '.sappc-icon-action--view, .sappc-icon-action--edit', function(e) {
                 e.preventDefault();
@@ -1685,7 +1963,15 @@
                     }
                     var cid = getSelectedBurialId();
                     if (!cid) {
-                        sappcSwalSelectBurialRowFirst();
+                        setSelectedBurialId('');
+                        $('#burialTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                        if ($burialAppForm[0]) {
+                            $burialAppForm[0].reset();
+                        }
+                        $burialAppForm.find('input[type=radio]').prop('checked', false);
+                        $('#brAppBurialId').val('');
+                        applyBurialApplicationData({});
+                        bootstrap.Modal.getOrCreateInstance($burialAppModal[0]).show();
                         return;
                     }
                     if (!burialAppDetailsUrl) {
@@ -1747,6 +2033,10 @@
                         .done(function(res) {
                             if (res && res.ok) {
                                 var shouldReopenFromDashboard = isDashboardEmbeddedAppContext();
+                                if (!shouldReopenFromDashboard && advanceRegistryWorkflow('application', bid)) {
+                                    bsModal.hide();
+                                    return;
+                                }
                                 bsModal.hide();
                                 var msg = res && res.message ? res.message : 'Burial application saved.';
                                 sappcBrSwal({

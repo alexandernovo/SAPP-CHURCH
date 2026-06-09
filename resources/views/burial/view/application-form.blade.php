@@ -13,7 +13,7 @@
             <div class="sappc-registry-page_head-main">
                 <h1 class="sappc-page-title">
                     <i class="fa-solid fa-file-lines" aria-hidden="true"></i>
-                    BURIAL — APPLICATION FORM
+                    BURIAL
                 </h1>
                 <p class="sappc-page-breadcrumb mb-0">
                     <a href="{{ route('admin.dashboard') }}">Dashboard</a>

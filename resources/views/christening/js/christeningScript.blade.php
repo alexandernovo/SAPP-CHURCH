@@ -42,11 +42,312 @@
             }
         }
 
+        function registryWorkflowNextUrl(currentStep) {
+            var $panel = $('#christeningRecordsPanel');
+            if (!$panel.length) {
+                return '';
+            }
+            var hasCert = ($panel.attr('data-workflow-has-certification') || '0') === '1';
+            var steps = hasCert
+                ? ['application', 'payment', 'certification', 'schedule']
+                : ['application', 'payment', 'schedule'];
+            var idx = steps.indexOf(currentStep);
+            if (idx < 0 || idx >= steps.length - 1) {
+                return '';
+            }
+            return ($panel.attr('data-workflow-' + steps[idx + 1] + '-url') || '').trim();
+        }
+
+        function advanceRegistryWorkflow(currentStep, recordId) {
+            var url = registryWorkflowNextUrl(currentStep);
+            var id = String(recordId == null ? getSelectedChristeningId() : recordId).trim();
+            if (!url || !id) {
+                return false;
+            }
+            var sep = url.indexOf('?') >= 0 ? '&' : '?';
+            window.location.href = url + sep + 'sappc_record=' + encodeURIComponent(id);
+            return true;
+        }
+
+        function tryOpenRecordFromWorkflowQuery() {
+            try {
+                var u = new URL(window.location.href);
+                var id = (u.searchParams.get('sappc_record') || '').trim();
+                if (!id) {
+                    return;
+                }
+                u.searchParams.delete('sappc_record');
+                var q = u.searchParams.toString();
+                window.history.replaceState({}, '', u.pathname + (q ? '?' + q : '') + u.hash);
+                setTimeout(function() {
+                    if (typeof window.sappcRegistryWorkflowOpenRecord === 'function') {
+                        window.sappcRegistryWorkflowOpenRecord(id);
+                        return;
+                    }
+                    setSelectedChristeningId(id);
+                    $('#christeningTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                    $('#christeningTableBody tr').each(function() {
+                        if (($(this).attr('data-record-id') || '').trim() === id) {
+                            $(this).addClass('is-schedule-selected');
+                            return false;
+                        }
+                    });
+                }, 0);
+            } catch (e1) {}
+        }
+
+        function swalRegistryApplicationRequired(messageText) {
+            var msg = messageText || 'Complete and save the application form first. A name is required before you can continue to the next step.';
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Application required',
+                    text: msg,
+                    confirmButtonText: 'OK',
+                });
+            } else {
+                window.alert(msg);
+            }
+        }
+
+        function ensureRegistryApplicationSaved(recordId, thenFn) {
+            recordId = String(recordId == null ? '' : recordId).trim();
+            if (!recordId) {
+                sappcSwalSelectChristeningRowFirst();
+                if (typeof thenFn === 'function') {
+                    thenFn(false);
+                }
+                return;
+            }
+            var appUrl = ($('#christeningRecordsPanel').attr('data-application-details-url') || '').trim();
+            if (!appUrl) {
+                if (typeof thenFn === 'function') {
+                    thenFn(true);
+                }
+                return;
+            }
+            fetchJson(buildQueryUrl(appUrl, {
+                christening_id: recordId,
+            }), {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            })
+                .done(function(res) {
+                    if (res && res.ok && res.application_saved === true) {
+                        if (typeof thenFn === 'function') {
+                            thenFn(true);
+                        }
+                        return;
+                    }
+                    swalRegistryApplicationRequired(res && res.message ? String(res.message) : '');
+                    if (typeof thenFn === 'function') {
+                        thenFn(false);
+                    }
+                })
+                .fail(function(xhr) {
+                    var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                    swalRegistryApplicationRequired(data && data.message ? String(data.message) : '');
+                    if (typeof thenFn === 'function') {
+                        thenFn(false);
+                    }
+                });
+        }
+
+        function swalRegistryPaymentRequired(messageText) {
+            var msg = messageText || 'Complete payment first. All fees must be marked Paid before you can continue to the next step.';
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Payment required',
+                    text: msg,
+                    confirmButtonText: 'OK',
+                });
+            } else {
+                window.alert(msg);
+            }
+        }
+
+        function swalRegistryCertificationRequired(messageText) {
+            var msg = messageText || 'Complete and save the certification first before you can continue to the next step.';
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Certification required',
+                    text: msg,
+                    confirmButtonText: 'OK',
+                });
+            } else {
+                window.alert(msg);
+            }
+        }
+
+        function registryWorkflowHasCertification() {
+            return ($('#christeningRecordsPanel').attr('data-workflow-has-certification') || '0') === '1';
+        }
+
+        function workflowChecksForStep(targetStep) {
+            var checks = [];
+            if (targetStep === 'payment' || targetStep === 'certification' || targetStep === 'schedule') {
+                checks.push('application');
+            }
+            if (targetStep === 'certification' || targetStep === 'schedule') {
+                checks.push('payment');
+            }
+            if (registryWorkflowHasCertification() && targetStep === 'schedule') {
+                checks.push('certification');
+            }
+            return checks;
+        }
+
+        function ensureRegistryPaymentComplete(recordId, thenFn) {
+            recordId = String(recordId == null ? '' : recordId).trim();
+            if (!recordId) {
+                if (typeof thenFn === 'function') {
+                    thenFn(true);
+                }
+                return;
+            }
+            var payUrl = ($('#christeningRecordsPanel').attr('data-payment-details-url') || '').trim();
+            if (!payUrl) {
+                if (typeof thenFn === 'function') {
+                    thenFn(true);
+                }
+                return;
+            }
+            fetchJson(buildQueryUrl(payUrl, {
+                christening_id: recordId,
+            }), {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            })
+                .done(function(res) {
+                    var paid = !!(res && res.ok && (res.payment_complete === true ||
+                        (res.data && String(res.data.payment_status || '').toLowerCase() === 'paid')));
+                    if (paid) {
+                        if (typeof thenFn === 'function') {
+                            thenFn(true);
+                        }
+                        return;
+                    }
+                    swalRegistryPaymentRequired(res && res.message ? String(res.message) : '');
+                    if (typeof thenFn === 'function') {
+                        thenFn(false);
+                    }
+                })
+                .fail(function(xhr) {
+                    var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                    swalRegistryPaymentRequired(data && data.message ? String(data.message) : '');
+                    if (typeof thenFn === 'function') {
+                        thenFn(false);
+                    }
+                });
+        }
+
+        function ensureRegistryCertificationSaved(recordId, thenFn) {
+            recordId = String(recordId == null ? '' : recordId).trim();
+            if (!recordId || !registryWorkflowHasCertification()) {
+                if (typeof thenFn === 'function') {
+                    thenFn(true);
+                }
+                return;
+            }
+            var certUrl = ($('#christeningRecordsPanel').attr('data-certification-details-url') || '').trim();
+            if (!certUrl) {
+                if (typeof thenFn === 'function') {
+                    thenFn(true);
+                }
+                return;
+            }
+            fetchJson(buildQueryUrl(certUrl, {
+                christening_id: recordId,
+            }), {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            })
+                .done(function(res) {
+                    var saved = !!(res && res.ok && (res.certification_saved === true || res.has_saved_cert === true));
+                    if (saved) {
+                        if (typeof thenFn === 'function') {
+                            thenFn(true);
+                        }
+                        return;
+                    }
+                    swalRegistryCertificationRequired(res && res.message ? String(res.message) : '');
+                    if (typeof thenFn === 'function') {
+                        thenFn(false);
+                    }
+                })
+                .fail(function(xhr) {
+                    var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                    swalRegistryCertificationRequired(data && data.message ? String(data.message) : '');
+                    if (typeof thenFn === 'function') {
+                        thenFn(false);
+                    }
+                });
+        }
+
+        function runRegistryWorkflowChecks(checks, index, recordId, thenFn) {
+            if (index >= checks.length) {
+                if (typeof thenFn === 'function') {
+                    thenFn(true);
+                }
+                return;
+            }
+            var check = checks[index];
+            if (check === 'application') {
+                ensureRegistryApplicationSaved(recordId, function(ok) {
+                    if (!ok) {
+                        if (typeof thenFn === 'function') {
+                            thenFn(false);
+                        }
+                        return;
+                    }
+                    runRegistryWorkflowChecks(checks, index + 1, recordId, thenFn);
+                });
+                return;
+            }
+            if (check === 'payment') {
+                ensureRegistryPaymentComplete(recordId, function(ok) {
+                    if (!ok) {
+                        if (typeof thenFn === 'function') {
+                            thenFn(false);
+                        }
+                        return;
+                    }
+                    runRegistryWorkflowChecks(checks, index + 1, recordId, thenFn);
+                });
+                return;
+            }
+            if (check === 'certification') {
+                ensureRegistryCertificationSaved(recordId, function(ok) {
+                    if (!ok) {
+                        if (typeof thenFn === 'function') {
+                            thenFn(false);
+                        }
+                        return;
+                    }
+                    runRegistryWorkflowChecks(checks, index + 1, recordId, thenFn);
+                });
+                return;
+            }
+            runRegistryWorkflowChecks(checks, index + 1, recordId, thenFn);
+        }
+
+        function ensureRegistryWorkflowStep(targetStep, recordId, thenFn) {
+            recordId = String(recordId == null ? '' : recordId).trim();
+            if (!recordId || targetStep === 'application') {
+                if (typeof thenFn === 'function') {
+                    thenFn(true);
+                }
+                return;
+            }
+            runRegistryWorkflowChecks(workflowChecksForStep(targetStep), 0, recordId, thenFn);
+        }
+
         function esc(s) {
             return $('<div/>').text(s == null ? '' : String(s)).html();
         }
 
-        /** First character uppercase, remaining letters lowercase (per name field). */
         function sappcCapitalizeNamePart(str) {
             var s = String(str == null ? '' : str).trim();
             if (!s.length) {
@@ -55,7 +356,6 @@
             return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
         }
 
-        /** Title-case each whitespace-delimited word (for multi-token first/middle/last). */
         function sappcTitleCaseEachWord(str) {
             return String(str == null ? '' : str).trim().split(/\s+/).filter(function(x) {
                 return x.length;
@@ -650,7 +950,15 @@
                 }
                 var cid = getSelectedChristeningId();
                 if (!cid) {
-                    sappcSwalSelectChristeningRowFirst();
+                    setSelectedChristeningId('');
+                    $('#christeningTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                    restoreChristeningApplicationDraftForCurrentRow();
+                    snapshotChristeningApplicationDraft();
+                    ensureChristeningApplicationNameAndContactGrids();
+                    bsModal.show();
+                    requestAnimationFrame(function() {
+                        requestAnimationFrame(syncChristeningApplicationOfficeGridMetrics);
+                    });
                     return;
                 }
                 if (!applicationDetailsUrl) {
@@ -702,10 +1010,6 @@
                 var url = $form.attr('data-save-url') || $form.attr('action');
                 if (!url) return;
                 var cid = getSelectedChristeningId();
-                if (!cid) {
-                    sappcSwalSelectChristeningRowFirst();
-                    return;
-                }
                 var arr = $form.serializeArray();
                 var payload = {};
                 $.each(arr, function(i, field) {
@@ -721,16 +1025,26 @@
                         payload[n] = field.value;
                     }
                 });
-                payload.christening_id = parseInt(cid, 10);
-                if (isNaN(payload.christening_id)) {
-                    window.alert('Invalid record.');
-                    return;
+                if (cid) {
+                    payload.christening_id = parseInt(cid, 10);
+                    if (isNaN(payload.christening_id)) {
+                        window.alert('Invalid record.');
+                        return;
+                    }
                 }
                 var $saveBtn = $('#christeningApplicationFormSaveBtn');
                 $saveBtn.prop('disabled', true);
                 fetchPostJson(url, payload, csrf)
                     .done(function(res) {
                         if (res && res.ok) {
+                            var savedId = (res.data && res.data.christening_id != null) ?
+                                String(res.data.christening_id).trim() : cid;
+                            if (savedId) {
+                                setSelectedChristeningId(savedId);
+                            }
+                            if (typeof fetchRecords === 'function') {
+                                fetchRecords();
+                            }
                             var shouldReopenFromDashboard = isDashboardEmbeddedAppContext();
                             if (typeof bootstrap !== 'undefined' && $appModal.length) {
                                 var inst = bootstrap.Modal.getInstance($appModal[0]);
@@ -751,6 +1065,8 @@
                                 setTimeout(function() {
                                     $('#christeningApplicationFormBtn').trigger('click');
                                 }, 120);
+                            } else if (advanceRegistryWorkflow('application', savedId)) {
+                                return;
                             }
                         }
                     })
@@ -965,6 +1281,7 @@
         }
 
         tryOpenChristeningApplicationFromDashboardQuery();
+        tryOpenRecordFromWorkflowQuery();
 
         if ($paymentModal.length && $paymentBtn.length && typeof bootstrap !== 'undefined') {
             var paymentBsModal = bootstrap.Modal.getOrCreateInstance($paymentModal[0]);
@@ -988,13 +1305,20 @@
                 e.preventDefault();
                 var cid = getSelectedChristeningId();
                 if (!cid) {
-                    sappcSwalSelectChristeningRowFirst();
+                    setSelectedChristeningId('');
+                    $('#christeningTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                    applyChristeningPaymentFeeFormObject({ fee_rows: [{}] });
+                    paymentBsModal.show();
                     return;
                 }
                 if (!paymentDetailsUrl) {
                     window.alert('Payment load is not configured.');
                     return;
                 }
+                ensureRegistryWorkflowStep('payment', cid, function(ok) {
+                    if (!ok) {
+                        return;
+                    }
                 fetchJson(buildQueryUrl(paymentDetailsUrl, {
                     christening_id: cid
                 }), jsonHeaders)
@@ -1020,6 +1344,7 @@
                             window.alert(msg);
                         }
                     });
+                });
             });
 
             $paymentFeeForm.on('submit', function(e) {
@@ -1047,6 +1372,11 @@
                                 if (inst) inst.hide();
                             }
                             var msg = (res && res.message) ? res.message : 'Payment record saved.';
+                            var payStatus = (res && res.data && res.data.payment_status) ?
+                                String(res.data.payment_status).toLowerCase() : '';
+                            if (payStatus === 'paid' && advanceRegistryWorkflow('payment', cid)) {
+                                return;
+                            }
                             if (typeof Swal !== 'undefined') {
                                 Swal.fire({
                                     icon: 'success',
@@ -1461,6 +1791,10 @@
                         return;
                     }
                     printBaptismCertificationSheet();
+                    var certId = getSelectedChristeningId();
+                    if (advanceRegistryWorkflow('certification', certId)) {
+                        return;
+                    }
                     var msg = (res && res.message) ? res.message : 'Certification record saved.';
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
@@ -1533,13 +1867,21 @@
                 e.preventDefault();
                 var cid = getSelectedChristeningId();
                 if (!cid) {
-                    sappcSwalSelectChristeningRowFirst();
+                    setSelectedChristeningId('');
+                    $('#christeningTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                    applyChristeningCertificationTopFromPayment({});
+                    applyChristeningCertificationFromApplicationDetails({});
+                    certBsModal.show();
                     return;
                 }
                 if (!paymentDetailsUrl || !certificationDetailsUrl) {
                     window.alert('Certification load is not configured.');
                     return;
                 }
+                ensureRegistryWorkflowStep('certification', cid, function(ok) {
+                    if (!ok) {
+                        return;
+                    }
                 $.when(
                     fetchJson(buildQueryUrl(paymentDetailsUrl, {
                         christening_id: cid
@@ -1568,6 +1910,7 @@
                     } else {
                         window.alert(msg);
                     }
+                });
                 });
             });
 
@@ -1670,6 +2013,7 @@
         }
 
         renderTable(initialTablePayload);
+        tryOpenRecordFromWorkflowQuery();
 
         function selectChristeningTableRow(id) {
             setSelectedChristeningId(id);
@@ -1687,23 +2031,38 @@
             selectChristeningTableRow(id);
 
             if (activeSection === 'schedule') {
-                if (typeof bootstrap !== 'undefined' && $scheduleModal.length) {
-                    bootstrap.Modal.getOrCreateInstance($scheduleModal[0]).show();
-                }
+                ensureRegistryWorkflowStep('schedule', id, function(ok) {
+                    if (!ok) {
+                        return;
+                    }
+                    if (typeof bootstrap !== 'undefined' && $scheduleModal.length) {
+                        bootstrap.Modal.getOrCreateInstance($scheduleModal[0]).show();
+                    }
+                });
                 return;
             }
 
             if (activeSection === 'payment') {
-                if ($paymentBtn.length) {
-                    $paymentBtn.trigger('click');
-                }
+                ensureRegistryWorkflowStep('payment', id, function(ok) {
+                    if (!ok) {
+                        return;
+                    }
+                    if ($paymentBtn.length) {
+                        $paymentBtn.trigger('click');
+                    }
+                });
                 return;
             }
 
             if (activeSection === 'certification') {
-                if ($certBtn.length) {
-                    $certBtn.trigger('click');
-                }
+                ensureRegistryWorkflowStep('certification', id, function(ok) {
+                    if (!ok) {
+                        return;
+                    }
+                    if ($certBtn.length) {
+                        $certBtn.trigger('click');
+                    }
+                });
                 return;
             }
 
@@ -1736,6 +2095,7 @@
                     }
                 });
         }
+        window.sappcRegistryWorkflowOpenRecord = openChristeningSectionRecord;
 
         $('#christeningTableBody').on('click', '.sappc-icon-action--view, .sappc-icon-action--edit', function(e) {
             e.preventDefault();
@@ -1836,6 +2196,7 @@
                 .done(function(res) {
                     renderTable(res);
                     tryOpenChristeningApplicationFromDashboardQuery();
+                    tryOpenRecordFromWorkflowQuery();
                 })
                 .fail(function(xhr) {
                     var msg = xhr && xhr.status ? xhr.status : '?';
@@ -1903,6 +2264,21 @@
         });
 
         $('#christeningReloadBtn').on('click', fetchRecords);
+
+        $panel.closest('.sappc-registry-page').find('.sappc-registry-toolbar a.sappc-registry-toolbar_btn[data-workflow-step]').on('click', function(e) {
+            var step = ($(this).attr('data-workflow-step') || '').trim();
+            var cid = getSelectedChristeningId();
+            if (!cid || !step || step === 'application') {
+                return;
+            }
+            e.preventDefault();
+            var href = $(this).attr('href');
+            ensureRegistryWorkflowStep(step, cid, function(ok) {
+                if (ok && href) {
+                    window.location.href = href;
+                }
+            });
+        });
 
         var $scheduleForm = $('#christeningScheduleRequestForm');
         var $scheduleBtn = $('#christeningScheduleRequestBtn');
@@ -2293,6 +2669,24 @@
         $scheduleNewBtn.on('click', onScheduleToolbarClick);
 
         if ($scheduleModal.length) {
+            $scheduleModal.on('show.bs.modal', function(e) {
+                var cid = getSelectedChristeningId();
+                if (!cid) {
+                    return;
+                }
+                if ($scheduleModal.data('workflow-gate-ok')) {
+                    $scheduleModal.removeData('workflow-gate-ok');
+                    return;
+                }
+                e.preventDefault();
+                ensureRegistryWorkflowStep('schedule', cid, function(ok) {
+                    if (!ok) {
+                        return;
+                    }
+                    $scheduleModal.data('workflow-gate-ok', true);
+                    bootstrap.Modal.getOrCreateInstance($scheduleModal[0]).show();
+                });
+            });
             $scheduleModal.on('shown.bs.modal', function() {
                 if ($scheduleBtn.length) {
                     $scheduleBtn.attr('aria-expanded', 'true');

@@ -52,6 +52,7 @@
             @endphp
             <a href="{{ route($section['route']) }}"
                 class="{{ $btnClass }}"
+                data-workflow-step="{{ $key }}"
                 @if ($isActive) aria-current="page" @endif>
                 <i class="fa-solid {{ $section['icon'] }}" aria-hidden="true"></i>
                 {{ $section['label'] }}

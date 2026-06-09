@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Support\ClientNameDisplay;
 use App\Support\DocumentationApplicationReportWriter;
+use App\Support\SacramentApplicationGate;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -191,6 +192,15 @@ class ConfirmationController extends Controller
                 ],
             ]);
         }
+
+        $existingConfirmationId = (int) $existing->confirmationId;
+        if (! SacramentApplicationGate::confirmationIsSaved($existingConfirmationId)) {
+            return SacramentApplicationGate::denyResponse();
+        }
+        if (! SacramentApplicationGate::confirmationIsPaymentComplete($existingConfirmationId)) {
+            return SacramentApplicationGate::paymentDenyResponse();
+        }
+
         if (! empty($existing->customerId)) {
             $user = Auth::user();
             $customerUpdate = [
@@ -255,6 +265,13 @@ class ConfirmationController extends Controller
                 'ok' => false,
                 'message' => 'Confirmation record not found.',
             ], 404);
+        }
+
+        if (! SacramentApplicationGate::confirmationIsSaved($confirmationId)) {
+            return SacramentApplicationGate::denyResponse();
+        }
+        if (! SacramentApplicationGate::confirmationIsPaymentComplete($confirmationId)) {
+            return SacramentApplicationGate::paymentDenyResponse();
         }
 
         $client = ClientNameDisplay::fullDisplayName(
@@ -331,8 +348,13 @@ class ConfirmationController extends Controller
             return response()->json(['message' => 'Confirmation record not found.'], 404);
         }
 
+        if (! SacramentApplicationGate::confirmationIsSaved($confirmationId)) {
+            return SacramentApplicationGate::denyResponse();
+        }
+
         return response()->json([
             'ok' => true,
+            'payment_complete' => SacramentApplicationGate::confirmationIsPaymentComplete($confirmationId),
             'data' => $this->mapConfirmationRowToPaymentFormFields($row),
         ]);
     }
@@ -355,6 +377,10 @@ class ConfirmationController extends Controller
         $existing = DB::table('confirmation')->where('confirmationId', $confirmationId)->first();
         if ($existing === null) {
             return response()->json(['message' => 'Confirmation record not found.'], 404);
+        }
+
+        if (! SacramentApplicationGate::confirmationIsSaved($confirmationId)) {
+            return SacramentApplicationGate::denyResponse();
         }
 
         $feeRows = $validated['fee_rows'] ?? [];
@@ -495,6 +521,7 @@ class ConfirmationController extends Controller
 
         return response()->json([
             'ok' => true,
+            'application_saved' => SacramentApplicationGate::confirmationIsSaved($id),
             'data' => $data,
         ]);
     }
@@ -515,6 +542,19 @@ class ConfirmationController extends Controller
             $data = [];
         }
         unset($data['confirmation_id'], $data['_token']);
+
+        $firstName = trim((string) ($data['first_name'] ?? ''));
+        $familyName = trim((string) ($data['family_name'] ?? ''));
+        if ($firstName === '' || $familyName === '') {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Please enter the candidate\'s first name and last name on the application form.',
+                'errors' => [
+                    'first_name' => ['First and last name are required.'],
+                ],
+            ], 422);
+        }
+
         $encoded = json_encode($data, JSON_UNESCAPED_UNICODE);
         if ($encoded === false) {
             return response()->json(['ok' => false, 'message' => 'Could not encode the application.'], 422);
@@ -607,6 +647,13 @@ class ConfirmationController extends Controller
         $row = DB::table('confirmation')->where('confirmationId', $id)->first();
         if ($row === null) {
             return response()->json(['message' => 'Confirmation record not found.'], 404);
+        }
+
+        if (! SacramentApplicationGate::confirmationIsSaved($id)) {
+            return SacramentApplicationGate::denyResponse();
+        }
+        if (! SacramentApplicationGate::confirmationIsPaymentComplete($id)) {
+            return SacramentApplicationGate::paymentDenyResponse();
         }
 
         $details = $this->latestConfirmationDetailsRow($id);

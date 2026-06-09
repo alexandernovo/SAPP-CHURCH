@@ -13,7 +13,7 @@
             <div class="sappc-registry-page_head-main">
                 <h1 class="sappc-page-title">
                     <i class="fa-solid fa-certificate" aria-hidden="true"></i>
-                    WEDDING — CERTIFICATION
+                    WEDDING
                 </h1>
                 <p class="sappc-page-breadcrumb mb-0">
                     <a href="{{ route('admin.dashboard') }}">Dashboard</a>

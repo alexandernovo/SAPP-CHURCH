@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Support\ClientNameDisplay;
 use App\Support\DocumentationApplicationReportWriter;
+use App\Support\SacramentApplicationGate;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -193,6 +194,18 @@ class WeddingController extends Controller
                 ],
             ]);
         }
+
+        $existingWeddingId = (int) $existing->weddingId;
+        if (! SacramentApplicationGate::weddingIsSaved($existingWeddingId)) {
+            return SacramentApplicationGate::denyResponse();
+        }
+        if (! SacramentApplicationGate::weddingIsPaymentComplete($existingWeddingId)) {
+            return SacramentApplicationGate::paymentDenyResponse();
+        }
+        if (! SacramentApplicationGate::weddingIsCertificationSaved($existingWeddingId)) {
+            return SacramentApplicationGate::certificationDenyResponse();
+        }
+
         if (! empty($existing->customerId)) {
             $user = Auth::user();
             $customerUpdate = [
@@ -257,6 +270,16 @@ class WeddingController extends Controller
                 'ok' => false,
                 'message' => 'Wedding record not found.',
             ], 404);
+        }
+
+        if (! SacramentApplicationGate::weddingIsSaved($weddingId)) {
+            return SacramentApplicationGate::denyResponse();
+        }
+        if (! SacramentApplicationGate::weddingIsPaymentComplete($weddingId)) {
+            return SacramentApplicationGate::paymentDenyResponse();
+        }
+        if (! SacramentApplicationGate::weddingIsCertificationSaved($weddingId)) {
+            return SacramentApplicationGate::certificationDenyResponse();
         }
 
         $client = ClientNameDisplay::fullDisplayName(
@@ -333,8 +356,13 @@ class WeddingController extends Controller
             return response()->json(['message' => 'Wedding record not found.'], 404);
         }
 
+        if (! SacramentApplicationGate::weddingIsSaved($weddingId)) {
+            return SacramentApplicationGate::denyResponse();
+        }
+
         return response()->json([
             'ok' => true,
+            'payment_complete' => SacramentApplicationGate::weddingIsPaymentComplete($weddingId),
             'data' => $this->mapWeddingRowToPaymentFormFields($row),
         ]);
     }
@@ -357,6 +385,10 @@ class WeddingController extends Controller
         $existing = DB::table('wedding')->where('weddingId', $weddingId)->first();
         if ($existing === null) {
             return response()->json(['message' => 'Wedding record not found.'], 404);
+        }
+
+        if (! SacramentApplicationGate::weddingIsSaved($weddingId)) {
+            return SacramentApplicationGate::denyResponse();
         }
 
         $feeRows = $validated['fee_rows'] ?? [];
@@ -456,6 +488,7 @@ class WeddingController extends Controller
 
         return response()->json([
             'ok' => true,
+            'application_saved' => SacramentApplicationGate::weddingIsSaved($weddingId),
             'data' => $this->decodeMarriageApplication($row),
         ]);
     }
@@ -476,6 +509,21 @@ class WeddingController extends Controller
             $data = [];
         }
         unset($data['wedding_id'], $data['_token']);
+
+        $groomFirst = trim((string) ($data['first_name'] ?? ''));
+        $groomLast = trim((string) ($data['family_name'] ?? ''));
+        $bride = is_array($data['bride'] ?? null) ? $data['bride'] : [];
+        $brideFirst = trim((string) ($bride['first_name'] ?? ''));
+        $brideLast = trim((string) ($bride['family_name'] ?? ''));
+        if ($groomFirst === '' || $groomLast === '' || $brideFirst === '' || $brideLast === '') {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Please enter the groom\'s and bride\'s first and last names on the marriage application form.',
+                'errors' => [
+                    'first_name' => ['Groom and bride first and last names are required.'],
+                ],
+            ], 422);
+        }
 
         $encoded = json_encode($data, JSON_UNESCAPED_UNICODE);
         if ($encoded === false) {
@@ -518,6 +566,13 @@ class WeddingController extends Controller
         $row = DB::table('wedding')->where('weddingId', $weddingId)->first();
         if ($row === null) {
             return response()->json(['message' => 'Wedding record not found.'], 404);
+        }
+
+        if (! SacramentApplicationGate::weddingIsSaved($weddingId)) {
+            return SacramentApplicationGate::denyResponse();
+        }
+        if (! SacramentApplicationGate::weddingIsPaymentComplete($weddingId)) {
+            return SacramentApplicationGate::paymentDenyResponse();
         }
 
         $details = DB::table('wedding_details')
@@ -573,6 +628,7 @@ class WeddingController extends Controller
         return response()->json([
             'ok' => true,
             'has_saved_cert' => $certRow !== null,
+            'certification_saved' => SacramentApplicationGate::weddingIsCertificationSaved($weddingId),
             'data' => $data,
         ]);
     }
@@ -613,6 +669,13 @@ class WeddingController extends Controller
         $wedding = DB::table('wedding')->where('weddingId', $weddingId)->first();
         if ($wedding === null) {
             return response()->json(['message' => 'Wedding record not found.'], 404);
+        }
+
+        if (! SacramentApplicationGate::weddingIsSaved($weddingId)) {
+            return SacramentApplicationGate::denyResponse();
+        }
+        if (! SacramentApplicationGate::weddingIsPaymentComplete($weddingId)) {
+            return SacramentApplicationGate::paymentDenyResponse();
         }
 
         if (! Schema::hasTable('wedding_certification')) {

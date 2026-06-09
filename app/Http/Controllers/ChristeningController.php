@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Support\ClientNameDisplay;
 use App\Support\DocumentationApplicationReportWriter;
+use App\Support\SacramentApplicationGate;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class ChristeningController extends Controller
@@ -316,6 +318,18 @@ class ChristeningController extends Controller
                 ],
             ]);
         }
+
+        $existingChristeningId = (int) $existing->christeningId;
+        if (! SacramentApplicationGate::christeningIsSaved($existingChristeningId)) {
+            return SacramentApplicationGate::denyResponse();
+        }
+        if (! SacramentApplicationGate::christeningIsPaymentComplete($existingChristeningId)) {
+            return SacramentApplicationGate::paymentDenyResponse();
+        }
+        if (! SacramentApplicationGate::christeningIsCertificationSaved($existingChristeningId)) {
+            return SacramentApplicationGate::certificationDenyResponse();
+        }
+
         if (! empty($existing->customerId)) {
             $user = Auth::user();
             $customerUpdate = [
@@ -382,6 +396,16 @@ class ChristeningController extends Controller
             ], 404);
         }
 
+        if (! SacramentApplicationGate::christeningIsSaved($christeningId)) {
+            return SacramentApplicationGate::denyResponse();
+        }
+        if (! SacramentApplicationGate::christeningIsPaymentComplete($christeningId)) {
+            return SacramentApplicationGate::paymentDenyResponse();
+        }
+        if (! SacramentApplicationGate::christeningIsCertificationSaved($christeningId)) {
+            return SacramentApplicationGate::certificationDenyResponse();
+        }
+
         $client = ClientNameDisplay::fullDisplayName(
             $row->clientFName ?? null,
             $row->clientMName ?? null,
@@ -419,44 +443,139 @@ class ChristeningController extends Controller
     public function christeningApplicationForm(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'christening_id' => ['required', 'integer', 'min:1'],
+            'christening_id' => ['nullable', 'integer', 'min:1'],
         ]);
 
-        $christeningId = (int) $validated['christening_id'];
+        $firstName = trim((string) $request->input('first_name', ''));
+        $familyName = trim((string) $request->input('family_name', ''));
+        if ($firstName === '' || $familyName === '') {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Please enter the child\'s first name and last name on the application form.',
+                'errors' => [
+                    'first_name' => ['First and last name are required.'],
+                ],
+            ], 422);
+        }
 
-        if (! DB::table('christening')->where('christeningId', $christeningId)->exists()) {
+        $middleName = trim((string) $request->input('middle_name', ''));
+        $christeningId = isset($validated['christening_id']) ? (int) $validated['christening_id'] : 0;
+        $created = false;
+        $referenceCode = null;
+
+        if ($christeningId <= 0) {
+            try {
+                [$christeningId, $referenceCode] = DB::transaction(function () use ($request, $firstName, $middleName, $familyName) {
+                    $user = Auth::user();
+                    $customerRow = [
+                        'customerFName' => $firstName,
+                        'customerMName' => $middleName !== '' ? $middleName : null,
+                        'customerLName' => $familyName,
+                        'updatedAt' => now(),
+                        'createdBy' => $user?->userName ?? $user?->userfName ?? null,
+                        'userId' => $user?->getAuthIdentifier(),
+                    ];
+                    $customerRow = array_filter($customerRow, fn ($v) => $v !== null);
+                    $customerId = DB::table('customer')->insertGetId($customerRow);
+
+                    $ref = $this->generateUniqueChristeningReferenceCode();
+                    $insertData = [
+                        'referenceCode' => $ref,
+                        'clientFName' => $firstName,
+                        'clientMName' => $middleName !== '' ? $middleName : null,
+                        'clientLName' => $familyName,
+                        'contactNum' => $this->nullableText($request->input('guardian_contact')),
+                        'address' => $this->nullableText($request->input('parent_address')),
+                        'paymentStatus' => 'Unpaid',
+                        'dateCreated' => now(),
+                        'customerId' => $customerId,
+                    ];
+                    if (Schema::hasColumn('christening', 'workflowStep')) {
+                        $insertData['workflowStep'] = 'application';
+                    }
+                    $insertData = array_filter($insertData, fn ($v) => $v !== null);
+
+                    $newId = (int) DB::table('christening')->insertGetId($insertData);
+
+                    return [$newId, $ref];
+                });
+                $created = true;
+            } catch (QueryException $e) {
+                report($e);
+
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Could not create the christening record. Please try again.',
+                ], 422);
+            }
+        } elseif (! DB::table('christening')->where('christeningId', $christeningId)->exists()) {
             return response()->json(['message' => 'Christening record not found.'], 404);
         }
 
         $row = $this->mapApplicationRequestToDetailsRow($request);
 
         try {
-            $existing = DB::table('christening_details')
-                ->where('christeningId', $christeningId)
-                ->orderByDesc('christeningDetailsId')
-                ->first();
+            $detailsId = DB::transaction(function () use ($christeningId, $row, $firstName, $middleName, $familyName, $request) {
+                try {
+                    $existing = DB::table('christening_details')
+                        ->where('christeningId', $christeningId)
+                        ->orderByDesc('christeningDetailsId')
+                        ->first();
+                } catch (QueryException $e) {
+                    if ($this->isCorruptedChristeningDetailsIndex($e)) {
+                        throw new \RuntimeException('corrupted_christening_details_index');
+                    }
+
+                    throw $e;
+                }
+
+                if ($existing) {
+                    $row['updated_at'] = now();
+                    DB::table('christening_details')
+                        ->where('christeningDetailsId', $existing->christeningDetailsId)
+                        ->update($row);
+                    $detailsId = (int) $existing->christeningDetailsId;
+                } else {
+                    $row['christeningId'] = $christeningId;
+                    $row['created_at'] = now();
+                    $row['updated_at'] = now();
+                    $detailsId = (int) DB::table('christening_details')->insertGetId($row);
+                }
+
+                $headerUpdate = [
+                    'clientFName' => $firstName,
+                    'clientMName' => $middleName !== '' ? $middleName : null,
+                    'clientLName' => $familyName,
+                    'contactNum' => $this->nullableText($request->input('guardian_contact')),
+                    'address' => $this->nullableText($request->input('parent_address')),
+                ];
+                if (Schema::hasColumn('christening', 'applicationCompletedAt')) {
+                    $headerUpdate['applicationCompletedAt'] = now();
+                }
+                if (Schema::hasColumn('christening', 'workflowStep')) {
+                    $headerUpdate['workflowStep'] = 'payment';
+                }
+                $headerUpdate = array_filter($headerUpdate, fn ($v) => $v !== null);
+                DB::table('christening')->where('christeningId', $christeningId)->update($headerUpdate);
+
+                return $detailsId;
+            });
+        } catch (\RuntimeException $e) {
+            if ($e->getMessage() === 'corrupted_christening_details_index') {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'The christening details index appears corrupted. Please repair the table and try again.',
+                ], 422);
+            }
+
+            throw $e;
         } catch (QueryException $e) {
             report($e);
 
             return response()->json([
                 'ok' => false,
-                'message' => $this->isCorruptedChristeningDetailsIndex($e)
-                    ? 'The christening details index appears corrupted. Please repair the table and try again.'
-                    : 'Could not load christening details. Please try again.',
+                'message' => 'Could not save the application. Please try again.',
             ], 422);
-        }
-
-        if ($existing) {
-            $row['updated_at'] = now();
-            DB::table('christening_details')
-                ->where('christeningDetailsId', $existing->christeningDetailsId)
-                ->update($row);
-            $detailsId = (int) $existing->christeningDetailsId;
-        } else {
-            $row['christeningId'] = $christeningId;
-            $row['created_at'] = now();
-            $row['updated_at'] = now();
-            $detailsId = (int) DB::table('christening_details')->insertGetId($row);
         }
 
         DocumentationApplicationReportWriter::syncChristening(
@@ -466,12 +585,19 @@ class ChristeningController extends Controller
             $row['familyName'] ?? null,
         );
 
+        if ($referenceCode === null) {
+            $header = DB::table('christening')->where('christeningId', $christeningId)->first();
+            $referenceCode = $header?->referenceCode ?? null;
+        }
+
         return response()->json([
             'ok' => true,
-            'message' => 'Application saved.',
+            'message' => $created ? 'New christening record and application saved.' : 'Application saved.',
+            'created' => $created,
             'data' => [
                 'christening_id' => $christeningId,
                 'christening_details_id' => $detailsId,
+                'reference_code' => $referenceCode,
             ],
         ]);
     }
@@ -532,6 +658,7 @@ class ChristeningController extends Controller
 
         return response()->json([
             'ok' => true,
+            'application_saved' => SacramentApplicationGate::christeningIsSaved($christeningId),
             'data' => $data,
         ]);
     }
@@ -640,8 +767,13 @@ class ChristeningController extends Controller
             return response()->json(['message' => 'Christening record not found.'], 404);
         }
 
+        if (! SacramentApplicationGate::christeningIsSaved($christeningId)) {
+            return SacramentApplicationGate::denyResponse();
+        }
+
         return response()->json([
             'ok' => true,
+            'payment_complete' => SacramentApplicationGate::christeningIsPaymentComplete($christeningId),
             'data' => $this->mapChristeningRowToPaymentFormFields($row),
         ]);
     }
@@ -664,6 +796,10 @@ class ChristeningController extends Controller
         $existing = DB::table('christening')->where('christeningId', $christeningId)->first();
         if ($existing === null) {
             return response()->json(['message' => 'Christening record not found.'], 404);
+        }
+
+        if (! SacramentApplicationGate::christeningIsSaved($christeningId)) {
+            return SacramentApplicationGate::denyResponse();
         }
 
         $feeRows = $validated['fee_rows'] ?? [];
@@ -1098,6 +1234,13 @@ class ChristeningController extends Controller
             return response()->json(['message' => 'Christening record not found.'], 404);
         }
 
+        if (! SacramentApplicationGate::christeningIsSaved($christeningId)) {
+            return SacramentApplicationGate::denyResponse();
+        }
+        if (! SacramentApplicationGate::christeningIsPaymentComplete($christeningId)) {
+            return SacramentApplicationGate::paymentDenyResponse();
+        }
+
         $certRow = $this->mapCertificationRequestToCertificationTableRow($request);
         $certificationDetailsRow = $this->mapCertificationRequestToCertificationDetailsRow($request, $christening);
 
@@ -1150,6 +1293,13 @@ class ChristeningController extends Controller
             return response()->json(['message' => 'Christening record not found.'], 404);
         }
 
+        if (! SacramentApplicationGate::christeningIsSaved($christeningId)) {
+            return SacramentApplicationGate::denyResponse();
+        }
+        if (! SacramentApplicationGate::christeningIsPaymentComplete($christeningId)) {
+            return SacramentApplicationGate::paymentDenyResponse();
+        }
+
         $christening = DB::table('christening')->where('christeningId', $christeningId)->first();
 
         try {
@@ -1192,6 +1342,7 @@ class ChristeningController extends Controller
         return response()->json([
             'ok' => true,
             'has_saved_cert' => $certRow !== null,
+            'certification_saved' => SacramentApplicationGate::christeningIsCertificationSaved($christeningId),
             'data' => $overlay,
         ]);
     }

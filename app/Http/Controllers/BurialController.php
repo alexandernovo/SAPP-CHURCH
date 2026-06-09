@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Support\ClientNameDisplay;
 use App\Support\DocumentationApplicationReportWriter;
+use App\Support\SacramentApplicationGate;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -190,6 +191,15 @@ class BurialController extends Controller
                 ],
             ]);
         }
+
+        $existingBurialId = (int) $existing->burialId;
+        if (! SacramentApplicationGate::burialIsSaved($existingBurialId)) {
+            return SacramentApplicationGate::denyResponse();
+        }
+        if (! SacramentApplicationGate::burialIsPaymentComplete($existingBurialId)) {
+            return SacramentApplicationGate::paymentDenyResponse();
+        }
+
         if (! empty($existing->customerId)) {
             $user = Auth::user();
             $customerUpdate = [
@@ -254,6 +264,13 @@ class BurialController extends Controller
                 'ok' => false,
                 'message' => 'Burial record not found.',
             ], 404);
+        }
+
+        if (! SacramentApplicationGate::burialIsSaved($burialId)) {
+            return SacramentApplicationGate::denyResponse();
+        }
+        if (! SacramentApplicationGate::burialIsPaymentComplete($burialId)) {
+            return SacramentApplicationGate::paymentDenyResponse();
         }
 
         $client = ClientNameDisplay::fullDisplayName(
@@ -330,8 +347,13 @@ class BurialController extends Controller
             return response()->json(['message' => 'Burial record not found.'], 404);
         }
 
+        if (! SacramentApplicationGate::burialIsSaved($burialId)) {
+            return SacramentApplicationGate::denyResponse();
+        }
+
         return response()->json([
             'ok' => true,
+            'payment_complete' => SacramentApplicationGate::burialIsPaymentComplete($burialId),
             'data' => $this->mapBurialRowToPaymentFormFields($row),
         ]);
     }
@@ -354,6 +376,10 @@ class BurialController extends Controller
         $existing = DB::table('burial')->where('burialId', $burialId)->first();
         if ($existing === null) {
             return response()->json(['message' => 'Burial record not found.'], 404);
+        }
+
+        if (! SacramentApplicationGate::burialIsSaved($burialId)) {
+            return SacramentApplicationGate::denyResponse();
         }
 
         $feeRows = $validated['fee_rows'] ?? [];
@@ -458,6 +484,7 @@ class BurialController extends Controller
 
         return response()->json([
             'ok' => true,
+            'application_saved' => SacramentApplicationGate::burialIsSaved($burialId),
             'data' => $this->mapBurialDetailsRowToApplicationPayload($details),
         ]);
     }
@@ -478,6 +505,16 @@ class BurialController extends Controller
             $data = [];
         }
         unset($data['burial_id'], $data['_token']);
+
+        if (trim((string) ($data['deceased_name'] ?? '')) === '') {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Please enter the deceased name on the burial application form.',
+                'errors' => [
+                    'deceased_name' => ['Deceased name is required.'],
+                ],
+            ], 422);
+        }
 
         $detailsRow = $this->mapBurialApplicationPayloadToDetailsRow($data);
 
@@ -524,6 +561,13 @@ class BurialController extends Controller
         $row = DB::table('burial')->where('burialId', $burialId)->first();
         if ($row === null) {
             return response()->json(['message' => 'Burial record not found.'], 404);
+        }
+
+        if (! SacramentApplicationGate::burialIsSaved($burialId)) {
+            return SacramentApplicationGate::denyResponse();
+        }
+        if (! SacramentApplicationGate::burialIsPaymentComplete($burialId)) {
+            return SacramentApplicationGate::paymentDenyResponse();
         }
 
         $details = DB::table('burial_details')
@@ -609,6 +653,13 @@ class BurialController extends Controller
         $burial = DB::table('burial')->where('burialId', $burialId)->first();
         if ($burial === null) {
             return response()->json(['message' => 'Burial record not found.'], 404);
+        }
+
+        if (! SacramentApplicationGate::burialIsSaved($burialId)) {
+            return SacramentApplicationGate::denyResponse();
+        }
+        if (! SacramentApplicationGate::burialIsPaymentComplete($burialId)) {
+            return SacramentApplicationGate::paymentDenyResponse();
         }
 
         $resolvedReferenceCode = trim((string) ($validated['reference_code'] ?? ''));
