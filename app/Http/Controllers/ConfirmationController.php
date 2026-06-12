@@ -299,7 +299,7 @@ class ConfirmationController extends Controller
                 'confirmation_id' => $confirmationId,
                 'reference_code' => (string) ($row->referenceCode ?? ''),
                 'client' => $client,
-                'address' => (string) ($row->address ?? ''),
+                'address' => ClientNameDisplay::formatAddress((string) ($row->address ?? '')),
                 'sex' => (string) ($row->sex ?? ''),
                 'contact_number' => (string) ($row->contactNum ?? ''),
                 'schedule_date' => $scheduleDate,
@@ -423,7 +423,7 @@ class ConfirmationController extends Controller
         $update = [
             'paymentStatus' => $paymentStatus,
             'contactNum' => $this->nullableText($validated['contact_number'] ?? null),
-            'address' => $this->nullableText($validated['address'] ?? null),
+            'address' => ClientNameDisplay::nullableFormattedAddress($validated['address'] ?? null),
         ];
         if ($clientTrim !== '') {
             if ($first) {
@@ -518,6 +518,7 @@ class ConfirmationController extends Controller
         $this->overlayNonEmptyJsonFields($data, $this->decodeConfirmationJsonColumn($row, 'confirmationApplication'));
         $this->applyRegistryClientNamesToConfirmationApplicationData($row, $data);
         $this->applyChristeningScheduleToConfirmationApplicationData($row, $data);
+        $data = ClientNameDisplay::normalizeApplicationNameFields($data);
 
         return response()->json([
             'ok' => true,
@@ -542,6 +543,7 @@ class ConfirmationController extends Controller
             $data = [];
         }
         unset($data['confirmation_id'], $data['_token']);
+        $data = ClientNameDisplay::normalizeApplicationNameFields($data);
 
         $firstName = trim((string) ($data['first_name'] ?? ''));
         $familyName = trim((string) ($data['family_name'] ?? ''));
@@ -720,7 +722,7 @@ class ConfirmationController extends Controller
             $data['book_no'] = (string) ($details->bookNo ?? '');
             $data['register_no'] = (string) ($details->registryNo ?? '');
             $data['page_no'] = (string) ($details->pageNo ?? '');
-            $data['priest'] = (string) ($details->confirmationMinister ?? '');
+            $data['priest'] = ClientNameDisplay::formatPriestName((string) ($details->confirmationMinister ?? ''));
 
             $sponsors = array_values(array_filter([
                 trim((string) ($details->godparent1 ?? '')),
@@ -755,12 +757,6 @@ class ConfirmationController extends Controller
         return [];
     }
 
-    /**
-     * When a christening registry row exists for the same candidate (first + last name match)
-     * and has scheduleRequested, use that datetime's date as baptism_date (same idea as christening application form).
-     *
-     * @param  array<string, mixed>  $data  Mutated in place.
-     */
     private function applyChristeningScheduleToConfirmationApplicationData(object $confirmation, array &$data): void
     {
         $christening = $this->findChristeningRowMatchingConfirmationClient($confirmation);
@@ -836,9 +832,6 @@ class ConfirmationController extends Controller
             ->first();
     }
 
-    /**
-     * @return array<string, string>
-     */
     private function mapConfirmationDetailsRowToApplicationForm(?object $row): array
     {
         $defaults = [
@@ -874,26 +867,23 @@ class ConfirmationController extends Controller
         $defaults['place_of_birth'] = (string) ($row->placeOfBirth ?? '');
         $defaults['father_name'] = (string) ($row->fatherName ?? '');
         $defaults['mother_maiden'] = (string) ($row->motherMaiden ?? '');
-        $defaults['address'] = (string) ($row->address ?? '');
+        $defaults['address'] = ClientNameDisplay::formatAddress((string) ($row->address ?? ''));
         $defaults['baptism_date'] = $this->dateForForm($row->baptismDate ?? null);
         $defaults['baptism_place'] = (string) ($row->baptismPlace ?? '');
-        $defaults['minister_baptism'] = (string) ($row->ministerBaptism ?? '');
+        $defaults['minister_baptism'] = ClientNameDisplay::formatPriestName((string) ($row->ministerBaptism ?? ''));
         $defaults['book_no'] = (string) ($row->bookNo ?? '');
         $defaults['page_no'] = (string) ($row->pageNo ?? '');
         $defaults['registry_no'] = (string) ($row->registryNo ?? '');
         $defaults['confirmation_date'] = $this->dateForForm($row->confirmationDate ?? null);
-        $defaults['confirmation_minister'] = (string) ($row->confirmationMinister ?? '');
+        $defaults['confirmation_minister'] = ClientNameDisplay::formatPriestName((string) ($row->confirmationMinister ?? ''));
         $defaults['godparent_1'] = (string) ($row->godparent1 ?? '');
         $defaults['godparent_2'] = (string) ($row->godparent2 ?? '');
         $defaults['godparent_3'] = (string) ($row->godparent3 ?? '');
         $defaults['godparent_4'] = (string) ($row->godparent4 ?? '');
 
-        return $defaults;
+        return ClientNameDisplay::normalizeApplicationNameFields($defaults);
     }
 
-    /**
-     * @return array<string, string>
-     */
     private function mapConfirmationDetailsRowToArancelForm(?object $row): array
     {
         $defaults = [
@@ -934,10 +924,6 @@ class ConfirmationController extends Controller
         return $defaults;
     }
 
-    /**
-     * @param  array<string, mixed>  $target
-     * @param  array<string, mixed>  $json
-     */
     private function overlayNonEmptyJsonFields(array &$target, array $json): void
     {
         foreach ($json as $k => $v) {
@@ -954,9 +940,6 @@ class ConfirmationController extends Controller
         }
     }
 
-    /**
-     * @param  array<string, mixed>  $data
-     */
     private function applyRegistryClientNamesToConfirmationApplicationData(object $confirmation, array &$data): void
     {
         if (trim((string) ($data['first_name'] ?? '')) === '') {
@@ -970,9 +953,6 @@ class ConfirmationController extends Controller
         }
     }
 
-    /**
-     * @param  array<string, mixed>  $payload  Request body (application slice).
-     */
     private function syncConfirmationDetailsFromApplicationPayload(int $confirmationId, array $payload): void
     {
         if (! $this->confirmationDetailsTableExists()) {
@@ -1002,7 +982,7 @@ class ConfirmationController extends Controller
             $row['motherMaiden'] = $this->nullableText($payload['mother_maiden']);
         }
         if (array_key_exists('address', $payload)) {
-            $row['address'] = $this->nullableText($payload['address']);
+            $row['address'] = ClientNameDisplay::nullableFormattedAddress($payload['address']);
         }
         if (array_key_exists('baptism_date', $payload)) {
             $row['baptismDate'] = $this->nullableDateFromForm($payload['baptism_date']);
@@ -1011,7 +991,7 @@ class ConfirmationController extends Controller
             $row['baptismPlace'] = $this->nullableText($payload['baptism_place']);
         }
         if (array_key_exists('minister_baptism', $payload)) {
-            $row['ministerBaptism'] = $this->nullableText($payload['minister_baptism']);
+            $row['ministerBaptism'] = ClientNameDisplay::nullableFormattedPriest($payload['minister_baptism']);
         }
         if (array_key_exists('book_no', $payload)) {
             $row['bookNo'] = $this->nullableText($payload['book_no']);
@@ -1026,7 +1006,7 @@ class ConfirmationController extends Controller
             $row['confirmationDate'] = $this->nullableDateFromForm($payload['confirmation_date']);
         }
         if (array_key_exists('confirmation_minister', $payload)) {
-            $row['confirmationMinister'] = $this->nullableText($payload['confirmation_minister']);
+            $row['confirmationMinister'] = ClientNameDisplay::nullableFormattedPriest($payload['confirmation_minister']);
         }
         if (array_key_exists('godparent_1', $payload)) {
             $row['godparent1'] = $this->nullableText($payload['godparent_1']);
@@ -1060,9 +1040,6 @@ class ConfirmationController extends Controller
         DB::table('confirmation_details')->insert($row);
     }
 
-    /**
-     * @param  array<string, mixed>  $payload  Request body (arancel slice).
-     */
     private function syncConfirmationDetailsFromArancelPayload(int $confirmationId, array $payload): void
     {
         if (! $this->confirmationDetailsTableExists()) {
@@ -1110,7 +1087,7 @@ class ConfirmationController extends Controller
             $row['approvedByPresacramentalInstructor'] = $this->nullableText($payload['sig_presacramental_instructor']);
         }
         if (array_key_exists('sig_parish_priest', $payload)) {
-            $row['approvedByParishPriest'] = $this->nullableText($payload['sig_parish_priest']);
+            $row['approvedByParishPriest'] = ClientNameDisplay::nullableFormattedPriest($payload['sig_parish_priest']);
         }
 
         if ($row === []) {
@@ -1145,9 +1122,6 @@ class ConfirmationController extends Controller
         }
     }
 
-    /**
-     * @return array{first:string,middle:string,last:string}
-     */
     private function splitFullNameThreeParts(mixed $raw): array
     {
         $raw = trim((string) ($raw ?? ''));
@@ -1233,7 +1207,7 @@ class ConfirmationController extends Controller
             'reference_code' => (string) ($row->referenceCode ?? ''),
             'client' => $client,
             'contact_number' => (string) ($row->contactNum ?? ''),
-            'address' => (string) ($row->address ?? ''),
+            'address' => ClientNameDisplay::formatAddress((string) ($row->address ?? '')),
             'payment_status' => $status,
             'fee_rows' => $feeRows,
         ];

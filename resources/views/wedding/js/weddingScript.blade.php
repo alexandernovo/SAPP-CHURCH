@@ -88,7 +88,7 @@
         }
 
         function swalRegistryApplicationRequired(messageText) {
-            var msg = messageText || 'Complete and save the application form first. A name is required before you can continue to the next step.';
+            var msg = messageText || 'Please do or fill the application form first.';
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
                     icon: 'warning',
@@ -104,7 +104,7 @@
         function ensureRegistryApplicationSaved(recordId, thenFn) {
             recordId = String(recordId == null ? '' : recordId).trim();
             if (!recordId) {
-                sappcSwalSelectWeddingRowFirst();
+                swalRegistryApplicationRequired();
                 if (typeof thenFn === 'function') {
                     thenFn(false);
                 }
@@ -468,7 +468,7 @@
                 '<td>' + esc(row.rowNumber) + '</td>' +
                 '<td>' + esc(row.referenceCode) + '</td>' +
                 '<td>' + esc(row.client) + '</td>' +
-                '<td>' + esc(row.address) + '</td>';
+                '<td>' + esc(typeof sappcFormatAddress === 'function' ? sappcFormatAddress(row.address) : row.address) + '</td>';
             if (activeSection === 'certification') {
                 return base + '<td>' + esc(row.contactNum) + '</td><td>' + esc(row.dateCreated) + '</td>' + rowActionCell(row.recordId) + '</tr>';
             }
@@ -1084,10 +1084,7 @@
                     e.preventDefault();
                     var cid = getSelectedWeddingId();
                     if (!cid) {
-                        setSelectedWeddingId('');
-                        $('#weddingTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
-                        applyConfirmationPaymentFeeFormObject({ fee_rows: [{}] });
-                        paymentBsModal.show();
+                        swalRegistryApplicationRequired();
                         return;
                     }
                     if (!paymentDetailsUrl) {
@@ -1130,7 +1127,7 @@
                     if (!saveUrl) return;
                     var cid = getSelectedWeddingId();
                     if (!cid) {
-                        sappcSwalSelectWeddingRowFirst();
+                        swalRegistryApplicationRequired();
                         return;
                     }
                     var payload = serializeConfirmationPaymentFeeToObject();
@@ -1524,9 +1521,9 @@
                 function saveWeddingCertificationRecord() {
                     var wid = getSelectedWeddingId();
                     if (!wid) {
-                        sappcSwalSelectWeddingRowFirst();
+                        swalRegistryApplicationRequired();
                         return $.Deferred().reject({
-                            responseJSON: { message: 'Select a wedding record first.' }
+                            responseJSON: { message: 'Please do or fill the application form first.' }
                         }).promise();
                     }
                     if (!certificationSaveUrl) {
@@ -1646,11 +1643,7 @@
                     e.preventDefault();
                     var wid = getSelectedWeddingId();
                     if (!wid) {
-                        setSelectedWeddingId('');
-                        $('#weddingTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
-                        applyWeddingCertificationTopFromPayment({});
-                        applyWeddingCertificationFromDetails({});
-                        certBsModal.show();
+                        swalRegistryApplicationRequired();
                         return;
                     }
                     if (!paymentDetailsUrl || !certificationDetailsUrl) {
@@ -2388,6 +2381,8 @@
                 $scheduleModal.on('show.bs.modal', function(e) {
                     var cid = getSelectedWeddingId();
                     if (!cid) {
+                        e.preventDefault();
+                        swalRegistryApplicationRequired();
                         return;
                     }
                     if ($scheduleModal.data('workflow-gate-ok')) {

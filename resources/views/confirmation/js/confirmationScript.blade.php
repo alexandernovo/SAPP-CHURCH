@@ -88,7 +88,7 @@
         }
 
         function swalRegistryApplicationRequired(messageText) {
-            var msg = messageText || 'Complete and save the application form first. A name is required before you can continue to the next step.';
+            var msg = messageText || 'Please do or fill the application form first.';
             sappcCnSwal({
                 icon: 'warning',
                 title: 'Application required',
@@ -100,7 +100,7 @@
         function ensureRegistryApplicationSaved(recordId, thenFn) {
             recordId = String(recordId == null ? '' : recordId).trim();
             if (!recordId) {
-                sappcSwalSelectConfirmationRowFirst();
+                swalRegistryApplicationRequired();
                 if (typeof thenFn === 'function') {
                     thenFn(false);
                 }
@@ -404,8 +404,8 @@
                 '">' +
                 '<td>' + esc(row.rowNumber) + '</td>' +
                 '<td>' + esc(row.referenceCode) + '</td>' +
-                '<td>' + esc(row.client) + '</td>' +
-                '<td>' + esc(row.address) + '</td>' +
+                '<td>' + esc(typeof sappcFormatClientDisplayName === 'function' ? sappcFormatClientDisplayName(row.client) : row.client) + '</td>' +
+                '<td>' + esc(typeof sappcFormatAddress === 'function' ? sappcFormatAddress(row.address) : row.address) + '</td>' +
                 '<td>' + esc(row.sex) + '</td>' +
                 '<td>' + esc(row.contactNum) + '</td>' +
                 '<td>' + esc(row.dateCreated) + '</td>' +
@@ -908,10 +908,7 @@
                     e.preventDefault();
                     var cid = getSelectedConfirmationId();
                     if (!cid) {
-                        setSelectedConfirmationId('');
-                        $('#confirmationTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
-                        applyConfirmationPaymentFeeFormObject({ fee_rows: [{}] });
-                        paymentBsModal.show();
+                        swalRegistryApplicationRequired();
                         return;
                     }
                     if (!paymentDetailsUrl) {
@@ -954,7 +951,7 @@
                     if (!saveUrl) return;
                     var cid = getSelectedConfirmationId();
                     if (!cid) {
-                        sappcSwalSelectConfirmationRowFirst();
+                        swalRegistryApplicationRequired();
                         return;
                     }
                     var payload = serializeConfirmationPaymentFeeToObject();
@@ -1602,11 +1599,7 @@
                     e.preventDefault();
                     var cid = getSelectedConfirmationId();
                     if (!cid) {
-                        setSelectedConfirmationId('');
-                        $('#confirmationTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
-                        applyConfirmationCertificationTopFromPayment({});
-                        applyConfirmationCertificationFromDetails({});
-                        certBsModal.show();
+                        swalRegistryApplicationRequired();
                         return;
                     }
                     if (!paymentDetailsUrl || !certificationDetailsUrl) {
@@ -1654,7 +1647,7 @@
                 $certForm.on('submit', function(ev) {
                     ev.preventDefault();
                     if (!sappcConfirmationGetSelectedRecordIdStrict()) {
-                        sappcSwalSelectConfirmationRowFirst();
+                        swalRegistryApplicationRequired();
                         return;
                     }
                 });
@@ -2040,6 +2033,8 @@
                 $scheduleModal.on('show.bs.modal', function(e) {
                     var cid = getSelectedConfirmationId();
                     if (!cid) {
+                        e.preventDefault();
+                        swalRegistryApplicationRequired();
                         return;
                     }
                     if ($scheduleModal.data('workflow-gate-ok')) {

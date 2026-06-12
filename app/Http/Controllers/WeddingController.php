@@ -307,7 +307,7 @@ class WeddingController extends Controller
                 'wedding_id' => $weddingId,
                 'reference_code' => (string) ($row->referenceCode ?? ''),
                 'client' => $client,
-                'address' => (string) ($row->address ?? ''),
+                'address' => ClientNameDisplay::formatAddress((string) ($row->address ?? '')),
                 'sex' => (string) ($row->sex ?? ''),
                 'contact_number' => (string) ($row->contactNum ?? ''),
                 'schedule_date' => $scheduleDate,
@@ -431,7 +431,7 @@ class WeddingController extends Controller
         $update = [
             'paymentStatus' => $paymentStatus,
             'contactNum' => $this->nullableText($validated['contact_number'] ?? null),
-            'address' => $this->nullableText($validated['address'] ?? null),
+            'address' => ClientNameDisplay::nullableFormattedAddress($validated['address'] ?? null),
         ];
         if ($clientTrim !== '') {
             if ($first) {
@@ -489,7 +489,7 @@ class WeddingController extends Controller
         return response()->json([
             'ok' => true,
             'application_saved' => SacramentApplicationGate::weddingIsSaved($weddingId),
-            'data' => $this->decodeMarriageApplication($row),
+            'data' => ClientNameDisplay::normalizeApplicationNameFields($this->decodeMarriageApplication($row)),
         ]);
     }
 
@@ -509,13 +509,11 @@ class WeddingController extends Controller
             $data = [];
         }
         unset($data['wedding_id'], $data['_token']);
+        $data = ClientNameDisplay::normalizeApplicationNameFields($data);
 
-        $groomFirst = trim((string) ($data['first_name'] ?? ''));
-        $groomLast = trim((string) ($data['family_name'] ?? ''));
-        $bride = is_array($data['bride'] ?? null) ? $data['bride'] : [];
-        $brideFirst = trim((string) ($bride['first_name'] ?? ''));
-        $brideLast = trim((string) ($bride['family_name'] ?? ''));
-        if ($groomFirst === '' || $groomLast === '' || $brideFirst === '' || $brideLast === '') {
+        $groomName = trim((string) ($data['groom_full_name'] ?? ''));
+        $brideName = trim((string) ($data['bride_full_name'] ?? ''));
+        if ($groomName === '' || $brideName === '') {
             return response()->json([
                 'ok' => false,
                 'message' => 'Please enter the groom\'s and bride\'s first and last names on the marriage application form.',
@@ -767,10 +765,10 @@ class WeddingController extends Controller
         if (is_string($raw)) {
             $decoded = json_decode($raw, true);
 
-            return is_array($decoded) ? $decoded : [];
+            return is_array($decoded) ? ClientNameDisplay::normalizeApplicationNameFields($decoded) : [];
         }
         if (is_array($raw)) {
-            return $raw;
+            return ClientNameDisplay::normalizeApplicationNameFields($raw);
         }
 
         return [];
@@ -857,7 +855,7 @@ class WeddingController extends Controller
             'reference_code' => (string) ($row->referenceCode ?? ''),
             'client' => $client,
             'contact_number' => (string) ($row->contactNum ?? ''),
-            'address' => (string) ($row->address ?? ''),
+            'address' => ClientNameDisplay::formatAddress((string) ($row->address ?? '')),
             'payment_status' => $status,
             'fee_rows' => $feeRows,
         ];
@@ -1001,7 +999,7 @@ class WeddingController extends Controller
         $data['municipality'] = $addr['municipality'];
         $data['province'] = $addr['province'] !== '' ? $addr['province'] : 'Antique';
 
-        $data['priest'] = (string) ($details->officiatingPriest ?? '');
+        $data['priest'] = ClientNameDisplay::formatPriestName((string) ($details->officiatingPriest ?? ''));
         $data['sponsors'] = implode('; ', array_values(array_filter([
             trim((string) ($details->sponsorsLine1 ?? '')),
             trim((string) ($details->sponsorsLine2 ?? '')),
@@ -1207,7 +1205,7 @@ class WeddingController extends Controller
             'groomAge' => $groomAge !== '' && ctype_digit($groomAge) ? (int) $groomAge : null,
             'groomDateOfBirth' => $this->parseFlexibleDate($app['groom_date_of_birth'] ?? null),
             'groomPlaceOfBirth' => $this->nullableText($app['groom_place_of_birth'] ?? null),
-            'groomPresentAddress' => $this->nullableText($app['groom_present_address'] ?? null),
+            'groomPresentAddress' => ClientNameDisplay::nullableFormattedAddress($app['groom_present_address'] ?? null),
             'groomFather' => $this->nullableText($app['groom_father'] ?? null),
             'groomMotherMaiden' => $this->nullableText($app['groom_mother_maiden'] ?? null),
             'groomReligion' => $this->nullableText($app['groom_religion'] ?? null),
@@ -1220,7 +1218,7 @@ class WeddingController extends Controller
             'brideAge' => $brideAge !== '' && ctype_digit($brideAge) ? (int) $brideAge : null,
             'brideDateOfBirth' => $this->parseFlexibleDate($app['bride_date_of_birth'] ?? null),
             'bridePlaceOfBirth' => $this->nullableText($app['bride_place_of_birth'] ?? null),
-            'bridePresentAddress' => $this->nullableText($app['bride_present_address'] ?? null),
+            'bridePresentAddress' => ClientNameDisplay::nullableFormattedAddress($app['bride_present_address'] ?? null),
             'brideFather' => $this->nullableText($app['bride_father'] ?? null),
             'brideMotherMaiden' => $this->nullableText($app['bride_mother_maiden'] ?? null),
             'brideReligion' => $this->nullableText($app['bride_religion'] ?? null),
@@ -1234,7 +1232,7 @@ class WeddingController extends Controller
             'prenuptialInvestigationDate' => $this->parseFlexibleDate($app['prenuptial_investigation_date'] ?? null),
             'churchWeddingDate' => $this->parseFlexibleDate($app['church_wedding_date'] ?? null),
             'churchWeddingPlace' => $this->nullableText($app['church_wedding_place'] ?? null),
-            'officiatingPriest' => $this->nullableText($app['officiating_priest'] ?? null),
+            'officiatingPriest' => ClientNameDisplay::nullableFormattedPriest($app['officiating_priest'] ?? null),
             'sponsorsLine1' => $this->nullableText($app['sponsors_line1'] ?? null),
             'sponsorsLine2' => $this->nullableText($app['sponsors_line2'] ?? null),
             'sponsorsLine3' => $this->nullableText($app['sponsors_line3'] ?? null),
@@ -1317,7 +1315,7 @@ class WeddingController extends Controller
             'addressProvince' => $this->nullableText($request->input('province')),
             'certDateReceived' => $this->parseFlexibleDate($request->input('date_received')),
             'certDateIssued' => $this->parseFlexibleDate($request->input('date_issued')),
-            'priest' => $this->nullableText($request->input('priest')),
+            'priest' => ClientNameDisplay::nullableFormattedPriest($request->input('priest')),
             'certSponsors' => $this->nullableText($request->input('sponsors')),
             'certPurpose' => $this->nullableText($request->input('purpose')),
             'certBookNo' => $this->nullableText($request->input('book_no')),
@@ -1364,7 +1362,7 @@ class WeddingController extends Controller
         return [
             'referenceCode' => $this->nullableText($resolvedReferenceCode),
             'client' => $this->nullableText($resolvedClient),
-            'address' => $this->nullableText($resolvedAddress),
+            'address' => ClientNameDisplay::nullableFormattedAddress($resolvedAddress),
             'sex' => $this->nullableText('Male'),
             'contactNumber' => $this->nullableText($resolvedContact),
             'date' => $resolvedDate,
@@ -1402,7 +1400,7 @@ class WeddingController extends Controller
             'book_no' => (string) ($row->certBookNo ?? ''),
             'register_no' => (string) ($row->certRegisterNo ?? ''),
             'page_no' => (string) ($row->certPageNo ?? ''),
-            'priest' => (string) ($row->priest ?? ''),
+            'priest' => ClientNameDisplay::formatPriestName((string) ($row->priest ?? '')),
             'sponsors' => (string) ($row->certSponsors ?? ''),
             'purpose' => (string) ($row->certPurpose ?? ''),
         ];

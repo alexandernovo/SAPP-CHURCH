@@ -229,7 +229,7 @@ class DashboardController extends Controller
             'documentType' => $row->document_type,
             'referenceCode' => $row->referenceCode ?? '',
             'client' => $client,
-            'address' => ($row->address ?? '') !== '' ? $row->address : '—',
+            'address' => ($row->address ?? '') !== '' ? ClientNameDisplay::formatAddress((string) $row->address) : '—',
             'sex' => ($row->sex ?? '') !== '' ? $row->sex : '—',
             'contactNum' => ($row->contactNum ?? '') !== '' ? $row->contactNum : '—',
             'paymentStatus' => ($row->paymentStatus ?? '') !== '' ? $row->paymentStatus : '—',

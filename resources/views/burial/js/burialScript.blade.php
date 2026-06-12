@@ -88,7 +88,7 @@
         }
 
         function swalRegistryApplicationRequired(messageText) {
-            var msg = messageText || 'Complete and save the application form first. A name is required before you can continue to the next step.';
+            var msg = messageText || 'Please do or fill the application form first.';
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
                     icon: 'warning',
@@ -104,7 +104,7 @@
         function ensureRegistryApplicationSaved(recordId, thenFn) {
             recordId = String(recordId == null ? '' : recordId).trim();
             if (!recordId) {
-                sappcSwalSelectBurialRowFirst();
+                swalRegistryApplicationRequired();
                 if (typeof thenFn === 'function') {
                     thenFn(false);
                 }
@@ -416,7 +416,7 @@
 
         function rowHtml(row) {
             var base = '<tr data-record-id="' + esc(row.recordId) + '" data-document-type="' + esc(row.documentType) + '">' +
-                '<td>' + esc(row.rowNumber) + '</td><td>' + esc(row.referenceCode) + '</td><td>' + esc(row.client) + '</td><td>' + esc(row.address) + '</td>';
+                '<td>' + esc(row.rowNumber) + '</td><td>' + esc(row.referenceCode) + '</td><td>' + esc(row.client) + '</td><td>' + esc(typeof sappcFormatAddress === 'function' ? sappcFormatAddress(row.address) : row.address) + '</td>';
             if (activeSection === 'certification') {
                 return base + '<td>' + esc(row.contactNum) + '</td><td>' + esc(row.dateCreated) + '</td>' + rowActionCell(row.recordId) + '</tr>';
             }
@@ -906,10 +906,7 @@
                     e.preventDefault();
                     var cid = getSelectedBurialId();
                     if (!cid) {
-                        setSelectedBurialId('');
-                        $('#burialTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
-                        applyConfirmationPaymentFeeFormObject({ fee_rows: [{}] });
-                        paymentBsModal.show();
+                        swalRegistryApplicationRequired();
                         return;
                     }
                     if (!paymentDetailsUrl) {
@@ -952,7 +949,7 @@
                     if (!saveUrl) return;
                     var cid = getSelectedBurialId();
                     if (!cid) {
-                        sappcSwalSelectBurialRowFirst();
+                        swalRegistryApplicationRequired();
                         return;
                     }
                     var payload = serializeConfirmationPaymentFeeToObject();
@@ -1074,11 +1071,7 @@
                     e.preventDefault();
                     var bid = getSelectedBurialId();
                     if (!bid) {
-                        setSelectedBurialId('');
-                        $('#burialTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
-                        applyBurialCertificationTopFromPayment({});
-                        applyBurialCertificationFromDetails({});
-                        certBsModal.show();
+                        swalRegistryApplicationRequired();
                         return;
                     }
                     if (!paymentDetailsUrl || !certificationDetailsUrl) {
@@ -1170,10 +1163,10 @@
                 function saveBurialCertificationRecord() {
                     var bid = getSelectedBurialId();
                     if (!bid) {
-                        sappcSwalSelectBurialRowFirst();
+                        swalRegistryApplicationRequired();
                         return $.Deferred().reject({
                             responseJSON: {
-                                message: 'Please select a burial record first.'
+                                message: 'Please do or fill the application form first.'
                             }
                         }).promise();
                     }
@@ -1728,6 +1721,8 @@
                 $scheduleModal.on('show.bs.modal', function(e) {
                     var cid = getSelectedBurialId();
                     if (!cid) {
+                        e.preventDefault();
+                        swalRegistryApplicationRequired();
                         return;
                     }
                     if ($scheduleModal.data('workflow-gate-ok')) {
@@ -2074,7 +2069,6 @@
                 });
             })();
 
-            // Initial fetch is already called earlier.
         });
     })();
 </script>

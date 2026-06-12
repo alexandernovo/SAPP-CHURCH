@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Schema;
 
 final class SacramentApplicationGate
 {
-    public const MESSAGE = 'Complete and save the application form first. A name is required before you can continue to the next step.';
+    public const MESSAGE = 'Please do or fill the application form first.';
 
     public const PAYMENT_MESSAGE = 'Complete payment first. All fees must be marked Paid before you can continue to the next step.';
 

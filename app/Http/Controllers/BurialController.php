@@ -298,7 +298,7 @@ class BurialController extends Controller
                 'burial_id' => $burialId,
                 'reference_code' => (string) ($row->referenceCode ?? ''),
                 'client' => $client,
-                'address' => (string) ($row->address ?? ''),
+                'address' => ClientNameDisplay::formatAddress((string) ($row->address ?? '')),
                 'sex' => (string) ($row->sex ?? ''),
                 'contact_number' => (string) ($row->contactNum ?? ''),
                 'schedule_date' => $scheduleDate,
@@ -422,7 +422,7 @@ class BurialController extends Controller
         $update = [
             'paymentStatus' => $paymentStatus,
             'contactNum' => $this->nullableText($validated['contact_number'] ?? null),
-            'address' => $this->nullableText($validated['address'] ?? null),
+            'address' => ClientNameDisplay::nullableFormattedAddress($validated['address'] ?? null),
         ];
         if ($clientTrim !== '') {
             if ($first) {
@@ -485,7 +485,7 @@ class BurialController extends Controller
         return response()->json([
             'ok' => true,
             'application_saved' => SacramentApplicationGate::burialIsSaved($burialId),
-            'data' => $this->mapBurialDetailsRowToApplicationPayload($details),
+            'data' => ClientNameDisplay::normalizeApplicationNameFields($this->mapBurialDetailsRowToApplicationPayload($details)),
         ]);
     }
 
@@ -505,6 +505,7 @@ class BurialController extends Controller
             $data = [];
         }
         unset($data['burial_id'], $data['_token']);
+        $data = ClientNameDisplay::normalizeApplicationNameFields($data);
 
         if (trim((string) ($data['deceased_name'] ?? '')) === '') {
             return response()->json([
@@ -695,7 +696,7 @@ class BurialController extends Controller
             DB::table('certification_details')->insert([
                 'referenceCode' => $this->nullableText($resolvedReferenceCode),
                 'client' => $this->nullableText($resolvedClient),
-                'address' => $this->nullableText($resolvedAddress),
+                'address' => ClientNameDisplay::nullableFormattedAddress($resolvedAddress),
                 'sex' => $this->nullableText($burial->sex ?? null),
                 'contactNumber' => $this->nullableText($resolvedContact),
                 'date' => $resolvedDate,
@@ -758,7 +759,7 @@ class BurialController extends Controller
             return [];
         }
 
-        return [
+        return ClientNameDisplay::normalizeApplicationNameFields([
             'deceased_name' => (string) ($details->deceasedName ?? ''),
             'deceased_age' => (string) ($details->deceasedAge ?? ''),
             'marital_status' => (string) ($details->maritalStatus ?? ''),
@@ -805,20 +806,20 @@ class BurialController extends Controller
             'noted_bpc_chairman' => (string) ($details->notedByBpcChairman ?? ''),
             'noted_parish_fiscal' => (string) ($details->notedByParishFiscalSecretary ?? ''),
             'approved_parish_priest' => (string) ($details->approvedByParishPriest ?? ''),
-        ];
+        ]);
     }
 
     private function mapBurialApplicationPayloadToDetailsRow(array $data): array
     {
         return [
-            'deceasedName' => $this->nullableText($data['deceased_name'] ?? null),
+            'deceasedName' => ClientNameDisplay::nullableFormattedFamilyName($data['deceased_name'] ?? null),
             'deceasedAge' => $this->nullableText($data['deceased_age'] ?? null),
             'maritalStatus' => $this->nullableText($data['marital_status'] ?? null),
-            'spouseName' => $this->nullableText($data['spouse_name'] ?? null),
-            'deceasedAddress' => $this->nullableText($data['deceased_address'] ?? null),
+            'spouseName' => ClientNameDisplay::nullableFormattedFamilyName($data['spouse_name'] ?? null),
+            'deceasedAddress' => ClientNameDisplay::nullableFormattedAddress($data['deceased_address'] ?? null),
             'kinamatyan' => $this->nullableText($data['kinamatyan'] ?? null),
             'occupation' => $this->nullableText($data['occupation'] ?? null),
-            'claimantName' => $this->nullableText($data['claimant_name'] ?? null),
+            'claimantName' => ClientNameDisplay::nullableFormattedFamilyName($data['claimant_name'] ?? null),
             'claimantRelation' => $this->nullableText($data['claimant_relation'] ?? null),
             'claimantPlace' => $this->nullableText($data['claimant_place'] ?? null),
             'churchObligation' => $this->nullableText($data['church_obligation'] ?? null),
@@ -831,8 +832,8 @@ class BurialController extends Controller
             'burialDate' => $this->nullableDate($data['burial_date'] ?? null),
             'burialTime' => $this->nullableTime($data['burial_time'] ?? null),
             'burialPermitNo' => $this->nullableText($data['burial_permit_no'] ?? null),
-            'minorFatherName' => $this->nullableText($data['minor_father_name'] ?? null),
-            'minorMotherName' => $this->nullableText($data['minor_mother_name'] ?? null),
+            'minorFatherName' => ClientNameDisplay::nullableFormattedFamilyName($data['minor_father_name'] ?? null),
+            'minorMotherName' => ClientNameDisplay::nullableFormattedFamilyName($data['minor_mother_name'] ?? null),
             'ceremonyType' => $this->nullableText($data['ceremony_type'] ?? null),
             'intermentType' => $this->nullableText($data['interment_type'] ?? null),
             'nicheNo' => $this->nullableText($data['niche_no'] ?? null),
@@ -854,9 +855,9 @@ class BurialController extends Controller
             'arExtra1Remarks' => $this->nullableText($data['ar_extra_1_remarks'] ?? null),
             'arExtra2Amount' => $this->nullableInteger($data['ar_extra_2_amount'] ?? null),
             'arExtra2Remarks' => $this->nullableText($data['ar_extra_2_remarks'] ?? null),
-            'notedByBpcChairman' => $this->nullableText($data['noted_bpc_chairman'] ?? null),
-            'notedByParishFiscalSecretary' => $this->nullableText($data['noted_parish_fiscal'] ?? null),
-            'approvedByParishPriest' => $this->nullableText($data['approved_parish_priest'] ?? null),
+            'notedByBpcChairman' => ClientNameDisplay::nullableFormattedFamilyName($data['noted_bpc_chairman'] ?? null),
+            'notedByParishFiscalSecretary' => ClientNameDisplay::nullableFormattedFamilyName($data['noted_parish_fiscal'] ?? null),
+            'approvedByParishPriest' => ClientNameDisplay::nullableFormattedPriest($data['approved_parish_priest'] ?? null),
         ];
     }
 
@@ -941,7 +942,7 @@ class BurialController extends Controller
             'reference_code' => (string) ($row->referenceCode ?? ''),
             'client' => $client,
             'contact_number' => (string) ($row->contactNum ?? ''),
-            'address' => (string) ($row->address ?? ''),
+            'address' => ClientNameDisplay::formatAddress((string) ($row->address ?? '')),
             'payment_status' => $status,
             'fee_rows' => $feeRows,
         ];

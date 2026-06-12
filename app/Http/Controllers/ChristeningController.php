@@ -431,7 +431,7 @@ class ChristeningController extends Controller
                 'christening_id' => $christeningId,
                 'reference_code' => (string) ($row->referenceCode ?? ''),
                 'client' => $client,
-                'address' => (string) ($row->address ?? ''),
+                'address' => ClientNameDisplay::formatAddress((string) ($row->address ?? '')),
                 'sex' => (string) ($row->sex ?? ''),
                 'contact_number' => (string) ($row->contactNum ?? ''),
                 'schedule_date' => $scheduleDate,
@@ -446,8 +446,8 @@ class ChristeningController extends Controller
             'christening_id' => ['nullable', 'integer', 'min:1'],
         ]);
 
-        $firstName = trim((string) $request->input('first_name', ''));
-        $familyName = trim((string) $request->input('family_name', ''));
+        $firstName = ClientNameDisplay::capitalizeNamePart((string) $request->input('first_name', ''));
+        $familyName = ClientNameDisplay::titleCaseNamePart((string) $request->input('family_name', ''));
         if ($firstName === '' || $familyName === '') {
             return response()->json([
                 'ok' => false,
@@ -458,7 +458,7 @@ class ChristeningController extends Controller
             ], 422);
         }
 
-        $middleName = trim((string) $request->input('middle_name', ''));
+        $middleName = ClientNameDisplay::capitalizeNamePart((string) $request->input('middle_name', ''));
         $christeningId = isset($validated['christening_id']) ? (int) $validated['christening_id'] : 0;
         $created = false;
         $referenceCode = null;
@@ -485,7 +485,7 @@ class ChristeningController extends Controller
                         'clientMName' => $middleName !== '' ? $middleName : null,
                         'clientLName' => $familyName,
                         'contactNum' => $this->nullableText($request->input('guardian_contact')),
-                        'address' => $this->nullableText($request->input('parent_address')),
+                        'address' => ClientNameDisplay::nullableFormattedAddress($request->input('parent_address')),
                         'paymentStatus' => 'Unpaid',
                         'dateCreated' => now(),
                         'customerId' => $customerId,
@@ -547,7 +547,7 @@ class ChristeningController extends Controller
                     'clientMName' => $middleName !== '' ? $middleName : null,
                     'clientLName' => $familyName,
                     'contactNum' => $this->nullableText($request->input('guardian_contact')),
-                    'address' => $this->nullableText($request->input('parent_address')),
+                    'address' => ClientNameDisplay::nullableFormattedAddress($request->input('parent_address')),
                 ];
                 if (Schema::hasColumn('christening', 'applicationCompletedAt')) {
                     $headerUpdate['applicationCompletedAt'] = now();
@@ -659,7 +659,7 @@ class ChristeningController extends Controller
         return response()->json([
             'ok' => true,
             'application_saved' => SacramentApplicationGate::christeningIsSaved($christeningId),
-            'data' => $data,
+            'data' => ClientNameDisplay::normalizeApplicationNameFields($data),
         ]);
     }
 
@@ -715,7 +715,7 @@ class ChristeningController extends Controller
             'reference_code' => (string) ($row->referenceCode ?? ''),
             'client' => $client,
             'contact_number' => (string) ($row->contactNum ?? ''),
-            'address' => (string) ($row->address ?? ''),
+            'address' => ClientNameDisplay::formatAddress((string) ($row->address ?? '')),
             'payment_status' => $status,
             'fee_rows' => $feeRows,
         ];
@@ -842,7 +842,7 @@ class ChristeningController extends Controller
         $update = [
             'paymentStatus' => $paymentStatus,
             'contactNum' => $this->nullableText($validated['contact_number'] ?? null),
-            'address' => $this->nullableText($validated['address'] ?? null),
+            'address' => ClientNameDisplay::nullableFormattedAddress($validated['address'] ?? null),
         ];
         if ($clientTrim !== '') {
             if ($first) {
@@ -1057,7 +1057,7 @@ class ChristeningController extends Controller
             }
         }
 
-        return $out;
+        return ClientNameDisplay::normalizeApplicationNameFields($out);
     }
 
     private function dateForForm(mixed $value): string
@@ -1099,10 +1099,10 @@ class ChristeningController extends Controller
         for ($i = 1; $i <= self::CHRISTENING_GODPARENT_FORM_ROWS; $i++) {
             $a = $request->input("godparent_{$i}a");
             $b = $request->input("godparent_{$i}b");
-            $a = is_string($a) ? trim($a) : '';
-            $b = is_string($b) ? trim($b) : '';
-            if ($a !== '' || $b !== '') {
-                $godparents[] = ['maninoy' => $a, 'maninay' => $b];
+            $a = ClientNameDisplay::nullableFormattedFamilyName(is_string($a) ? trim($a) : '');
+            $b = ClientNameDisplay::nullableFormattedFamilyName(is_string($b) ? trim($b) : '');
+            if ($a !== null || $b !== null) {
+                $godparents[] = ['maninoy' => $a ?? '', 'maninay' => $b ?? ''];
             }
         }
 
@@ -1117,15 +1117,15 @@ class ChristeningController extends Controller
         }
 
         return [
-            'firstName' => $this->nullableText($request->input('first_name')),
-            'middleName' => $this->nullableText($request->input('middle_name')),
-            'familyName' => $this->nullableText($request->input('family_name')),
+            'firstName' => ClientNameDisplay::nullableFormattedNamePart($request->input('first_name')),
+            'middleName' => ClientNameDisplay::nullableFormattedNamePart($request->input('middle_name')),
+            'familyName' => ClientNameDisplay::nullableFormattedFamilyName($request->input('family_name')),
             'dateOfBirth' => $dob,
             'birthRegistryNumber' => $this->nullableText($request->input('registry_number')),
             'placeOfBirth' => $this->nullableText($request->input('place_of_birth')),
-            'fatherName' => $this->nullableText($request->input('father_name')),
-            'motherMaidenName' => $this->nullableText($request->input('mother_maiden_name')),
-            'parentAddress' => $this->nullableText($request->input('parent_address')),
+            'fatherName' => ClientNameDisplay::nullableFormattedFamilyName($request->input('father_name')),
+            'motherMaidenName' => ClientNameDisplay::nullableFormattedFamilyName($request->input('mother_maiden_name')),
+            'parentAddress' => ClientNameDisplay::nullableFormattedAddress($request->input('parent_address')),
             'parentStatus' => $parentStatusText !== '' ? $parentStatusText : null,
             'civillyMarriedDate' => $this->parseFlexibleDate($request->input('marriage_date_1')),
             'civillyMarriedPlace' => $this->nullableText($request->input('marriage_place_1')),
@@ -1137,7 +1137,7 @@ class ChristeningController extends Controller
             'parentGuardianContact' => $this->nullableText($request->input('guardian_contact')),
             'dateOfBaptism' => $this->parseFlexibleDate($request->input('baptism_date')),
             'placeOfBaptism' => self::CHRISTENING_FIXED_BAPTISM_PLACE,
-            'ministerOfSacrament' => $this->nullableText($request->input('minister')),
+            'ministerOfSacrament' => ClientNameDisplay::nullableFormattedPriest($request->input('minister')),
             'age' => $age,
             'feeArancel' => $this->nullableDecimal($request->input('fee_arancel')),
             'feeBaptismalSymbols' => $this->nullableDecimal($request->input('fee_symbols')),
@@ -1146,10 +1146,10 @@ class ChristeningController extends Controller
             'feeOthers' => $this->nullableDecimal($request->input('fee_others')),
             'feeTotal' => $this->nullableDecimal($request->input('fee_total')),
             'godparents' => count($godparents) ? json_encode($godparents, JSON_UNESCAPED_UNICODE) : null,
-            'approvedByBpcChairman' => $this->nullableText($request->input('approval_bpc_chairman')),
-            'approvedByPreJordanInstructor' => $this->nullableText($request->input('approval_prejordan_instructor')),
-            'approvedByParishSecretary' => $this->nullableText($request->input('approval_parish_secretary')),
-            'approvedByParishPriest' => $this->nullableText($request->input('approval_parish_priest')),
+            'approvedByBpcChairman' => ClientNameDisplay::nullableFormattedFamilyName($request->input('approval_bpc_chairman')),
+            'approvedByPreJordanInstructor' => ClientNameDisplay::nullableFormattedFamilyName($request->input('approval_prejordan_instructor')),
+            'approvedByParishSecretary' => ClientNameDisplay::nullableFormattedFamilyName($request->input('approval_parish_secretary')),
+            'approvedByParishPriest' => ClientNameDisplay::nullableFormattedPriest($request->input('approval_parish_priest')),
         ];
     }
 
@@ -1383,7 +1383,7 @@ class ChristeningController extends Controller
             'mother_middle_name' => '',
             'mother_last_name' => '',
             'mother_maiden_name' => (string) ($app['mother_maiden_name'] ?? ''),
-            'minister' => (string) ($app['minister'] ?? ''),
+            'minister' => ClientNameDisplay::formatPriestName((string) ($app['minister'] ?? '')),
             'barangay' => '',
             'municipality' => '',
             'province' => '',
@@ -1448,10 +1448,10 @@ class ChristeningController extends Controller
             'mother_middle_name' => (string) ($row->motherMiddleName ?? ''),
             'mother_last_name' => (string) ($row->motherLastName ?? ''),
             'mother_maiden_name' => '',
-            'minister' => (string) ($row->priest ?? ''),
-            'barangay' => (string) ($row->addressBarangay ?? ''),
-            'municipality' => (string) ($row->addressMunicipality ?? ''),
-            'province' => (string) ($row->addressProvince ?? ''),
+            'minister' => ClientNameDisplay::formatPriestName((string) ($row->priest ?? '')),
+            'barangay' => ClientNameDisplay::formatAddress((string) ($row->addressBarangay ?? '')),
+            'municipality' => ClientNameDisplay::formatAddress((string) ($row->addressMunicipality ?? '')),
+            'province' => ClientNameDisplay::formatAddress((string) ($row->addressProvince ?? '')),
             'parent_address' => '',
             'date_received' => $this->dateForForm($row->certDateReceived ?? null),
             'date_issued' => $this->dateForForm($row->certDateIssued ?? null),
@@ -1486,12 +1486,12 @@ class ChristeningController extends Controller
             'motherFirstName' => $this->nullableText($request->input('mother_first_name')),
             'motherMiddleName' => $this->nullableText($request->input('mother_middle_name')),
             'motherLastName' => $this->nullableText($request->input('mother_last_name')),
-            'addressBarangay' => $this->nullableText($request->input('barangay')),
-            'addressMunicipality' => $this->nullableText($request->input('municipality')),
-            'addressProvince' => $this->nullableText($request->input('province')),
+            'addressBarangay' => ClientNameDisplay::nullableFormattedAddress($request->input('barangay')),
+            'addressMunicipality' => ClientNameDisplay::nullableFormattedAddress($request->input('municipality')),
+            'addressProvince' => ClientNameDisplay::nullableFormattedAddress($request->input('province')),
             'certDateReceived' => $dateReceived,
             'certDateIssued' => $dateIssued,
-            'priest' => $this->nullableText($request->input('priest')),
+            'priest' => ClientNameDisplay::nullableFormattedPriest($request->input('priest')),
             'certSponsors' => $this->nullableText($request->input('sponsors')),
             'certPurpose' => $this->nullableText($request->input('purpose')),
             'certBookNo' => $this->nullableText($request->input('book_no')),
@@ -1540,7 +1540,7 @@ class ChristeningController extends Controller
         return [
             'referenceCode' => $this->nullableText($resolvedReferenceCode),
             'client' => $this->nullableText($resolvedClient),
-            'address' => $this->nullableText($resolvedAddress),
+            'address' => ClientNameDisplay::nullableFormattedAddress($resolvedAddress),
             'sex' => $this->nullableText($resolvedSex),
             'contactNumber' => $this->nullableText($resolvedContact),
             'date' => $resolvedDate,

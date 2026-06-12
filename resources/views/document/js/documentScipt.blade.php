@@ -43,8 +43,18 @@
                 columns: [
                     { data: 'no', className: 'text-end' },
                     { data: 'reference_code' },
-                    { data: 'client' },
-                    { data: 'address' },
+                    { data: 'client', render: function(data) {
+                        var label = typeof sappcFormatClientDisplayName === 'function'
+                            ? sappcFormatClientDisplayName(data)
+                            : (data == null ? '' : String(data));
+                        return $('<div/>').text(label).html();
+                    }},
+                    { data: 'address', render: function(data) {
+                        var label = typeof sappcFormatAddress === 'function'
+                            ? sappcFormatAddress(data)
+                            : (data == null ? '' : String(data));
+                        return $('<div/>').text(label).html();
+                    }},
                     { data: 'sex' },
                     { data: 'contact_number' },
                     { data: 'date' },

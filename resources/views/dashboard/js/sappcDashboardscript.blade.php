@@ -357,7 +357,7 @@
                     esc(row.client) +
                     '</td>' +
                     '<td>' +
-                    esc(row.address) +
+                    esc(typeof sappcFormatAddress === 'function' ? sappcFormatAddress(row.address) : row.address) +
                     '</td>' +
                     '<td>' +
                     esc(row.sex) +

@@ -97,7 +97,7 @@
         }
 
         function swalRegistryApplicationRequired(messageText) {
-            var msg = messageText || 'Complete and save the application form first. A name is required before you can continue to the next step.';
+            var msg = messageText || 'Please do or fill the application form first.';
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
                     icon: 'warning',
@@ -113,7 +113,7 @@
         function ensureRegistryApplicationSaved(recordId, thenFn) {
             recordId = String(recordId == null ? '' : recordId).trim();
             if (!recordId) {
-                sappcSwalSelectChristeningRowFirst();
+                swalRegistryApplicationRequired();
                 if (typeof thenFn === 'function') {
                     thenFn(false);
                 }
@@ -1305,10 +1305,7 @@
                 e.preventDefault();
                 var cid = getSelectedChristeningId();
                 if (!cid) {
-                    setSelectedChristeningId('');
-                    $('#christeningTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
-                    applyChristeningPaymentFeeFormObject({ fee_rows: [{}] });
-                    paymentBsModal.show();
+                    swalRegistryApplicationRequired();
                     return;
                 }
                 if (!paymentDetailsUrl) {
@@ -1353,7 +1350,7 @@
                 if (!saveUrl) return;
                 var cid = getSelectedChristeningId();
                 if (!cid) {
-                    sappcSwalSelectChristeningRowFirst();
+                    swalRegistryApplicationRequired();
                     return;
                 }
                 var payload = serializeChristeningPaymentFeeToObject();
@@ -1724,10 +1721,10 @@
         function saveChristeningCertificationRecord() {
             var cid = getSelectedChristeningId();
             if (!cid) {
-                sappcSwalSelectChristeningRowFirst();
+                swalRegistryApplicationRequired();
                 return $.Deferred().reject({
                     responseJSON: {
-                        message: 'Please select a christening record first.'
+                        message: 'Please do or fill the application form first.'
                     }
                 }).promise();
             }
@@ -1867,11 +1864,7 @@
                 e.preventDefault();
                 var cid = getSelectedChristeningId();
                 if (!cid) {
-                    setSelectedChristeningId('');
-                    $('#christeningTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
-                    applyChristeningCertificationTopFromPayment({});
-                    applyChristeningCertificationFromApplicationDetails({});
-                    certBsModal.show();
+                    swalRegistryApplicationRequired();
                     return;
                 }
                 if (!paymentDetailsUrl || !certificationDetailsUrl) {
@@ -1950,8 +1943,8 @@
                 '<tr data-record-id="' + esc(row.recordId) + '" data-document-type="' + esc(row.documentType) + '">' +
                 '<td>' + esc(row.rowNumber) + '</td>' +
                 '<td>' + esc(row.referenceCode) + '</td>' +
-                '<td>' + esc(row.client) + '</td>' +
-                '<td>' + esc(row.address) + '</td>';
+                '<td>' + esc(typeof sappcFormatClientDisplayName === 'function' ? sappcFormatClientDisplayName(row.client) : row.client) + '</td>' +
+                '<td>' + esc(typeof sappcFormatAddress === 'function' ? sappcFormatAddress(row.address) : row.address) + '</td>';
 
             if (activeSection === 'certification') {
                 return base +
@@ -2672,6 +2665,8 @@
             $scheduleModal.on('show.bs.modal', function(e) {
                 var cid = getSelectedChristeningId();
                 if (!cid) {
+                    e.preventDefault();
+                    swalRegistryApplicationRequired();
                     return;
                 }
                 if ($scheduleModal.data('workflow-gate-ok')) {

@@ -103,7 +103,7 @@ class DocumentationController extends Controller
                     $r->clientMName ?? null,
                     $r->clientLName ?? null
                 ) ?: '—',
-                'address' => ($r->address ?? '') !== '' ? (string) $r->address : '—',
+                'address' => ($r->address ?? '') !== '' ? ClientNameDisplay::formatAddress((string) $r->address) : '—',
                 'sex' => ($r->sex ?? '') !== '' ? (string) $r->sex : '—',
                 'contact_number' => ($r->contactNum ?? '') !== '' ? (string) $r->contactNum : '—',
                 'date' => ClientNameDisplay::formatDateCreated($r->dateCreated ?? null),
