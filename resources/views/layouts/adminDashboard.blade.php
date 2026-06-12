@@ -56,5 +56,7 @@
     <script src="{{ asset('js/adminSidebar.js') }}"></script>
     @include('partials.registry.clientNameFormatScript')
     @stack('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    @include('partials.adminLogoutConfirmScript')
 </body>
 </html>
