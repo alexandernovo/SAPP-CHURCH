@@ -75,13 +75,38 @@ final class SacramentApplicationGate
         }
 
         $raw = $row->marriageApplication ?? null;
-        if ($raw === null || $raw === '') {
-            return false;
+        if ($raw !== null && $raw !== '') {
+            $app = is_string($raw) ? json_decode($raw, true) : (is_array($raw) ? $raw : []);
+            if (is_array($app) && self::marriageApplicationPayloadIsComplete($app)) {
+                return true;
+            }
         }
 
-        $app = is_string($raw) ? json_decode($raw, true) : (is_array($raw) ? $raw : []);
-        if (! is_array($app)) {
-            return false;
+        if (Schema::hasTable('wedding_details')) {
+            $details = DB::table('wedding_details')
+                ->where('weddingId', $weddingId)
+                ->orderByDesc('weddingDetailsId')
+                ->first();
+
+            if ($details !== null) {
+                $groom = trim((string) ($details->groomFullName ?? ''));
+                $bride = trim((string) ($details->brideFullName ?? ''));
+
+                if ($groom !== '' && $bride !== '') {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static function marriageApplicationPayloadIsComplete(array $app): bool
+    {
+        $groomFull = trim((string) ($app['groom_full_name'] ?? ''));
+        $brideFull = trim((string) ($app['bride_full_name'] ?? ''));
+        if ($groomFull !== '' && $brideFull !== '') {
+            return true;
         }
 
         $groomFirst = trim((string) ($app['first_name'] ?? ''));

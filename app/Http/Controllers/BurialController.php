@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class BurialController extends Controller
@@ -492,13 +493,9 @@ class BurialController extends Controller
     public function burialApplicationSave(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'burial_id' => ['required', 'integer', 'min:1'],
+            'burial_id' => ['nullable', 'integer', 'min:1'],
         ]);
-        $burialId = (int) $validated['burial_id'];
-        $existing = DB::table('burial')->where('burialId', $burialId)->first();
-        if ($existing === null) {
-            return response()->json(['message' => 'Burial record not found.'], 404);
-        }
+        $burialId = (int) ($validated['burial_id'] ?? 0);
 
         $data = $request->json() ? $request->json()->all() : $request->all();
         if (! is_array($data)) {
@@ -507,7 +504,8 @@ class BurialController extends Controller
         unset($data['burial_id'], $data['_token']);
         $data = ClientNameDisplay::normalizeApplicationNameFields($data);
 
-        if (trim((string) ($data['deceased_name'] ?? '')) === '') {
+        $deceasedName = trim((string) ($data['deceased_name'] ?? ''));
+        if ($deceasedName === '') {
             return response()->json([
                 'ok' => false,
                 'message' => 'Please enter the deceased name on the burial application form.',
@@ -517,10 +515,36 @@ class BurialController extends Controller
             ], 422);
         }
 
+        $created = false;
+        $referenceCode = null;
+
+        if ($burialId <= 0) {
+            try {
+                [$burialId, $referenceCode] = $this->createBurialRegistryFromApplication($data);
+                $created = true;
+            } catch (QueryException $e) {
+                report($e);
+
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Could not create the burial record. Please try again.',
+                ], 422);
+            }
+        } elseif (DB::table('burial')->where('burialId', $burialId)->first() === null) {
+            return response()->json(['message' => 'Burial record not found.'], 404);
+        }
+
         $detailsRow = $this->mapBurialApplicationPayloadToDetailsRow($data);
 
         try {
-            DB::transaction(function () use ($burialId, $detailsRow) {
+            DB::transaction(function () use ($burialId, $detailsRow, $deceasedName, $data) {
+                $nameParts = $this->splitRegistryClientName($deceasedName);
+                DB::table('burial')->where('burialId', $burialId)->update(array_filter([
+                    'clientFName' => $nameParts['first'] !== '' ? $nameParts['first'] : null,
+                    'clientMName' => $nameParts['middle'],
+                    'clientLName' => $nameParts['last'] !== '' ? $nameParts['last'] : null,
+                    'address' => ClientNameDisplay::nullableFormattedAddress($data['deceased_address'] ?? null),
+                ], fn ($v) => $v !== null));
                 $existingDetails = DB::table('burial_details')->where('burialId', $burialId)->first();
                 if ($existingDetails) {
                     DB::table('burial_details')
@@ -550,6 +574,11 @@ class BurialController extends Controller
         return response()->json([
             'ok' => true,
             'message' => 'Burial application saved.',
+            'created' => $created,
+            'data' => [
+                'burial_id' => $burialId,
+                'reference_code' => $referenceCode,
+            ],
         ]);
     }
 
@@ -1029,5 +1058,72 @@ class BurialController extends Controller
         }
 
         return (int) round((float) $normalized);
+    }
+
+    /**
+     * @return array{first:string,middle:?string,last:string}
+     */
+    private function splitRegistryClientName(string $full): array
+    {
+        $parts = preg_split('/\s+/u', trim($full), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        if ($parts === []) {
+            return ['first' => '', 'middle' => null, 'last' => ''];
+        }
+        if (count($parts) === 1) {
+            return ['first' => $parts[0], 'middle' => null, 'last' => ''];
+        }
+
+        $last = array_pop($parts);
+        $first = array_shift($parts);
+
+        return [
+            'first' => $first ?? '',
+            'middle' => $parts !== [] ? implode(' ', $parts) : null,
+            'last' => $last ?? '',
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $app
+     * @return array{0:int,1:string}
+     */
+    private function createBurialRegistryFromApplication(array $app): array
+    {
+        $deceasedName = trim((string) ($app['deceased_name'] ?? ''));
+        $nameParts = $this->splitRegistryClientName($deceasedName);
+        if ($nameParts['last'] === '') {
+            throw new \InvalidArgumentException('Deceased name must include a last name.');
+        }
+
+        return DB::transaction(function () use ($nameParts, $app) {
+            $user = Auth::user();
+            $customerId = DB::table('customer')->insertGetId(array_filter([
+                'customerFName' => $nameParts['first'],
+                'customerMName' => $nameParts['middle'],
+                'customerLName' => $nameParts['last'],
+                'updatedAt' => now(),
+                'createdBy' => $user?->userName ?? $user?->userfName ?? null,
+                'userId' => $user?->getAuthIdentifier(),
+            ], fn ($v) => $v !== null));
+
+            $ref = $this->generateUniqueBurialReferenceCode();
+            $insertData = [
+                'referenceCode' => $ref,
+                'clientFName' => $nameParts['first'],
+                'clientMName' => $nameParts['middle'],
+                'clientLName' => $nameParts['last'],
+                'address' => ClientNameDisplay::nullableFormattedAddress($app['deceased_address'] ?? null),
+                'paymentStatus' => 'Unpaid',
+                'dateCreated' => now(),
+                'customerId' => $customerId,
+            ];
+            if (Schema::hasColumn('burial', 'workflowStep')) {
+                $insertData['workflowStep'] = 'application';
+            }
+            $insertData = array_filter($insertData, fn ($v) => $v !== null);
+            $id = (int) DB::table('burial')->insertGetId($insertData);
+
+            return [$id, $ref];
+        });
     }
 }

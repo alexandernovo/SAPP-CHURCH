@@ -530,13 +530,9 @@ class ConfirmationController extends Controller
     public function confirmationApplicationSave(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'confirmation_id' => ['required', 'integer', 'min:1'],
+            'confirmation_id' => ['nullable', 'integer', 'min:1'],
         ]);
-        $id = (int) $validated['confirmation_id'];
-        $existing = DB::table('confirmation')->where('confirmationId', $id)->first();
-        if ($existing === null) {
-            return response()->json(['message' => 'Confirmation record not found.'], 404);
-        }
+        $id = (int) ($validated['confirmation_id'] ?? 0);
 
         $data = $request->json() ? $request->json()->all() : $request->all();
         if (! is_array($data)) {
@@ -546,6 +542,7 @@ class ConfirmationController extends Controller
         $data = ClientNameDisplay::normalizeApplicationNameFields($data);
 
         $firstName = trim((string) ($data['first_name'] ?? ''));
+        $middleName = trim((string) ($data['middle_name'] ?? ''));
         $familyName = trim((string) ($data['family_name'] ?? ''));
         if ($firstName === '' || $familyName === '') {
             return response()->json([
@@ -557,6 +554,30 @@ class ConfirmationController extends Controller
             ], 422);
         }
 
+        $created = false;
+        $referenceCode = null;
+
+        if ($id <= 0) {
+            try {
+                [$id, $referenceCode] = $this->createConfirmationRegistryFromApplicationNames(
+                    $firstName,
+                    $middleName !== '' ? $middleName : null,
+                    $familyName,
+                    $data['address'] ?? null
+                );
+                $created = true;
+            } catch (QueryException $e) {
+                report($e);
+
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Could not create the confirmation record. Please try again.',
+                ], 422);
+            }
+        } elseif (DB::table('confirmation')->where('confirmationId', $id)->first() === null) {
+            return response()->json(['message' => 'Confirmation record not found.'], 404);
+        }
+
         $encoded = json_encode($data, JSON_UNESCAPED_UNICODE);
         if ($encoded === false) {
             return response()->json(['ok' => false, 'message' => 'Could not encode the application.'], 422);
@@ -564,6 +585,9 @@ class ConfirmationController extends Controller
 
         try {
             DB::table('confirmation')->where('confirmationId', $id)->update([
+                'clientFName' => $firstName,
+                'clientMName' => $middleName !== '' ? $middleName : null,
+                'clientLName' => $familyName,
                 'confirmationApplication' => $encoded,
             ]);
             $this->syncConfirmationDetailsFromApplicationPayload($id, $data);
@@ -578,7 +602,15 @@ class ConfirmationController extends Controller
 
         DocumentationApplicationReportWriter::syncConfirmation($id, $data);
 
-        return response()->json(['ok' => true, 'message' => 'Confirmation application saved.']);
+        return response()->json([
+            'ok' => true,
+            'message' => 'Confirmation application saved.',
+            'created' => $created,
+            'data' => [
+                'confirmation_id' => $id,
+                'reference_code' => $referenceCode,
+            ],
+        ]);
     }
 
     public function confirmationArancelDetails(Request $request): JsonResponse
@@ -1254,5 +1286,46 @@ class ConfirmationController extends Controller
         $s = trim((string) $value);
 
         return $s === '' ? null : $s;
+    }
+
+    /**
+     * @return array{0:int,1:string}
+     */
+    private function createConfirmationRegistryFromApplicationNames(
+        string $firstName,
+        ?string $middleName,
+        string $familyName,
+        mixed $address = null
+    ): array {
+        return DB::transaction(function () use ($firstName, $middleName, $familyName, $address) {
+            $user = Auth::user();
+            $customerId = DB::table('customer')->insertGetId(array_filter([
+                'customerFName' => $firstName,
+                'customerMName' => $middleName,
+                'customerLName' => $familyName,
+                'updatedAt' => now(),
+                'createdBy' => $user?->userName ?? $user?->userfName ?? null,
+                'userId' => $user?->getAuthIdentifier(),
+            ], fn ($v) => $v !== null));
+
+            $ref = $this->generateUniqueConfirmationReferenceCode();
+            $insertData = [
+                'referenceCode' => $ref,
+                'clientFName' => $firstName,
+                'clientMName' => $middleName,
+                'clientLName' => $familyName,
+                'address' => ClientNameDisplay::nullableFormattedAddress($address),
+                'paymentStatus' => 'Unpaid',
+                'dateCreated' => now(),
+                'customerId' => $customerId,
+            ];
+            if (Schema::hasColumn('confirmation', 'workflowStep')) {
+                $insertData['workflowStep'] = 'application';
+            }
+            $insertData = array_filter($insertData, fn ($v) => $v !== null);
+            $id = (int) DB::table('confirmation')->insertGetId($insertData);
+
+            return [$id, $ref];
+        });
     }
 }

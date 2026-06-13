@@ -38,7 +38,7 @@
                 <form class="admin-login-form" method="POST" action="{{ route('admin.login.submit') }}" autocomplete="on">
                     @csrf
                     <div class="admin-login-field">
-                        <label for="admin-username">Username</label>
+                        <label for="admin-username">Admin</label>
                         <div class="admin-login-input-wrap">
                             <span class="admin-login-input-wrap__icon" aria-hidden="true">
                                 <i class="fa-solid fa-user"></i>

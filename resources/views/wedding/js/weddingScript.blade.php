@@ -443,7 +443,7 @@
             return d.slice(0, 15);
         }
 
-        $(document).on('input', '#wdScheduleContact, #wdPaymentContact', function() {
+        $(document).on('input', '#wdScheduleContact, #wdPaymentContact, #wdCertContact', function() {
             var $el = $(this);
             var before = $el.val();
             var formatted = formatPhMobileDisplay(before);
@@ -1206,7 +1206,11 @@
                     $('#wdCertContact').val(
                         data.contact_number != null ? formatPhMobileDisplay(String(data.contact_number)) : ''
                     );
-                    $('#wdCertTopAddress').val(data.address != null ? String(data.address) : '');
+                    $('#wdCertTopAddress').val(
+                        data.address != null ?
+                            (typeof sappcFormatAddress === 'function' ? sappcFormatAddress(String(data.address)) : String(data.address)) :
+                            ''
+                    );
                 }
 
                 function applyWeddingCertificationFromDetails(data) {
@@ -1885,17 +1889,15 @@
                         return;
                     }
                     var wid = ($('#wdMarriageAppWeddingId').val() || '').trim() || getSelectedWeddingId();
-                    if (!wid) {
-                        sappcSwalSelectWeddingRowFirst();
-                        return;
-                    }
-                    var wn = parseInt(wid, 10);
-                    if (isNaN(wn) || wn < 1) {
+                    var wn = wid ? parseInt(wid, 10) : 0;
+                    if (wid && (isNaN(wn) || wn < 1)) {
                         window.alert('Invalid record.');
                         return;
                     }
                     var payload = collectMarriageApplicationPayload();
-                    payload.wedding_id = wn;
+                    if (wn > 0) {
+                        payload.wedding_id = wn;
+                    }
                     var $saveBtn = $('#weddingMarriageAppSaveBtn');
                     var marriageBsModal =
                         (typeof bootstrap !== 'undefined' && $marriageAppModal.length) ?
@@ -1927,8 +1929,19 @@
                                 return;
                             }
 
+                            var savedId = (res.data && res.data.wedding_id != null) ?
+                                String(res.data.wedding_id).trim() :
+                                (wn > 0 ? String(wn) : '');
+                            if (savedId) {
+                                setSelectedWeddingId(savedId);
+                                $('#wdMarriageAppWeddingId').val(savedId);
+                                if (typeof fetchRecords === 'function') {
+                                    fetchRecords();
+                                }
+                            }
+
                             var shouldReopenFromDashboard = isDashboardEmbeddedAppContextLocal();
-                            if (!shouldReopenFromDashboard && advanceRegistryWorkflow('application', wid)) {
+                            if (!shouldReopenFromDashboard && advanceRegistryWorkflow('application', savedId || wid)) {
                                 if (marriageBsModal) {
                                     marriageBsModal.hide();
                                 }

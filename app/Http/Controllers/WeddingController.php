@@ -496,13 +496,9 @@ class WeddingController extends Controller
     public function weddingMarriageApplicationSave(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'wedding_id' => ['required', 'integer', 'min:1'],
+            'wedding_id' => ['nullable', 'integer', 'min:1'],
         ]);
-        $weddingId = (int) $validated['wedding_id'];
-        $existing = DB::table('wedding')->where('weddingId', $weddingId)->first();
-        if ($existing === null) {
-            return response()->json(['message' => 'Wedding record not found.'], 404);
-        }
+        $weddingId = (int) ($validated['wedding_id'] ?? 0);
 
         $data = $request->json() ? $request->json()->all() : $request->all();
         if (! is_array($data)) {
@@ -523,6 +519,25 @@ class WeddingController extends Controller
             ], 422);
         }
 
+        $created = false;
+        $referenceCode = null;
+
+        if ($weddingId <= 0) {
+            try {
+                [$weddingId, $referenceCode] = $this->createWeddingRegistryFromMarriageApplication($data);
+                $created = true;
+            } catch (QueryException $e) {
+                report($e);
+
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Could not create the wedding record. Please try again.',
+                ], 422);
+            }
+        } elseif (DB::table('wedding')->where('weddingId', $weddingId)->first() === null) {
+            return response()->json(['message' => 'Wedding record not found.'], 404);
+        }
+
         $encoded = json_encode($data, JSON_UNESCAPED_UNICODE);
         if ($encoded === false) {
             return response()->json([
@@ -532,10 +547,14 @@ class WeddingController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($weddingId, $encoded, $data) {
-                DB::table('wedding')->where('weddingId', $weddingId)->update([
+            DB::transaction(function () use ($weddingId, $encoded, $data, $groomName) {
+                $nameParts = $this->splitRegistryClientName($groomName);
+                DB::table('wedding')->where('weddingId', $weddingId)->update(array_filter([
+                    'clientFName' => $nameParts['first'] !== '' ? $nameParts['first'] : null,
+                    'clientMName' => $nameParts['middle'],
+                    'clientLName' => $nameParts['last'] !== '' ? $nameParts['last'] : null,
                     'marriageApplication' => $encoded,
-                ]);
+                ], fn ($v) => $v !== null));
                 $this->upsertWeddingDetailsFromMarriageApplication($weddingId, $data);
             });
         } catch (QueryException $e) {
@@ -552,6 +571,11 @@ class WeddingController extends Controller
         return response()->json([
             'ok' => true,
             'message' => 'Marriage application saved.',
+            'created' => $created,
+            'data' => [
+                'wedding_id' => $weddingId,
+                'reference_code' => $referenceCode,
+            ],
         ]);
     }
 
@@ -687,7 +711,7 @@ class WeddingController extends Controller
         $certificationDetailsRow = $this->mapWeddingCertificationRequestToCertificationDetailsRow($request, $wedding);
 
         try {
-            DB::transaction(function () use ($weddingId, $certRow, $certificationDetailsRow) {
+            DB::transaction(function () use ($weddingId, $certRow, $certificationDetailsRow, $request) {
                 $existing = DB::table('wedding_certification')->where('weddingId', $weddingId)->first();
 
                 if ($existing) {
@@ -702,6 +726,11 @@ class WeddingController extends Controller
                 }
 
                 DB::table('certification_details')->insert($certificationDetailsRow);
+
+                DB::table('wedding')->where('weddingId', $weddingId)->update([
+                    'contactNum' => $this->nullableText($request->input('contact_number')),
+                    'address' => ClientNameDisplay::nullableFormattedAddress($request->input('top_address')),
+                ]);
             });
         } catch (QueryException $e) {
             report($e);
@@ -1404,5 +1433,72 @@ class WeddingController extends Controller
             'sponsors' => (string) ($row->certSponsors ?? ''),
             'purpose' => (string) ($row->certPurpose ?? ''),
         ];
+    }
+
+    /**
+     * @return array{first:string,middle:?string,last:string}
+     */
+    private function splitRegistryClientName(string $full): array
+    {
+        $parts = preg_split('/\s+/u', trim($full), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        if ($parts === []) {
+            return ['first' => '', 'middle' => null, 'last' => ''];
+        }
+        if (count($parts) === 1) {
+            return ['first' => $parts[0], 'middle' => null, 'last' => ''];
+        }
+
+        $last = array_pop($parts);
+        $first = array_shift($parts);
+
+        return [
+            'first' => $first ?? '',
+            'middle' => $parts !== [] ? implode(' ', $parts) : null,
+            'last' => $last ?? '',
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $app
+     * @return array{0:int,1:string}
+     */
+    private function createWeddingRegistryFromMarriageApplication(array $app): array
+    {
+        $groomName = trim((string) ($app['groom_full_name'] ?? ''));
+        $nameParts = $this->splitRegistryClientName($groomName);
+        if ($nameParts['last'] === '') {
+            throw new \InvalidArgumentException('Groom name must include a last name.');
+        }
+
+        return DB::transaction(function () use ($nameParts, $app) {
+            $user = Auth::user();
+            $customerId = DB::table('customer')->insertGetId(array_filter([
+                'customerFName' => $nameParts['first'],
+                'customerMName' => $nameParts['middle'],
+                'customerLName' => $nameParts['last'],
+                'updatedAt' => now(),
+                'createdBy' => $user?->userName ?? $user?->userfName ?? null,
+                'userId' => $user?->getAuthIdentifier(),
+            ], fn ($v) => $v !== null));
+
+            $ref = $this->generateUniqueWeddingReferenceCode();
+            $insertData = [
+                'referenceCode' => $ref,
+                'clientFName' => $nameParts['first'],
+                'clientMName' => $nameParts['middle'],
+                'clientLName' => $nameParts['last'],
+                'address' => ClientNameDisplay::nullableFormattedAddress($app['groom_present_address'] ?? null),
+                'paymentStatus' => 'Unpaid',
+                'dateCreated' => now(),
+                'customerId' => $customerId,
+            ];
+            if (Schema::hasColumn('wedding', 'workflowStep')) {
+                $insertData['workflowStep'] = 'application';
+            }
+            $insertData = array_filter($insertData, fn ($v) => $v !== null);
+            $id = (int) DB::table('wedding')->insertGetId($insertData);
+
+            return [$id, $ref];
+        });
     }
 }

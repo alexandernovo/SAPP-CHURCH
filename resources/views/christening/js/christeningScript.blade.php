@@ -513,7 +513,7 @@
             return d.slice(0, 15);
         }
 
-        $(document).on('input', '#chScheduleContact, #chPaymentContact', function() {
+        $(document).on('input', '#chScheduleContact, #chPaymentContact, #chCertContact', function() {
             var $el = $(this);
             var before = $el.val();
             var formatted = formatPhMobileDisplay(before);
@@ -1424,7 +1424,11 @@
             $('#chCertContact').val(
                 data.contact_number != null ? formatPhMobileDisplay(String(data.contact_number)) : ''
             );
-            $('#chCertTopAddress').val(data.address != null ? String(data.address) : '');
+            $('#chCertTopAddress').val(
+                data.address != null ?
+                    (typeof sappcFormatAddress === 'function' ? sappcFormatAddress(String(data.address)) : String(data.address)) :
+                    ''
+            );
         }
 
         function applyChristeningCertificationFromApplicationDetails(data) {

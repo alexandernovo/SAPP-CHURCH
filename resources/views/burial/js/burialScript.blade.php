@@ -2010,25 +2010,33 @@
                         return;
                     }
                     var bid = ($('#brAppBurialId').val() || '').trim() || getSelectedBurialId();
-                    if (!bid) {
-                        sappcSwalSelectBurialRowFirst();
-                        return;
-                    }
-                    var n = parseInt(bid, 10);
-                    if (isNaN(n) || n < 1) {
+                    var n = bid ? parseInt(bid, 10) : 0;
+                    if (bid && (isNaN(n) || n < 1)) {
                         window.alert('Invalid record.');
                         return;
                     }
                     var payload = collectBurialApplicationPayload();
-                    payload.burial_id = n;
+                    if (n > 0) {
+                        payload.burial_id = n;
+                    }
                     var $saveBtn = $('#burialApplicationFormSaveBtn');
                     var bsModal = bootstrap.Modal.getOrCreateInstance($burialAppModal[0]);
                     $saveBtn.prop('disabled', true);
                     fetchPostJson(burialAppSaveUrl, payload, csrf)
                         .done(function(res) {
                             if (res && res.ok) {
+                                var savedId = (res.data && res.data.burial_id != null) ?
+                                    String(res.data.burial_id).trim() :
+                                    (n > 0 ? String(n) : '');
+                                if (savedId) {
+                                    setSelectedBurialId(savedId);
+                                    $('#brAppBurialId').val(savedId);
+                                    if (typeof fetchRecords === 'function') {
+                                        fetchRecords();
+                                    }
+                                }
                                 var shouldReopenFromDashboard = isDashboardEmbeddedAppContext();
-                                if (!shouldReopenFromDashboard && advanceRegistryWorkflow('application', bid)) {
+                                if (!shouldReopenFromDashboard && advanceRegistryWorkflow('application', savedId || bid)) {
                                     bsModal.hide();
                                     return;
                                 }

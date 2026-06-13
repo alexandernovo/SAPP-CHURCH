@@ -36,10 +36,10 @@
                                 <div class="sappcCertModalMetaRow">
                                     <label class="sappcCertModalLabel" for="chCertContact">Contact Number</label>
                                     <input type="text" class="sappcCertModalInput" id="chCertContact"
-                                        name="contact_number" value="" readonly inputmode="tel">
+                                        name="contact_number" value="" inputmode="tel">
                                     <label class="sappcCertModalLabel" for="chCertTopAddress">Address</label>
                                     <input type="text" class="sappcCertModalInput" id="chCertTopAddress" name="top_address"
-                                        value="" readonly>
+                                        value="">
                                 </div>
                             </div>
 

@@ -1410,13 +1410,9 @@
                         });
                         return;
                     }
-                    var cid = getSelectedConfirmationId();
-                    if (!cid) {
-                        sappcSwalSelectConfirmationRowFirst();
-                        return;
-                    }
-                    var wn = parseInt(cid, 10);
-                    if (isNaN(wn) || wn < 1) {
+                    var cid = ($('#cnApplicationConfirmationId').val() || '').trim() || getSelectedConfirmationId();
+                    var wn = cid ? parseInt(cid, 10) : 0;
+                    if (cid && (isNaN(wn) || wn < 1)) {
                         sappcCnSwal({
                             icon: 'warning',
                             title: 'Invalid record',
@@ -1445,8 +1441,10 @@
                     });
                     var pApp = pickFields(payload, applicationFieldNames);
                     var pAr = pickFields(payload, arancelFieldNames);
-                    pApp.confirmation_id = wn;
-                    pAr.confirmation_id = wn;
+                    if (wn > 0) {
+                        pApp.confirmation_id = wn;
+                        pAr.confirmation_id = wn;
+                    }
                     var $saveBtn = $('#confirmationApplicationSaveBtn');
                     $saveBtn.prop('disabled', true);
                     fetchPostJson(confirmationAppSaveUrl, pApp, csrf)
@@ -1461,13 +1459,25 @@
                                 $saveBtn.prop('disabled', false);
                                 return;
                             }
+                            var savedId = (r1.data && r1.data.confirmation_id != null) ?
+                                parseInt(String(r1.data.confirmation_id), 10) :
+                                wn;
+                            if (!isNaN(savedId) && savedId > 0) {
+                                setSelectedConfirmationId(String(savedId));
+                                $('#cnApplicationConfirmationId').val(String(savedId));
+                                pAr.confirmation_id = savedId;
+                                if (typeof fetchRecords === 'function') {
+                                    fetchRecords();
+                                }
+                            }
                             fetchPostJson(confirmationArancelSaveUrl, pAr, csrf)
                                 .done(function(r2) {
                                     if (r2 && r2.ok) {
                                         var shouldReopenFromDashboard = isDashboardEmbeddedAppContext();
-                                        cnApplicationDraftsByConfirmationId[String(wn)] =
+                                        var workflowId = (!isNaN(savedId) && savedId > 0) ? savedId : wn;
+                                        cnApplicationDraftsByConfirmationId[String(workflowId)] =
                                             serializeConfirmationApplicationFormToObject();
-                                        if (!shouldReopenFromDashboard && advanceRegistryWorkflow('application', wn)) {
+                                        if (!shouldReopenFromDashboard && advanceRegistryWorkflow('application', workflowId)) {
                                             if (typeof bootstrap !== 'undefined' && $mApp.length) {
                                                 var instM = bootstrap.Modal.getInstance($mApp[0]);
                                                 if (instM) {

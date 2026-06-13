@@ -1245,7 +1245,7 @@ class ChristeningController extends Controller
         $certificationDetailsRow = $this->mapCertificationRequestToCertificationDetailsRow($request, $christening);
 
         try {
-            DB::transaction(function () use ($christeningId, $certRow, $certificationDetailsRow) {
+            DB::transaction(function () use ($christeningId, $certRow, $certificationDetailsRow, $request) {
                 $existing = DB::table('christening_certification')->where('christeningId', $christeningId)->first();
 
                 if ($existing) {
@@ -1262,6 +1262,11 @@ class ChristeningController extends Controller
                 }
 
                 DB::table('certification_details')->insert($certificationDetailsRow);
+
+                DB::table('christening')->where('christeningId', $christeningId)->update([
+                    'contactNum' => $this->nullableText($request->input('contact_number')),
+                    'address' => ClientNameDisplay::nullableFormattedAddress($request->input('top_address')),
+                ]);
             });
         } catch (QueryException $e) {
             report($e);

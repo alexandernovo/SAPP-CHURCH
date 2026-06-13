@@ -413,10 +413,10 @@
                                 <div class="sappcCertModalMetaRow">
                                     <label class="sappcCertModalLabel" for="wdCertContact">Contact Number</label>
                                     <input type="text" class="sappcCertModalInput" id="wdCertContact"
-                                        name="contact_number" value="" readonly inputmode="tel">
+                                        name="contact_number" value="" inputmode="tel">
                                     <label class="sappcCertModalLabel" for="wdCertTopAddress">Address</label>
                                     <input type="text" class="sappcCertModalInput" id="wdCertTopAddress" name="top_address"
-                                        value="" readonly>
+                                        value="">
                                 </div>
                             </div>
 
