@@ -44,6 +44,7 @@
 
         @include('christening.partials.certificationModal')
         @include('christening.partials.baptismCertificationCertificate')
+        @include('partials.sappcCertificatePreviewModal')
 
         @include('christening.partials.recordsTablePanel', [
             'activeSection' => 'certification',

@@ -18,7 +18,6 @@
 .sappcBurialCertPaper_parish,
 .sappcBurialCertPaper_sub {
     margin: 0;
-    font-family: "Times New Roman", serif;
     letter-spacing: 0.02em;
 }
 
@@ -39,7 +38,6 @@
     margin: 0.65rem 0 0.25rem;
     font-size: clamp(2rem, 4vw, 3rem);
     color: #17376f;
-    font-family: "Times New Roman", serif;
     font-weight: 500;
 }
 
@@ -47,7 +45,6 @@
     margin: 0.15rem 0 0.75rem;
     font-size: 1.05rem;
     color: #1d2e57;
-    font-family: "Times New Roman", serif;
 }
 
 .sappcBurialCertPaper_text--center {
@@ -66,7 +63,6 @@
     align-items: center;
     flex-wrap: wrap;
     gap: 0.38rem;
-    font-family: "Times New Roman", serif;
     color: #1d2e57;
 }
 
@@ -146,7 +142,6 @@
     flex: 0 1 auto;
     min-height: 0;
     overflow-y: auto;
-    font-family: 'Times New Roman', Times, 'Liberation Serif', Georgia, serif;
     color: #111;
     box-sizing: border-box;
     padding-top: 0.5rem;
@@ -180,12 +175,10 @@
 
 #burialApplicationFormModal .sappcBurialAppForm .sappcChOfficialMastheadLine,
 #burialApplicationFormModal .sappcBurialAppForm .sappcChOfficialMastheadLineStrong {
-    font-family: 'Times New Roman', Times, 'Liberation Serif', Georgia, serif;
     letter-spacing: 0.02em;
 }
 
 #burialApplicationFormModal .sappcBurialAppDocTitle {
-    font-family: 'Times New Roman', Times, 'Liberation Serif', Georgia, serif;
     font-size: clamp(1.35rem, 3.2vw, 1.65rem);
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -314,7 +307,6 @@
 }
 
 #burialApplicationFormModal .sappcBurialAppChildBoxTitle {
-    font-family: inherit;
     font-size: 0.95rem;
     font-weight: 700;
     text-align: center;
@@ -331,7 +323,6 @@
 }
 
 #burialApplicationFormModal .sappcBurialAppArancelTitle {
-    font-family: inherit;
     font-size: 1.05rem;
     font-weight: 700;
     letter-spacing: 0.12em;

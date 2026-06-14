@@ -59,7 +59,7 @@
                     { data: 'contact_number' },
                     { data: 'date' },
                 ],
-                order: [[0, 'asc']],
+                order: [[6, 'desc']],
                 paging: false,
                 ordering: false,
                 info: false,

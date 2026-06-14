@@ -1,21 +1,113 @@
+/**
+ * Global typography — single source of truth for the entire application.
+ * Load via layouts/cdn.blade.php before all other stylesheets.
+ */
 :root {
     --sappc-font-family: Arial, Helvetica, sans-serif;
-    --bs-body-font-family: Arial, Helvetica, sans-serif;
-    --bs-font-sans-serif: Arial, Helvetica, sans-serif;
+    --bs-body-font-family: var(--sappc-font-family);
+    --bs-font-sans-serif: var(--sappc-font-family);
 }
 
 html {
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: var(--sappc-font-family);
 }
 
 body {
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: var(--sappc-font-family);
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
     font-family: inherit;
 }
 
-input, button, select, textarea {
+input,
+button,
+select,
+textarea,
+optgroup {
     font-family: inherit;
+}
+
+/* Bootstrap and common UI surfaces */
+.modal,
+.modal-content,
+.modal-header,
+.modal-body,
+.modal-footer,
+.dropdown-menu,
+.dropdown-item,
+.form-control,
+.form-select,
+.form-label,
+.form-check-label,
+.btn,
+.table,
+.alert,
+.badge,
+.tooltip,
+.popover,
+.navbar,
+.nav,
+.nav-link,
+.card,
+.card-body,
+.card-header,
+.card-footer,
+.list-group,
+.list-group-item,
+.pagination,
+.page-link,
+.breadcrumb,
+.breadcrumb-item,
+.toast,
+.toast-body,
+.offcanvas,
+.offcanvas-body {
+    font-family: inherit;
+}
+
+/* SweetAlert2 */
+.swal2-popup,
+.swal2-title,
+.swal2-html-container,
+.swal2-input,
+.swal2-textarea,
+.swal2-select,
+.swal2-confirm,
+.swal2-cancel,
+.swal2-deny {
+    font-family: inherit;
+}
+
+@media print {
+    html,
+    body {
+        font-family: var(--sappc-font-family) !important;
+    }
+}
+
+.sappc-data-table,
+.sappc-data-table thead th,
+.sappc-data-table tbody td,
+.sappc-doc-table,
+.sappc-doc-table thead th,
+.sappc-doc-table tbody td,
+.sappc-table-toolbar,
+.sappc-table-toolbar_entries,
+.sappc-table-toolbar_search-heading,
+.sappc-table-toolbar_search-input,
+.sappc-table-footer,
+.sappc-table-footer_info,
+.sappc-pagination_btn,
+.sappc-letter-filter_btn,
+.sappc-table-reload-bar_text,
+.dataTables_wrapper,
+.dataTables_info,
+.dataTables_length label,
+.dataTables_filter label,
+.dataTables_filter input,
+.dataTables_paginate .paginate_button {
+    font-family: var(--sappc-font-family);
 }

@@ -399,6 +399,7 @@
         });
 
         function rowHtml(row) {
+            var viewLabel = activeSection === 'certification' ? 'View certificate' : 'View record';
             return (
                 '<tr data-record-id="' + esc(row.recordId) + '" data-document-type="' + esc(row.documentType) +
                 '">' +
@@ -410,7 +411,7 @@
                 '<td>' + esc(row.contactNum) + '</td>' +
                 '<td>' + esc(row.dateCreated) + '</td>' +
                 '<td class="text-center"><div class="sappc-icon-action_group">' +
-                '<a href="#" class="sappc-icon-action sappc-icon-action--view" title="View" aria-label="View record" data-record-id="' +
+                '<a href="#" class="sappc-icon-action sappc-icon-action--view" title="' + viewLabel + '" aria-label="' + viewLabel + '" data-record-id="' +
                 esc(row.recordId) +
                 '"><i class="fa-solid fa-eye" aria-hidden="true"></i></a>' +
                 '<a href="#" class="sappc-icon-action sappc-icon-action--edit" title="Edit" aria-label="Edit record" data-record-id="' +
@@ -974,11 +975,6 @@
                                     if (inst) inst.hide();
                                 }
                                 var msg = (res && res.message) ? res.message : 'Payment record saved.';
-                                var payStatus = (res && res.data && res.data.payment_status) ?
-                                    String(res.data.payment_status).toLowerCase() : '';
-                                if (payStatus === 'paid' && advanceRegistryWorkflow('payment', cid)) {
-                                    return;
-                                }
                                 sappcCnSwal({
                                     icon: 'success',
                                     title: 'Saved',
@@ -1064,7 +1060,20 @@
             }
             window.sappcRegistryWorkflowOpenRecord = openConfirmationSectionRecord;
 
-            $('#confirmationTableBody').on('click', '.sappc-icon-action--view, .sappc-icon-action--edit', function(e) {
+            $('#confirmationTableBody').on('click', '.sappc-icon-action--view', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var id = ($(this).attr('data-record-id') || '').trim();
+                if (activeSection === 'certification') {
+                    if (typeof window.sappcShowConfirmationCertificatePreview === 'function') {
+                        window.sappcShowConfirmationCertificatePreview(id);
+                    }
+                    return;
+                }
+                openConfirmationSectionRecord(id);
+            });
+
+            $('#confirmationTableBody').on('click', '.sappc-icon-action--edit', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 openConfirmationSectionRecord(($(this).attr('data-record-id') || '').trim());
@@ -1477,15 +1486,6 @@
                                         var workflowId = (!isNaN(savedId) && savedId > 0) ? savedId : wn;
                                         cnApplicationDraftsByConfirmationId[String(workflowId)] =
                                             serializeConfirmationApplicationFormToObject();
-                                        if (!shouldReopenFromDashboard && advanceRegistryWorkflow('application', workflowId)) {
-                                            if (typeof bootstrap !== 'undefined' && $mApp.length) {
-                                                var instM = bootstrap.Modal.getInstance($mApp[0]);
-                                                if (instM) {
-                                                    instM.hide();
-                                                }
-                                            }
-                                            return;
-                                        }
                                         if (typeof bootstrap !== 'undefined' && $mApp.length) {
                                             var instM = bootstrap.Modal.getInstance($mApp[0]);
                                             if (instM) {
@@ -1598,6 +1598,86 @@
                     $('#cnCertPurpose').val(data.purpose != null ? String(data.purpose) : '');
                 }
 
+                function loadConfirmationCertificationForRecord(id, doneFn, failFn) {
+                    if (!id) {
+                        return;
+                    }
+                    if (!paymentDetailsUrl || !certificationDetailsUrl) {
+                        sappcCnSwal({
+                            icon: 'warning',
+                            title: 'Not configured',
+                            text: 'Certification load is not configured.',
+                        });
+                        return;
+                    }
+
+                    setSelectedConfirmationId(id);
+                    selectConfirmationTableRow(id);
+
+                    ensureRegistryWorkflowStep('certification', id, function(ok) {
+                        if (!ok) {
+                            return;
+                        }
+                        $.when(
+                            fetchJson(buildQueryUrl(paymentDetailsUrl, {
+                                confirmation_id: id
+                            }), jsonHeaders),
+                            fetchJson(buildQueryUrl(certificationDetailsUrl, {
+                                confirmation_id: id
+                            }), jsonHeaders)
+                        ).done(function(payTuple, certTuple) {
+                            var pay = payTuple && payTuple[0] ? payTuple[0] : null;
+                            var cert = certTuple && certTuple[0] ? certTuple[0] : null;
+                            if (pay && pay.ok && pay.data) {
+                                applyConfirmationCertificationTopFromPayment(pay.data);
+                            }
+                            if (cert && cert.ok && cert.data) {
+                                applyConfirmationCertificationFromDetails(cert.data);
+                            }
+                            if (typeof doneFn === 'function') {
+                                doneFn(cert);
+                            }
+                        }).fail(function(xhr) {
+                            var msg = 'Could not load certification record.';
+                            var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                            if (data && data.message) {
+                                msg = data.message;
+                            }
+                            if (typeof failFn === 'function') {
+                                failFn(msg);
+                                return;
+                            }
+                            sappcCnSwal({
+                                icon: 'error',
+                                title: 'Error',
+                                text: msg,
+                            });
+                        });
+                    });
+                }
+
+                function showConfirmationCertificatePreview(id) {
+                    loadConfirmationCertificationForRecord(id, function() {
+                        if (typeof window.sappcShowCertificatePreview !== 'function') {
+                            sappcCnSwal({
+                                icon: 'info',
+                                title: 'Certificate preview',
+                                text: 'Certificate preview is not yet available for confirmation.',
+                            });
+                            return;
+                        }
+                        window.sappcShowCertificatePreview({
+                            title: 'Confirmation Certification',
+                            render: function(mountEl) {
+                                mountEl.innerHTML =
+                                    '<div class="alert alert-info mb-0 text-center">Confirmation certificate layout is not configured yet. Use the edit action to review or update certification details.</div>';
+                            }
+                        });
+                    });
+                }
+
+                window.sappcShowConfirmationCertificatePreview = showConfirmationCertificatePreview;
+
                 $certModal.on('shown.bs.modal', function() {
                     $certBtn.attr('aria-expanded', 'true');
                 });
@@ -1612,45 +1692,14 @@
                         swalRegistryApplicationRequired();
                         return;
                     }
-                    if (!paymentDetailsUrl || !certificationDetailsUrl) {
-                        sappcCnSwal({
-                            icon: 'warning',
-                            title: 'Not configured',
-                            text: 'Certification load is not configured.',
-                        });
-                        return;
-                    }
-                    ensureRegistryWorkflowStep('certification', cid, function(ok) {
-                        if (!ok) {
-                            return;
-                        }
-                    $.when(
-                        fetchJson(buildQueryUrl(paymentDetailsUrl, {
-                            confirmation_id: cid
-                        }), jsonHeaders),
-                        fetchJson(buildQueryUrl(certificationDetailsUrl, {
-                            confirmation_id: cid
-                        }), jsonHeaders)
-                    ).done(function(payTuple, certTuple) {
-                        var pay = payTuple && payTuple[0] ? payTuple[0] : null;
-                        var cert = certTuple && certTuple[0] ? certTuple[0] : null;
-                        if (pay && pay.ok && pay.data) {
-                            applyConfirmationCertificationTopFromPayment(pay.data);
-                        }
-                        if (cert && cert.ok && cert.data) {
-                            applyConfirmationCertificationFromDetails(cert.data);
-                        }
+                    loadConfirmationCertificationForRecord(cid, function() {
                         certBsModal.show();
-                    }).fail(function(xhr) {
-                        var msg = 'Could not load record for certification.';
-                        var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
-                        if (data && data.message) msg = data.message;
+                    }, function(msg) {
                         sappcCnSwal({
                             icon: 'error',
                             title: 'Error',
                             text: msg,
                         });
-                    });
                     });
                 });
 

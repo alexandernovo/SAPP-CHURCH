@@ -39,9 +39,9 @@
                 return '';
             }
             var hasCert = ($panel.attr('data-workflow-has-certification') || '0') === '1';
-            var steps = hasCert
-                ? ['application', 'payment', 'certification', 'schedule']
-                : ['application', 'payment', 'schedule'];
+            var steps = hasCert ?
+                ['application', 'payment', 'certification', 'schedule'] :
+                ['application', 'payment', 'schedule'];
             var idx = steps.indexOf(currentStep);
             if (idx < 0 || idx >= steps.length - 1) {
                 return '';
@@ -118,11 +118,11 @@
                 return;
             }
             fetchJson(buildQueryUrl(appUrl, {
-                wedding_id: recordId,
-            }), {
-                Accept: 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-            })
+                    wedding_id: recordId,
+                }), {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                })
                 .done(function(res) {
                     if (res && res.ok && res.application_saved === true) {
                         if (typeof thenFn === 'function') {
@@ -145,18 +145,30 @@
         }
 
         function swalRegistryPaymentRequired(messageText) {
-            var msg = messageText || 'Complete payment first. All fees must be marked Paid before you can continue to the next step.';
+            var msg = messageText ||
+                'Complete payment first. All fees must be marked Paid before you can continue to the next step.';
             if (typeof Swal !== 'undefined') {
-                Swal.fire({ icon: 'warning', title: 'Payment required', text: msg, confirmButtonText: 'OK' });
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Payment required',
+                    text: msg,
+                    confirmButtonText: 'OK'
+                });
             } else {
                 window.alert(msg);
             }
         }
 
         function swalRegistryCertificationRequired(messageText) {
-            var msg = messageText || 'Complete and save the certification first before you can continue to the next step.';
+            var msg = messageText ||
+                'Complete and save the certification first before you can continue to the next step.';
             if (typeof Swal !== 'undefined') {
-                Swal.fire({ icon: 'warning', title: 'Certification required', text: msg, confirmButtonText: 'OK' });
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Certification required',
+                    text: msg,
+                    confirmButtonText: 'OK'
+                });
             } else {
                 window.alert(msg);
             }
@@ -191,7 +203,9 @@
                 if (typeof thenFn === 'function') thenFn(true);
                 return;
             }
-            fetchJson(buildQueryUrl(payUrl, { wedding_id: recordId }), {
+            fetchJson(buildQueryUrl(payUrl, {
+                wedding_id: recordId
+            }), {
                 Accept: 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
             }).done(function(res) {
@@ -221,11 +235,14 @@
                 if (typeof thenFn === 'function') thenFn(true);
                 return;
             }
-            fetchJson(buildQueryUrl(certUrl, { wedding_id: recordId }), {
+            fetchJson(buildQueryUrl(certUrl, {
+                wedding_id: recordId
+            }), {
                 Accept: 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
             }).done(function(res) {
-                var saved = !!(res && res.ok && (res.certification_saved === true || res.has_saved_cert === true));
+                var saved = !!(res && res.ok && (res.certification_saved === true || res.has_saved_cert ===
+                    true));
                 if (saved) {
                     if (typeof thenFn === 'function') thenFn(true);
                     return;
@@ -453,32 +470,44 @@
         });
 
         function rowActionCell(recordId) {
+            var viewLabel = activeSection === 'certification' ? 'View certificate' : 'View record';
             return '<td class="text-center"><div class="sappc-icon-action_group">' +
-                '<a href="#" class="sappc-icon-action sappc-icon-action--view" title="View" aria-label="View record" data-record-id="' + esc(recordId) +
+                '<a href="#" class="sappc-icon-action sappc-icon-action--view" title="' + viewLabel + '" aria-label="' + viewLabel + '" data-record-id="' +
+                esc(recordId) +
                 '"><i class="fa-solid fa-eye" aria-hidden="true"></i></a>' +
-                '<a href="#" class="sappc-icon-action sappc-icon-action--edit" title="Edit" aria-label="Edit record" data-record-id="' + esc(recordId) +
+                '<a href="#" class="sappc-icon-action sappc-icon-action--edit" title="Edit" aria-label="Edit record" data-record-id="' +
+                esc(recordId) +
                 '"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>' +
-                '<button type="button" class="sappc-icon-action sappc-icon-action--delete" title="Delete" aria-label="Delete record" data-record-id="' + esc(recordId) +
+                '<button type="button" class="sappc-icon-action sappc-icon-action--delete" title="Delete" aria-label="Delete record" data-record-id="' +
+                esc(recordId) +
                 '"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>' +
                 '</div></td>';
         }
 
         function rowHtml(row) {
-            var base = '<tr data-record-id="' + esc(row.recordId) + '" data-document-type="' + esc(row.documentType) + '">' +
+            var base = '<tr data-record-id="' + esc(row.recordId) + '" data-document-type="' + esc(row
+                .documentType) + '">' +
                 '<td>' + esc(row.rowNumber) + '</td>' +
                 '<td>' + esc(row.referenceCode) + '</td>' +
                 '<td>' + esc(row.client) + '</td>' +
-                '<td>' + esc(typeof sappcFormatAddress === 'function' ? sappcFormatAddress(row.address) : row.address) + '</td>';
+                '<td>' + esc(typeof sappcFormatAddress === 'function' ? sappcFormatAddress(row.address) : row
+                    .address) + '</td>';
             if (activeSection === 'certification') {
-                return base + '<td>' + esc(row.contactNum) + '</td><td>' + esc(row.dateCreated) + '</td>' + rowActionCell(row.recordId) + '</tr>';
+                return base + '<td>' + esc(row.contactNum) + '</td><td>' + esc(row.dateCreated) + '</td>' +
+                    rowActionCell(row.recordId) + '</tr>';
             }
             if (activeSection === 'application') {
-                return base + '<td>' + esc(row.sex) + '</td><td>' + esc(row.contactNum) + '</td><td>' + esc(row.dateCreated) + '</td>' + rowActionCell(row.recordId) + '</tr>';
+                return base + '<td>' + esc(row.sex) + '</td><td>' + esc(row.contactNum) + '</td><td>' + esc(row
+                    .dateCreated) + '</td>' + rowActionCell(row.recordId) + '</tr>';
             }
             if (activeSection === 'payment') {
-                return base + '<td>' + esc(row.contactNum) + '</td><td class="text-center align-middle">' + paymentStatusCell(row.paymentStatus) + '</td><td>' + esc(row.dateCreated) + '</td>' + rowActionCell(row.recordId) + '</tr>';
+                return base + '<td>' + esc(row.contactNum) + '</td><td class="text-center align-middle">' +
+                    paymentStatusCell(row.paymentStatus) + '</td><td>' + esc(row.dateCreated) + '</td>' +
+                    rowActionCell(row.recordId) + '</tr>';
             }
-            return base + '<td>' + esc(row.sex) + '</td><td>' + esc(row.contactNum) + '</td><td class="text-center align-middle">' + paymentStatusCell(row.paymentStatus) + '</td><td>' + esc(row.dateCreated) + '</td>' + rowActionCell(row.recordId) + '</tr>';
+            return base + '<td>' + esc(row.sex) + '</td><td>' + esc(row.contactNum) +
+                '</td><td class="text-center align-middle">' + paymentStatusCell(row.paymentStatus) + '</td><td>' +
+                esc(row.dateCreated) + '</td>' + rowActionCell(row.recordId) + '</tr>';
         }
 
         $(function() {
@@ -575,278 +604,16 @@
             var paymentDetailsUrl = ($panel.attr('data-payment-details-url') || '').trim();
             var paymentSaveUrlPanel = ($panel.attr('data-payment-save-url') || '').trim();
             var $weddingAppFormBtn = $('#weddingApplicationFormBtn');
-            var marriageAppDetailsUrl = ($panel.attr('data-marriage-application-details-url') || $weddingAppFormBtn.attr(
-                'data-marriage-application-details-url') || '').trim();
-            var marriageAppSaveUrl = ($panel.attr('data-marriage-application-save-url') || $weddingAppFormBtn.attr(
-                'data-marriage-application-save-url') || '').trim();
+            var marriageAppDetailsUrl = ($panel.attr('data-marriage-application-details-url') ||
+                $weddingAppFormBtn.attr(
+                    'data-marriage-application-details-url') || '').trim();
+            var marriageAppSaveUrl = ($panel.attr('data-marriage-application-save-url') ||
+                $weddingAppFormBtn.attr(
+                    'data-marriage-application-save-url') || '').trim();
             var weddingDeleteUrl = ($panel.attr('data-wedding-delete-url') || '').trim();
             var scheduleDetailsUrl = ($panel.attr('data-schedule-details-url') || '').trim();
             var certificationDetailsUrl = ($panel.attr('data-certification-details-url') || '').trim();
             var certificationSaveUrl = ($panel.attr('data-certification-save-url') || '').trim();
-
-            var fetchRecords = function() {};
-
-            if (recordsUrl) {
-            function tryOpenWeddingApplicationFromDashboardQuery() {
-                try {
-                    var u = new URL(window.location.href);
-                    var id = (u.searchParams.get('sappc_dash_app') || '').trim();
-                    if (!id) {
-                        return;
-                    }
-                    u.searchParams.delete('sappc_dash_app');
-                    var q = u.searchParams.toString();
-                    window.history.replaceState({}, '', u.pathname + (q ? '?' + q : '') + u.hash);
-                    setSelectedWeddingId(id);
-                    $('#weddingTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
-                    $('#weddingTableBody tr').each(function() {
-                        if (($(this).attr('data-record-id') || '').trim() === id) {
-                            $(this).addClass('is-schedule-selected');
-                            return false;
-                        }
-                    });
-                    setTimeout(function() {
-                        $('#weddingApplicationFormBtn').trigger('click');
-                    }, 0);
-                } catch (e1) {}
-            }
-
-            function isDashboardEmbeddedAppContext() {
-                try {
-                    var u = new URL(window.location.href);
-                    return (u.searchParams.get('embed') || '').trim() === '1';
-                } catch (e1) {
-                    return false;
-                }
-            }
-
-            tryOpenWeddingApplicationFromDashboardQuery();
-
-            var meta0 = (initialTablePayload && initialTablePayload.meta) ? initialTablePayload.meta : {};
-            var state = {
-                page: meta0.current_page || 1,
-                per_page: meta0.per_page || 10,
-                search: '',
-                letter: '',
-                date_from: '',
-                date_to: '',
-            };
-
-            var $searchInput = $('#weddingSearch');
-            var $body = $('#weddingTableBody');
-            var $info = $('#weddingTableFooterInfo');
-            var $nav = $('#weddingPagination');
-
-            function renderTable(res) {
-                var html = '';
-                if (!res || !res.data || !res.data.length) {
-                    html =
-                        '<tr class="sappc-table-empty"><td colspan="' + tableColspan + '" class="text-center text-muted py-4">No records found.</td></tr>';
-                } else {
-                    res.data.forEach(function(row) {
-                        html += rowHtml(row);
-                    });
-                }
-                $body.html(html);
-
-                var m = res && res.meta ? res.meta : {};
-                if (!m.total) {
-                    $info.text('Showing 0 entries');
-                } else {
-                    $info.text('Showing ' + m.from + ' to ' + m.to + ' of ' + m.total + ' entries');
-                }
-
-                $nav.empty();
-                var last = Math.max(1, m.last_page || 1);
-                var cur = m.current_page || 1;
-
-                function appendBtn(h) {
-                    $nav.append(h);
-                }
-
-                appendBtn(
-                    '<button type="button" class="sappc-pagination_btn" data-page="' + (cur - 1) +
-                    '" ' + (cur <= 1 ? 'disabled' : '') + ' aria-label="Previous">&lt;</button>'
-                );
-                for (var p = 1; p <= last; p++) {
-                    var active = p === cur ? ' is-active' : '';
-                    var aria = p === cur ? ' aria-current="page"' : '';
-                    appendBtn('<button type="button" class="sappc-pagination_btn' + active +
-                        '" data-page="' + p + '"' + aria + '>' + p + '</button>');
-                }
-                appendBtn(
-                    '<button type="button" class="sappc-pagination_btn" data-page="' + (cur + 1) +
-                    '" ' + (cur >= last ? 'disabled' : '') + ' aria-label="Next">&gt;</button>'
-                );
-            }
-
-            fetchRecords = function() {
-                $body.html(
-                    '<tr class="sappc-table-loading"><td colspan="' + tableColspan + '" class="text-center text-muted py-4">Loading...</td></tr>'
-                );
-                var reqUrl = buildQueryUrl(recordsUrl, {
-                    page: state.page,
-                    per_page: state.per_page,
-                    search: state.search,
-                    letter: state.letter,
-                    date_from: state.date_from,
-                    date_to: state.date_to,
-                    registry_type: 'wedding',
-                });
-
-                $.ajax({
-                    url: reqUrl,
-                    type: 'GET',
-                    dataType: 'json',
-                    headers: {
-                        Accept: 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                    },
-                })
-                    .done(function(res) {
-                        renderTable(res);
-                        tryOpenRecordFromWorkflowQuery();
-                        tryOpenWeddingApplicationFromDashboardQuery();
-                    })
-                    .fail(function(xhr, textStatus, errorThrown) {
-                        var msg =
-                            (xhr && xhr.status) ||
-                            errorThrown ||
-                            textStatus ||
-                            '?';
-                        $body.html(
-                            '<tr><td colspan="' + tableColspan + '" class="text-center text-danger py-3">Could not load records (' +
-                            esc(String(msg)) +
-                            ').</td></tr>'
-                        );
-                    });
-            };
-
-            var searchDebounceTimer;
-            $searchInput.on('input', function() {
-                clearTimeout(searchDebounceTimer);
-                searchDebounceTimer = setTimeout(function() {
-                    state.search = ($searchInput.val() || '').trim();
-                    state.page = 1;
-                    fetchRecords();
-                }, 400);
-            });
-
-            $searchInput.on('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    clearTimeout(searchDebounceTimer);
-                    state.search = ($searchInput.val() || '').trim();
-                    state.page = 1;
-                    fetchRecords();
-                }
-            });
-
-            $('#weddingEntries').on('change', function() {
-                state.per_page = parseInt($(this).val(), 10) || 10;
-                state.page = 1;
-                fetchRecords();
-            });
-
-            $panel.find('.sappc-toolbar-date-strip_btn').on('click', function() {
-                state.date_from = $('#weddingDateFrom').val() || '';
-                state.date_to = $('#weddingDateTo').val() || '';
-                state.page = 1;
-                fetchRecords();
-            });
-
-            $panel.find('.sappc-letter-filter_btn').on('click', function() {
-                var $btn = $(this);
-                var letter = $btn.attr('data-letter');
-                if ($btn.hasClass('is-active')) {
-                    $btn.removeClass('is-active');
-                    state.letter = '';
-                } else {
-                    $panel.find('.sappc-letter-filter_btn').removeClass('is-active');
-                    $btn.addClass('is-active');
-                    state.letter = letter;
-                }
-                state.page = 1;
-                fetchRecords();
-            });
-
-            $nav.on('click', function(e) {
-                var $btn = $(e.target).closest('.sappc-pagination_btn:not(:disabled)');
-                if (!$btn.length) return;
-                var p = parseInt($btn.attr('data-page'), 10);
-                if (!isNaN(p) && p >= 1) {
-                    state.page = p;
-                    fetchRecords();
-                }
-            });
-
-            var $reloadBtn = $('#weddingReloadBtn');
-            $panel.closest('.sappc-registry-page').find('.sappc-registry-toolbar a.sappc-registry-toolbar_btn[data-workflow-step]').on('click', function(e) {
-                var step = ($(this).attr('data-workflow-step') || '').trim();
-                var cid = getSelectedWeddingId();
-                if (!cid || !step || step === 'application') {
-                    return;
-                }
-                e.preventDefault();
-                var href = $(this).attr('href');
-                ensureRegistryWorkflowStep(step, cid, function(ok) {
-                    if (ok && href) {
-                        window.location.href = href;
-                    }
-                });
-            });
-            if ($reloadBtn.length) {
-                $reloadBtn.on('click', fetchRecords);
-            }
-
-            $('#weddingTableBody').on('click', '.sappc-icon-action--delete', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                var id = ($(this).attr('data-record-id') || '').trim();
-                if (!id || !weddingDeleteUrl) return;
-
-                function runDelete() {
-                    fetchPostJson(
-                            weddingDeleteUrl, {
-                                wedding_id: parseInt(id, 10),
-                            },
-                            csrf
-                        )
-                        .done(function(res) {
-                            if (res && res.ok) {
-                                if (getSelectedWeddingId() === id) {
-                                    setSelectedWeddingId('');
-                                }
-                                if (($('#wdMarriageAppWeddingId').val() || '').trim() === id) {
-                                    $('#wdMarriageAppWeddingId').val('');
-                                }
-                                var msg = res && res.message ? res.message : 'Removed.';
-                                sappcWdSwal({
-                                    icon: 'success',
-                                    title: 'Deleted',
-                                    text: msg,
-                                });
-                                fetchRecords();
-                            }
-                        })
-                        .fail(function(xhr) {
-                            var msg = 'Could not delete.';
-                            var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
-                            if (data && data.message) msg = data.message;
-                            sappcWdSwal({
-                                icon: 'error',
-                                title: 'Error',
-                                text: msg,
-                            });
-                        });
-                }
-
-                sappcWdConfirmDeleteDocument({
-                    title: 'Delete wedding record?',
-                    text: 'This permanently deletes this wedding row from the registry (including schedule and marriage application data).',
-                    confirmButtonText: 'Yes, delete',
-                }, runDelete);
-            });
 
             function selectWeddingTableRow(id) {
                 setSelectedWeddingId(id);
@@ -860,59 +627,352 @@
                 });
             }
 
-            function openWeddingSectionRecord(id) {
-                if (!id) return;
-                selectWeddingTableRow(id);
-                if (activeSection === 'schedule') {
-                    ensureRegistryWorkflowStep('schedule', id, function(ok) {
-                        if (!ok) {
-                            return;
-                        }
-                        if (typeof bootstrap !== 'undefined' && $('#weddingScheduleRequestModal').length) {
-                            bootstrap.Modal.getOrCreateInstance($('#weddingScheduleRequestModal')[0]).show();
-                        }
-                    });
-                    return;
-                }
-                if (activeSection === 'payment') {
-                    ensureRegistryWorkflowStep('payment', id, function(ok) {
-                        if (!ok) {
-                            return;
-                        }
-                        $('#weddingPaymentFeeBtn').trigger('click');
-                    });
-                    return;
-                }
-                if (activeSection === 'certification') {
-                    ensureRegistryWorkflowStep('certification', id, function(ok) {
-                        if (!ok) {
-                            return;
-                        }
-                        $('#weddingCertificationBtn').trigger('click');
-                    });
-                    return;
-                }
-                if (!marriageAppDetailsUrl) {
-                    sappcWdSwal({ icon: 'warning', title: 'Not configured', text: 'Marriage application is not configured.' });
-                    return;
-                }
-                $('#weddingApplicationFormBtn').trigger('click');
-            }
-            window.sappcRegistryWorkflowOpenRecord = openWeddingSectionRecord;
+            var fetchRecords = function() {};
 
-            $('#weddingTableBody').on('click', '.sappc-icon-action--view, .sappc-icon-action--edit', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                openWeddingSectionRecord(($(this).attr('data-record-id') || '').trim());
-            });
+            if (recordsUrl) {
+                function tryOpenWeddingApplicationFromDashboardQuery() {
+                    try {
+                        var u = new URL(window.location.href);
+                        var id = (u.searchParams.get('sappc_dash_app') || '').trim();
+                        if (!id) {
+                            return;
+                        }
+                        u.searchParams.delete('sappc_dash_app');
+                        var q = u.searchParams.toString();
+                        window.history.replaceState({}, '', u.pathname + (q ? '?' + q : '') + u.hash);
+                        setSelectedWeddingId(id);
+                        $('#weddingTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                        $('#weddingTableBody tr').each(function() {
+                            if (($(this).attr('data-record-id') || '').trim() === id) {
+                                $(this).addClass('is-schedule-selected');
+                                return false;
+                            }
+                        });
+                        setTimeout(function() {
+                            $('#weddingApplicationFormBtn').trigger('click');
+                        }, 0);
+                    } catch (e1) {}
+                }
 
-            if (initialTablePayload) {
-                renderTable(initialTablePayload);
-                tryOpenRecordFromWorkflowQuery();
+                function isDashboardEmbeddedAppContext() {
+                    try {
+                        var u = new URL(window.location.href);
+                        return (u.searchParams.get('embed') || '').trim() === '1';
+                    } catch (e1) {
+                        return false;
+                    }
+                }
+
                 tryOpenWeddingApplicationFromDashboardQuery();
-            } else {
-                fetchRecords();
-            }
+
+                var meta0 = (initialTablePayload && initialTablePayload.meta) ? initialTablePayload.meta :
+                    {};
+                var state = {
+                    page: meta0.current_page || 1,
+                    per_page: meta0.per_page || 10,
+                    search: '',
+                    letter: '',
+                    date_from: '',
+                    date_to: '',
+                };
+
+                var $searchInput = $('#weddingSearch');
+                var $body = $('#weddingTableBody');
+                var $info = $('#weddingTableFooterInfo');
+                var $nav = $('#weddingPagination');
+
+                function renderTable(res) {
+                    var html = '';
+                    if (!res || !res.data || !res.data.length) {
+                        html =
+                            '<tr class="sappc-table-empty"><td colspan="' + tableColspan +
+                            '" class="text-center text-muted py-4">No records found.</td></tr>';
+                    } else {
+                        res.data.forEach(function(row) {
+                            html += rowHtml(row);
+                        });
+                    }
+                    $body.html(html);
+
+                    var m = res && res.meta ? res.meta : {};
+                    if (!m.total) {
+                        $info.text('Showing 0 entries');
+                    } else {
+                        $info.text('Showing ' + m.from + ' to ' + m.to + ' of ' + m.total + ' entries');
+                    }
+
+                    $nav.empty();
+                    var last = Math.max(1, m.last_page || 1);
+                    var cur = m.current_page || 1;
+
+                    function appendBtn(h) {
+                        $nav.append(h);
+                    }
+
+                    appendBtn(
+                        '<button type="button" class="sappc-pagination_btn" data-page="' + (cur - 1) +
+                        '" ' + (cur <= 1 ? 'disabled' : '') + ' aria-label="Previous">&lt;</button>'
+                    );
+                    for (var p = 1; p <= last; p++) {
+                        var active = p === cur ? ' is-active' : '';
+                        var aria = p === cur ? ' aria-current="page"' : '';
+                        appendBtn('<button type="button" class="sappc-pagination_btn' + active +
+                            '" data-page="' + p + '"' + aria + '>' + p + '</button>');
+                    }
+                    appendBtn(
+                        '<button type="button" class="sappc-pagination_btn" data-page="' + (cur + 1) +
+                        '" ' + (cur >= last ? 'disabled' : '') + ' aria-label="Next">&gt;</button>'
+                    );
+                }
+
+                fetchRecords = function() {
+                    $body.html(
+                        '<tr class="sappc-table-loading"><td colspan="' + tableColspan +
+                        '" class="text-center text-muted py-4">Loading...</td></tr>'
+                    );
+                    var reqUrl = buildQueryUrl(recordsUrl, {
+                        page: state.page,
+                        per_page: state.per_page,
+                        search: state.search,
+                        letter: state.letter,
+                        date_from: state.date_from,
+                        date_to: state.date_to,
+                        registry_type: 'wedding',
+                    });
+
+                    $.ajax({
+                            url: reqUrl,
+                            type: 'GET',
+                            dataType: 'json',
+                            headers: {
+                                Accept: 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                        })
+                        .done(function(res) {
+                            renderTable(res);
+                            tryOpenRecordFromWorkflowQuery();
+                            tryOpenWeddingApplicationFromDashboardQuery();
+                        })
+                        .fail(function(xhr, textStatus, errorThrown) {
+                            var msg =
+                                (xhr && xhr.status) ||
+                                errorThrown ||
+                                textStatus ||
+                                '?';
+                            $body.html(
+                                '<tr><td colspan="' + tableColspan +
+                                '" class="text-center text-danger py-3">Could not load records (' +
+                                esc(String(msg)) +
+                                ').</td></tr>'
+                            );
+                        });
+                };
+
+                var searchDebounceTimer;
+                $searchInput.on('input', function() {
+                    clearTimeout(searchDebounceTimer);
+                    searchDebounceTimer = setTimeout(function() {
+                        state.search = ($searchInput.val() || '').trim();
+                        state.page = 1;
+                        fetchRecords();
+                    }, 400);
+                });
+
+                $searchInput.on('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        clearTimeout(searchDebounceTimer);
+                        state.search = ($searchInput.val() || '').trim();
+                        state.page = 1;
+                        fetchRecords();
+                    }
+                });
+
+                $('#weddingEntries').on('change', function() {
+                    state.per_page = parseInt($(this).val(), 10) || 10;
+                    state.page = 1;
+                    fetchRecords();
+                });
+
+                $panel.find('.sappc-toolbar-date-strip_btn').on('click', function() {
+                    state.date_from = $('#weddingDateFrom').val() || '';
+                    state.date_to = $('#weddingDateTo').val() || '';
+                    state.page = 1;
+                    fetchRecords();
+                });
+
+                $panel.find('.sappc-letter-filter_btn').on('click', function() {
+                    var $btn = $(this);
+                    var letter = $btn.attr('data-letter');
+                    if ($btn.hasClass('is-active')) {
+                        $btn.removeClass('is-active');
+                        state.letter = '';
+                    } else {
+                        $panel.find('.sappc-letter-filter_btn').removeClass('is-active');
+                        $btn.addClass('is-active');
+                        state.letter = letter;
+                    }
+                    state.page = 1;
+                    fetchRecords();
+                });
+
+                $nav.on('click', function(e) {
+                    var $btn = $(e.target).closest('.sappc-pagination_btn:not(:disabled)');
+                    if (!$btn.length) return;
+                    var p = parseInt($btn.attr('data-page'), 10);
+                    if (!isNaN(p) && p >= 1) {
+                        state.page = p;
+                        fetchRecords();
+                    }
+                });
+
+                var $reloadBtn = $('#weddingReloadBtn');
+                $panel.closest('.sappc-registry-page').find(
+                    '.sappc-registry-toolbar a.sappc-registry-toolbar_btn[data-workflow-step]').on(
+                    'click',
+                    function(e) {
+                        var step = ($(this).attr('data-workflow-step') || '').trim();
+                        var cid = getSelectedWeddingId();
+                        if (!cid || !step || step === 'application') {
+                            return;
+                        }
+                        e.preventDefault();
+                        var href = $(this).attr('href');
+                        ensureRegistryWorkflowStep(step, cid, function(ok) {
+                            if (ok && href) {
+                                window.location.href = href;
+                            }
+                        });
+                    });
+                if ($reloadBtn.length) {
+                    $reloadBtn.on('click', fetchRecords);
+                }
+
+                $('#weddingTableBody').on('click', '.sappc-icon-action--delete', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var id = ($(this).attr('data-record-id') || '').trim();
+                    if (!id || !weddingDeleteUrl) return;
+
+                    function runDelete() {
+                        fetchPostJson(
+                                weddingDeleteUrl, {
+                                    wedding_id: parseInt(id, 10),
+                                },
+                                csrf
+                            )
+                            .done(function(res) {
+                                if (res && res.ok) {
+                                    if (getSelectedWeddingId() === id) {
+                                        setSelectedWeddingId('');
+                                    }
+                                    if (($('#wdMarriageAppWeddingId').val() || '').trim() ===
+                                        id) {
+                                        $('#wdMarriageAppWeddingId').val('');
+                                    }
+                                    var msg = res && res.message ? res.message : 'Removed.';
+                                    sappcWdSwal({
+                                        icon: 'success',
+                                        title: 'Deleted',
+                                        text: msg,
+                                    });
+                                    fetchRecords();
+                                }
+                            })
+                            .fail(function(xhr) {
+                                var msg = 'Could not delete.';
+                                var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                                if (data && data.message) msg = data.message;
+                                sappcWdSwal({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: msg,
+                                });
+                            });
+                    }
+
+                    sappcWdConfirmDeleteDocument({
+                        title: 'Delete wedding record?',
+                        text: 'This permanently deletes this wedding row from the registry (including schedule and marriage application data).',
+                        confirmButtonText: 'Yes, delete',
+                    }, runDelete);
+                });
+
+                function openWeddingSectionRecord(id) {
+                    if (!id) return;
+                    selectWeddingTableRow(id);
+                    if (activeSection === 'schedule') {
+                        ensureRegistryWorkflowStep('schedule', id, function(ok) {
+                            if (!ok) {
+                                return;
+                            }
+                            if (typeof bootstrap !== 'undefined' && $(
+                                    '#weddingScheduleRequestModal').length) {
+                                bootstrap.Modal.getOrCreateInstance($(
+                                    '#weddingScheduleRequestModal')[0]).show();
+                            }
+                        });
+                        return;
+                    }
+                    if (activeSection === 'payment') {
+                        ensureRegistryWorkflowStep('payment', id, function(ok) {
+                            if (!ok) {
+                                return;
+                            }
+                            $('#weddingPaymentFeeBtn').trigger('click');
+                        });
+                        return;
+                    }
+                    if (activeSection === 'certification') {
+                        ensureRegistryWorkflowStep('certification', id, function(ok) {
+                            if (!ok) {
+                                return;
+                            }
+                            $('#weddingCertificationBtn').trigger('click');
+                        });
+                        return;
+                    }
+                    if (!marriageAppDetailsUrl) {
+                        sappcWdSwal({
+                            icon: 'warning',
+                            title: 'Not configured',
+                            text: 'Marriage application is not configured.'
+                        });
+                        return;
+                    }
+                    $('#weddingApplicationFormBtn').trigger('click');
+                }
+                window.sappcRegistryWorkflowOpenRecord = openWeddingSectionRecord;
+
+                $('#weddingTableBody').on('click', '.sappc-icon-action--view', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        var id = ($(this).attr('data-record-id') || '').trim();
+                        if (activeSection === 'certification') {
+                            if (typeof window.sappcShowWeddingCertificatePreview === 'function') {
+                                window.sappcShowWeddingCertificatePreview(id);
+                            } else {
+                                window.alert('Certificate preview is not available on this page.');
+                            }
+                            return;
+                        }
+                        openWeddingSectionRecord(id);
+                    });
+
+                $('#weddingTableBody').on('click', '.sappc-icon-action--edit', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        openWeddingSectionRecord(($(this).attr('data-record-id') || '').trim());
+                    });
+
+                if (initialTablePayload) {
+                    renderTable(initialTablePayload);
+                    tryOpenRecordFromWorkflowQuery();
+                    tryOpenWeddingApplicationFromDashboardQuery();
+                } else {
+                    fetchRecords();
+                }
 
             }
 
@@ -925,7 +985,8 @@
             function renumberConfirmationFeeRows() {
                 $feeItemsBody.find('[data-fee-row]').each(function(i) {
                     $(this).find('.sappcPaymentFeeModalCellNo').text(i + 1);
-                    $(this).find('.sappcPaymentFeeModalItemInput').attr('aria-label', 'Fee item ' + (i + 1));
+                    $(this).find('.sappcPaymentFeeModalItemInput').attr('aria-label', 'Fee item ' +
+                        (i + 1));
                 });
             }
 
@@ -963,7 +1024,8 @@
                 $feeItemsBody.find('[data-fee-row]').each(function() {
                     var $row = $(this);
                     var label = ($row.find('.sappcPaymentFeeModalItemInput').val() || '').trim();
-                    var paid = $row.find('.sappcPaymentFeeModalStatus').hasClass('sappcPaymentFeeModalStatusPaid');
+                    var paid = $row.find('.sappcPaymentFeeModalStatus').hasClass(
+                        'sappcPaymentFeeModalStatusPaid');
                     var $date = $row.find('.sappcPaymentFeeModalDatePaid');
                     var datePaid = ($date.attr('data-date-paid') || '').trim();
                     if (!paid) {
@@ -988,7 +1050,8 @@
                 var $date = $tr.find('.sappcPaymentFeeModalDatePaid');
                 var $toggle = $tr.find('.sappcPaymentFeeModalToggleUnpaid');
                 if (paid) {
-                    $status.removeClass('sappcPaymentFeeModalStatusUnpaid').addClass('sappcPaymentFeeModalStatusPaid').text('Paid');
+                    $status.removeClass('sappcPaymentFeeModalStatusUnpaid').addClass(
+                        'sappcPaymentFeeModalStatusPaid').text('Paid');
                     $toggle.text('Unpaid');
                     if (dateIso) {
                         $date.attr('data-date-paid', dateIso);
@@ -999,7 +1062,8 @@
                         $date.text(formatPaymentFeeDateDisplay(today));
                     }
                 } else {
-                    $status.removeClass('sappcPaymentFeeModalStatusPaid').addClass('sappcPaymentFeeModalStatusUnpaid').text('Unpaid');
+                    $status.removeClass('sappcPaymentFeeModalStatusPaid').addClass(
+                        'sappcPaymentFeeModalStatusUnpaid').text('Unpaid');
                     $toggle.text('Paid');
                     $date.removeAttr('data-date-paid');
                     $date.text('\u2014');
@@ -1022,7 +1086,8 @@
                 $('#wdPaymentRefCode').val(data.reference_code != null ? String(data.reference_code) : '');
                 $('#wdPaymentClient').val(data.client != null ? String(data.client) : '');
                 $('#wdPaymentContact').val(
-                    data.contact_number != null ? formatPhMobileDisplay(String(data.contact_number)) : ''
+                    data.contact_number != null ? formatPhMobileDisplay(String(data.contact_number)) :
+                    ''
                 );
                 $('#wdPaymentAddress').val(data.address != null ? String(data.address) : '');
                 var feeRows = data.fee_rows;
@@ -1057,13 +1122,15 @@
                 var $date = $row.find('.sappcPaymentFeeModalDatePaid');
                 var isPaid = $status.hasClass('sappcPaymentFeeModalStatusPaid');
                 if (isPaid) {
-                    $status.removeClass('sappcPaymentFeeModalStatusPaid').addClass('sappcPaymentFeeModalStatusUnpaid').text('Unpaid');
+                    $status.removeClass('sappcPaymentFeeModalStatusPaid').addClass(
+                        'sappcPaymentFeeModalStatusUnpaid').text('Unpaid');
                     $btn.text('Paid');
                     $date.removeAttr('data-date-paid');
                     $date.text('\u2014');
                 } else {
                     var iso = new Date().toISOString().slice(0, 10);
-                    $status.addClass('sappcPaymentFeeModalStatusPaid').removeClass('sappcPaymentFeeModalStatusUnpaid').text('Paid');
+                    $status.addClass('sappcPaymentFeeModalStatusPaid').removeClass(
+                        'sappcPaymentFeeModalStatusUnpaid').text('Paid');
                     $btn.text('Unpaid');
                     $date.attr('data-date-paid', iso);
                     $date.text(formatPaymentFeeDateDisplay(iso));
@@ -1095,35 +1162,37 @@
                         if (!ok) {
                             return;
                         }
-                    fetchJson(buildQueryUrl(paymentDetailsUrl, {
-                        wedding_id: cid
-                    }), jsonHeaders)
-                        .done(function(res) {
-                            if (res && res.ok && res.data) {
-                                applyConfirmationPaymentFeeFormObject(res.data);
-                                paymentBsModal.show();
-                            }
-                        })
-                        .fail(function(xhr) {
-                            var msg = 'Could not load payment details.';
-                            var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
-                            if (data && data.message) msg = data.message;
-                            if (typeof Swal !== 'undefined') {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Error',
-                                    text: msg
-                                });
-                            } else {
-                                window.alert(msg);
-                            }
-                        });
+                        fetchJson(buildQueryUrl(paymentDetailsUrl, {
+                                wedding_id: cid
+                            }), jsonHeaders)
+                            .done(function(res) {
+                                if (res && res.ok && res.data) {
+                                    applyConfirmationPaymentFeeFormObject(res.data);
+                                    paymentBsModal.show();
+                                }
+                            })
+                            .fail(function(xhr) {
+                                var msg = 'Could not load payment details.';
+                                var data = xhr && xhr.responseJSON ? xhr.responseJSON :
+                                    null;
+                                if (data && data.message) msg = data.message;
+                                if (typeof Swal !== 'undefined') {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error',
+                                        text: msg
+                                    });
+                                } else {
+                                    window.alert(msg);
+                                }
+                            });
                     });
                 });
 
                 $paymentFeeForm.on('submit', function(e) {
                     e.preventDefault();
-                    var saveUrl = ($paymentFeeForm.attr('data-save-url') || paymentSaveUrlPanel || '').trim();
+                    var saveUrl = ($paymentFeeForm.attr('data-save-url') || paymentSaveUrlPanel ||
+                        '').trim();
                     if (!saveUrl) return;
                     var cid = getSelectedWeddingId();
                     if (!cid) {
@@ -1145,12 +1214,8 @@
                                     var inst = bootstrap.Modal.getInstance($paymentModal[0]);
                                     if (inst) inst.hide();
                                 }
-                                var msg = (res && res.message) ? res.message : 'Payment record saved.';
-                                var payStatus = (res && res.data && res.data.payment_status) ?
-                                    String(res.data.payment_status).toLowerCase() : '';
-                                if (payStatus === 'paid' && advanceRegistryWorkflow('payment', cid)) {
-                                    return;
-                                }
+                                var msg = (res && res.message) ? res.message :
+                                    'Payment record saved.';
                                 if (typeof Swal !== 'undefined') {
                                     Swal.fire({
                                         icon: 'success',
@@ -1169,7 +1234,8 @@
                             var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
                             if (data && data.errors) {
                                 var vals = Object.values(data.errors);
-                                if (vals.length && Array.isArray(vals[0]) && vals[0][0]) msg = vals[0][0];
+                                if (vals.length && Array.isArray(vals[0]) && vals[0][0]) msg =
+                                    vals[0][0];
                             } else if (data && data.message) {
                                 msg = data.message;
                             }
@@ -1193,61 +1259,74 @@
                 var $certModal = $('#weddingCertificationModal');
                 var $certBtn = $('#weddingCertificationBtn');
                 var $certForm = $('#weddingCertificationForm');
-                if (!$certModal.length || !$certBtn.length || !$certForm.length || typeof bootstrap === 'undefined') {
-                    return;
-                }
-
-                var certBsModal = bootstrap.Modal.getOrCreateInstance($certModal[0]);
 
                 function applyWeddingCertificationTopFromPayment(data) {
                     if (!data || typeof data !== 'object') return;
-                    $('#wdCertRefCode').val(data.reference_code != null ? String(data.reference_code) : '');
+                    $('#wdCertRefCode').val(data.reference_code != null ? String(data.reference_code) :
+                        '');
                     $('#wdCertClient').val(data.client != null ? String(data.client) : '');
                     $('#wdCertContact').val(
-                        data.contact_number != null ? formatPhMobileDisplay(String(data.contact_number)) : ''
+                        data.contact_number != null ? formatPhMobileDisplay(String(data
+                            .contact_number)) : ''
                     );
                     $('#wdCertTopAddress').val(
                         data.address != null ?
-                            (typeof sappcFormatAddress === 'function' ? sappcFormatAddress(String(data.address)) : String(data.address)) :
-                            ''
+                        (typeof sappcFormatAddress === 'function' ? sappcFormatAddress(String(data
+                            .address)) : String(data.address)) :
+                        ''
                     );
                 }
 
                 function applyWeddingCertificationFromDetails(data) {
                     if (!data || typeof data !== 'object') return;
                     $('#wdCertChildFirst').val(data.first_name != null ? String(data.first_name) : '');
-                    $('#wdCertChildMiddle').val(data.middle_name != null ? String(data.middle_name) : '');
+                    $('#wdCertChildMiddle').val(data.middle_name != null ? String(data.middle_name) :
+                        '');
                     $('#wdCertChildLast').val(data.family_name != null ? String(data.family_name) : '');
-                    $('#wdCertBirthday').val(data.date_of_birth != null ? String(data.date_of_birth) : '');
-                    $('#wdCertBirthplace').val(data.place_of_birth != null ? String(data.place_of_birth) : '');
-                    $('#wdCertFatherFirst').val(data.father_first_name != null ? String(data.father_first_name) : '');
-                    $('#wdCertFatherMiddle').val(data.father_middle_name != null ? String(data.father_middle_name) : '');
-                    $('#wdCertFatherLast').val(data.father_last_name != null ? String(data.father_last_name) : '');
-                    $('#wdCertMotherFirst').val(data.mother_first_name != null ? String(data.mother_first_name) : '');
-                    $('#wdCertMotherMiddle').val(data.mother_middle_name != null ? String(data.mother_middle_name) : '');
-                    $('#wdCertMotherLast').val(data.mother_last_name != null ? String(data.mother_last_name) : '');
+                    $('#wdCertBirthday').val(data.date_of_birth != null ? String(data.date_of_birth) :
+                        '');
+                    $('#wdCertBirthplace').val(data.place_of_birth != null ? String(data
+                        .place_of_birth) : '');
+                    $('#wdCertFatherFirst').val(data.father_first_name != null ? String(data
+                        .father_first_name) : '');
+                    $('#wdCertFatherMiddle').val(data.father_middle_name != null ? String(data
+                        .father_middle_name) : '');
+                    $('#wdCertFatherLast').val(data.father_last_name != null ? String(data
+                        .father_last_name) : '');
+                    $('#wdCertMotherFirst').val(data.mother_first_name != null ? String(data
+                        .mother_first_name) : '');
+                    $('#wdCertMotherMiddle').val(data.mother_middle_name != null ? String(data
+                        .mother_middle_name) : '');
+                    $('#wdCertMotherLast').val(data.mother_last_name != null ? String(data
+                        .mother_last_name) : '');
                     $('#wdCertBarangay').val(data.barangay != null ? String(data.barangay) : '');
-                    $('#wdCertMunicipality').val(data.municipality != null ? String(data.municipality) : '');
+                    $('#wdCertMunicipality').val(data.municipality != null ? String(data.municipality) :
+                        '');
                     $('#wdCertProvince').val(data.province != null ? String(data.province) : 'Antique');
-                    $('#wdCertDateReceived').val(data.date_received != null ? String(data.date_received) : '');
-                    $('#wdCertDateIssued').val(data.date_issued != null ? String(data.date_issued) : '');
+                    $('#wdCertDateReceived').val(data.date_received != null ? String(data
+                        .date_received) : '');
+                    $('#wdCertDateIssued').val(data.date_issued != null ? String(data.date_issued) :
+                    '');
                     $('#wdCertBookNo').val(data.book_no != null ? String(data.book_no) : '');
-                    $('#wdCertRegisterNo').val(data.register_no != null ? String(data.register_no) : '');
+                    $('#wdCertRegisterNo').val(data.register_no != null ? String(data.register_no) :
+                    '');
                     $('#wdCertPageNo').val(data.page_no != null ? String(data.page_no) : '');
                     $('#wdCertPriest').val(data.priest != null ? String(data.priest) : '');
                     $('#wdCertSponsors').val(data.sponsors != null ? String(data.sponsors) : '');
                     $('#wdCertPurpose').val(
-                        data.purpose != null && String(data.purpose).trim() !== ''
-                            ? String(data.purpose)
-                            : DEFAULT_CERT_PURPOSE
+                        data.purpose != null && String(data.purpose).trim() !== '' ?
+                        String(data.purpose) :
+                        DEFAULT_CERT_PURPOSE
                     );
                 }
 
                 function stashWeddingCertPrintExtras(data) {
                     if (!data || typeof data !== 'object') return;
                     var bride = data.bride && typeof data.bride === 'object' ? data.bride : {};
-                    var marriage = data.marriage && typeof data.marriage === 'object' ? data.marriage : {};
-                    var rh = data.registry_header && typeof data.registry_header === 'object' ? data.registry_header : {};
+                    var marriage = data.marriage && typeof data.marriage === 'object' ? data.marriage :
+                    {};
+                    var rh = data.registry_header && typeof data.registry_header === 'object' ? data
+                        .registry_header : {};
                     $panel.data('weddingCertPrintExtra', {
                         bride: bride,
                         marriage: marriage,
@@ -1270,7 +1349,8 @@
                 }
 
                 function wdCertJoinThree(selF, selM, selL) {
-                    return [wdCertField(selF), wdCertField(selM), wdCertField(selL)].filter(function(p) {
+                    return [wdCertField(selF), wdCertField(selM), wdCertField(selL)].filter(function(
+                    p) {
                         return p !== '';
                     }).join(' ');
                 }
@@ -1296,7 +1376,9 @@
                     if (!iso || String(iso).length < 10) return '';
                     var p = String(iso).slice(0, 10).split('-');
                     if (p.length !== 3) return '';
-                    var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                    var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
+                        'August', 'September', 'October', 'November', 'December'
+                    ];
                     var mi = parseInt(p[1], 10) - 1;
                     var mon = (mi >= 0 && mi < 12) ? months[mi] : p[1];
                     return mon + ' ' + String(parseInt(p[2], 10)) + ', ' + p[0];
@@ -1374,7 +1456,7 @@
                     set('mc18WName', printData.w_name);
                     (function fillWitnessLines(raw) {
                         var s = raw != null ? String(raw) : '';
-                        var parts = s.split(/\r\n|\r|\n|;/g).map(function (x) {
+                        var parts = s.split(/\r\n|\r|\n|;/g).map(function(x) {
                             return x.trim();
                         }).filter(Boolean);
                         var i;
@@ -1390,47 +1472,166 @@
                     set('mcRefCode', printData.ref_code);
                 }
 
+                function mountMarriageCertificatePreview(mountEl, printData) {
+                    var tplNode = document.getElementById('marriageCertificatePrintableTemplate');
+                    if (!tplNode || !tplNode.content || !mountEl) {
+                        window.alert('Certificate preview template not found.');
+                        return false;
+                    }
+                    var tplStyleNode = tplNode.content.querySelector('style');
+                    var tplFrameNode = tplNode.content.querySelector('.mc-screen-frame');
+                    if (!tplStyleNode || !tplFrameNode) {
+                        window.alert('Certificate preview template is incomplete.');
+                        return false;
+                    }
+
+                    mountEl.innerHTML = '';
+
+                    var styleEl = document.createElement('style');
+                    styleEl.textContent = tplStyleNode.textContent || '';
+                    mountEl.appendChild(styleEl);
+
+                    var frameEl = document.createElement('div');
+                    frameEl.className = 'sappcChristeningCertFrame';
+
+                    var sheetHolder = document.createElement('div');
+                    sheetHolder.className = 'sappcCertPreviewSheet sappcCertPreviewSheet--marriage';
+
+                    var tplFrameClone = tplFrameNode.cloneNode(true);
+                    applyMarriagePrintDataToClone(tplFrameClone, printData);
+                    sheetHolder.appendChild(tplFrameClone);
+                    frameEl.appendChild(sheetHolder);
+                    mountEl.appendChild(frameEl);
+                    return true;
+                }
+
+                function loadWeddingCertificationForRecord(id, doneFn, failFn) {
+                    if (!id) {
+                        return;
+                    }
+                    if (!paymentDetailsUrl || !certificationDetailsUrl) {
+                        window.alert('Certification load is not configured.');
+                        return;
+                    }
+
+                    setSelectedWeddingId(id);
+                    selectWeddingTableRow(id);
+
+                    ensureRegistryWorkflowStep('certification', id, function(ok) {
+                        if (!ok) {
+                            return;
+                        }
+                        $.when(
+                            fetchJson(buildQueryUrl(paymentDetailsUrl, {
+                                wedding_id: id
+                            }), jsonHeaders),
+                            fetchJson(buildQueryUrl(certificationDetailsUrl, {
+                                wedding_id: id
+                            }), jsonHeaders)
+                        ).done(function(payTuple, certTuple) {
+                            var pay = payTuple && payTuple[0] ? payTuple[0] : null;
+                            var cert = certTuple && certTuple[0] ? certTuple[0] : null;
+                            if (pay && pay.ok && pay.data) {
+                                applyWeddingCertificationTopFromPayment(pay.data);
+                            }
+                            if (cert && cert.ok && cert.data) {
+                                applyWeddingCertificationFromDetails(cert.data);
+                                stashWeddingCertPrintExtras(cert.data);
+                            }
+                            if (typeof doneFn === 'function') {
+                                doneFn(cert);
+                            }
+                        }).fail(function(xhr) {
+                            var msg = 'Could not load certification record.';
+                            var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                            if (data && data.message) {
+                                msg = data.message;
+                            }
+                            if (typeof failFn === 'function') {
+                                failFn(msg);
+                                return;
+                            }
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: msg
+                                });
+                            } else {
+                                window.alert(msg);
+                            }
+                        });
+                    });
+                }
+
+                function showWeddingCertificatePreview(id) {
+                    loadWeddingCertificationForRecord(id, function() {
+                        if (typeof window.sappcShowCertificatePreview !== 'function') {
+                            window.alert('Certificate preview is not available on this page.');
+                            return;
+                        }
+                        window.sappcShowCertificatePreview({
+                            title: 'Certificate of Marriage',
+                            render: function(mountEl) {
+                                mountMarriageCertificatePreview(mountEl, collectMarriageCertificatePrintData());
+                            },
+                            onPrint: function() {
+                                printMarriageCertificateSheet(null, true);
+                            }
+                        });
+                    });
+                }
+
                 function collectMarriageCertificatePrintData() {
                     var extra = $panel.data('weddingCertPrintExtra') || {};
                     var bride = extra.bride || {};
                     var marriage = extra.marriage || {};
                     var rh = extra.registry_header || {};
                     var hDobIso = wdCertField('#wdCertBirthday');
-                    var wDobIso = (bride.date_of_birth != null ? String(bride.date_of_birth) : '').slice(0, 10);
+                    var wDobIso = (bride.date_of_birth != null ? String(bride.date_of_birth) : '')
+                        .slice(0, 10);
                     var hAge = extra.groom_age ? String(extra.groom_age) : wdCertComputeAge(hDobIso);
                     var wAge = extra.bride_age ? String(extra.bride_age) : wdCertComputeAge(wDobIso);
                     var marriageDateStr = marriage.date ? wdCertFormatLongDate(marriage.date) : '';
-                    if (!marriageDateStr) marriageDateStr = wdCertFormatLongDate(wdCertField('#wdCertDateReceived'));
+                    if (!marriageDateStr) marriageDateStr = wdCertFormatLongDate(wdCertField(
+                        '#wdCertDateReceived'));
 
                     return {
-                        hdr_province: (rh.province || '').trim() || wdCertField('#wdCertProvince') || 'Antique',
-                        hdr_city: (rh.city_municipality || '').trim() || wdCertField('#wdCertMunicipality') || '',
+                        hdr_province: (rh.province || '').trim() || wdCertField('#wdCertProvince') ||
+                            'Antique',
+                        hdr_city: (rh.city_municipality || '').trim() || wdCertField(
+                            '#wdCertMunicipality') || '',
                         hdr_registry: wdCertField('#wdCertRegisterNo'),
-                        h_name: wdCertJoinThree('#wdCertChildFirst', '#wdCertChildMiddle', '#wdCertChildLast'),
+                        h_name: wdCertJoinThree('#wdCertChildFirst', '#wdCertChildMiddle',
+                            '#wdCertChildLast'),
                         w_name: wdCertJoinNameObj(bride),
                         h_dob: wdCertFormatLongDate(hDobIso),
                         w_dob: wdCertFormatLongDate(wDobIso),
                         h_age: hAge,
                         w_age: wAge,
                         h_pob: wdCertField('#wdCertBirthplace'),
-                        w_pob: (bride.place_of_birth != null ? String(bride.place_of_birth) : '').trim(),
+                        w_pob: (bride.place_of_birth != null ? String(bride.place_of_birth) : '')
+                        .trim(),
                         h_sex: extra.groom_sex || 'Male',
                         w_sex: extra.bride_sex || 'Female',
                         h_citz: extra.groom_citizenship || 'Filipino',
                         w_citz: extra.bride_citizenship || 'Filipino',
-                        h_res: wdCertJoinAddr(wdCertField('#wdCertBarangay'), wdCertField('#wdCertMunicipality'), wdCertField('#wdCertProvince')),
+                        h_res: wdCertJoinAddr(wdCertField('#wdCertBarangay'), wdCertField(
+                            '#wdCertMunicipality'), wdCertField('#wdCertProvince')),
                         w_res: wdCertJoinAddr(bride.barangay, bride.municipality, bride.province),
                         h_rel: extra.groom_religion || '',
                         w_rel: extra.bride_religion || '',
                         h_civil: extra.groom_civil_status || '',
                         w_civil: extra.bride_civil_status || '',
-                        h_father: wdCertJoinThree('#wdCertFatherFirst', '#wdCertFatherMiddle', '#wdCertFatherLast'),
+                        h_father: wdCertJoinThree('#wdCertFatherFirst', '#wdCertFatherMiddle',
+                            '#wdCertFatherLast'),
                         w_father: wdCertJoinNameObj({
                             first_name: bride.father_first_name,
                             middle_name: bride.father_middle_name,
                             family_name: bride.father_last_name,
                         }),
-                        h_mother: wdCertJoinThree('#wdCertMotherFirst', '#wdCertMotherMiddle', '#wdCertMotherLast'),
+                        h_mother: wdCertJoinThree('#wdCertMotherFirst', '#wdCertMotherMiddle',
+                            '#wdCertMotherLast'),
                         w_mother: wdCertJoinNameObj({
                             first_name: bride.mother_first_name,
                             middle_name: bride.mother_middle_name,
@@ -1489,7 +1690,8 @@
                     var printData = collectMarriageCertificatePrintData();
                     var tplWrapClone = tplWrapNode.cloneNode(true);
                     applyMarriagePrintDataToClone(tplWrapClone, printData);
-                    var html = '<!doctype html><html><head><meta charset="utf-8"><title>Certificate of Marriage</title><style>' +
+                    var html =
+                        '<!doctype html><html><head><meta charset="utf-8"><title>Certificate of Marriage</title><style>' +
                         (tplStyleNode.textContent || '') +
                         '</style></head><body>' + (tplWrapClone.outerHTML || '') + '</body></html>';
                     if (marriagePrintBlobUrl) {
@@ -1527,12 +1729,16 @@
                     if (!wid) {
                         swalRegistryApplicationRequired();
                         return $.Deferred().reject({
-                            responseJSON: { message: 'Please do or fill the application form first.' }
+                            responseJSON: {
+                                message: 'Please do or fill the application form first.'
+                            }
                         }).promise();
                     }
                     if (!certificationSaveUrl) {
                         return $.Deferred().reject({
-                            responseJSON: { message: 'Certification save is not configured.' }
+                            responseJSON: {
+                                message: 'Certification save is not configured.'
+                            }
                         }).promise();
                     }
 
@@ -1575,7 +1781,8 @@
                     saveWeddingCertificationRecord()
                         .done(function(res) {
                             if (!res || res.ok === false) {
-                                var badMsg = (res && res.message) ? res.message : 'Certification could not be saved.';
+                                var badMsg = (res && res.message) ? res.message :
+                                    'Certification could not be saved.';
                                 if (typeof Swal !== 'undefined') {
                                     Swal.fire({
                                         icon: 'error',
@@ -1588,10 +1795,8 @@
                                 return;
                             }
                             printMarriageCertificateSheet(null, true);
-                            if (advanceRegistryWorkflow('certification', getSelectedWeddingId())) {
-                                return;
-                            }
-                            var msg = (res && res.message) ? res.message : 'Certification record saved.';
+                            var msg = (res && res.message) ? res.message :
+                                'Certification record saved.';
                             if (typeof Swal !== 'undefined') {
                                 Swal.fire({
                                     icon: 'success',
@@ -1626,6 +1831,15 @@
                         });
                 }
 
+                window.sappcShowWeddingCertificatePreview = showWeddingCertificatePreview;
+
+                if (!$certModal.length || !$certBtn.length || !$certForm.length || typeof bootstrap ===
+                    'undefined') {
+                    return;
+                }
+
+                var certBsModal = bootstrap.Modal.getOrCreateInstance($certModal[0]);
+
                 $certForm.on('submit', function(e) {
                     e.preventDefault();
                     runWeddingCertificationSaveAndPrint($('#wdCertAddRecordBtn'));
@@ -1650,36 +1864,9 @@
                         swalRegistryApplicationRequired();
                         return;
                     }
-                    if (!paymentDetailsUrl || !certificationDetailsUrl) {
-                        window.alert('Certification load is not configured.');
-                        return;
-                    }
-                    ensureRegistryWorkflowStep('certification', wid, function(ok) {
-                        if (!ok) {
-                            return;
-                        }
-                    $.when(
-                        fetchJson(buildQueryUrl(paymentDetailsUrl, {
-                            wedding_id: wid
-                        }), jsonHeaders),
-                        fetchJson(buildQueryUrl(certificationDetailsUrl, {
-                            wedding_id: wid
-                        }), jsonHeaders)
-                    ).done(function(payTuple, certTuple) {
-                        var pay = payTuple && payTuple[0] ? payTuple[0] : null;
-                        var cert = certTuple && certTuple[0] ? certTuple[0] : null;
-                        if (pay && pay.ok && pay.data) {
-                            applyWeddingCertificationTopFromPayment(pay.data);
-                        }
-                        if (cert && cert.ok && cert.data) {
-                            applyWeddingCertificationFromDetails(cert.data);
-                            stashWeddingCertPrintExtras(cert.data);
-                        }
+                    loadWeddingCertificationForRecord(wid, function() {
                         certBsModal.show();
-                    }).fail(function(xhr) {
-                        var msg = 'Could not load record for certification.';
-                        var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
-                        if (data && data.message) msg = data.message;
+                    }, function(msg) {
                         if (typeof Swal !== 'undefined') {
                             Swal.fire({
                                 icon: 'error',
@@ -1689,7 +1876,6 @@
                         } else {
                             window.alert(msg);
                         }
-                    });
                     });
                 });
             })();
@@ -1704,7 +1890,8 @@
 
                 function fieldByName($f, n) {
                     if (!$f.length) return $();
-                    return $f.find('[name="' + String(n).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"]');
+                    return $f.find('[name="' + String(n).replace(/\\/g, '\\\\').replace(/"/g, '\\"') +
+                        '"]');
                 }
 
                 function isDashboardEmbeddedAppContextLocal() {
@@ -1727,7 +1914,8 @@
                             return;
                         }
                         var v = data[n];
-                        $(this).prop('checked', v === 1 || v === '1' || v === true || v === 'on');
+                        $(this).prop('checked', v === 1 || v === '1' || v === true || v ===
+                            'on');
                     });
                     $f.find('input:not([type=checkbox]), textarea, select').each(function() {
                         var n = this.name;
@@ -1751,13 +1939,16 @@
                                 return;
                             }
                             if (row.date) {
-                                fieldByName($f, 'precana[' + i + '][date]').val(String(row.date));
+                                fieldByName($f, 'precana[' + i + '][date]').val(String(row
+                                    .date));
                             }
                             if (row.topic) {
-                                fieldByName($f, 'precana[' + i + '][topic]').val(String(row.topic));
+                                fieldByName($f, 'precana[' + i + '][topic]').val(String(row
+                                    .topic));
                             }
                             if (row.signature) {
-                                fieldByName($f, 'precana[' + i + '][signature]').val(String(row.signature));
+                                fieldByName($f, 'precana[' + i + '][signature]').val(String(row
+                                    .signature));
                             }
                         });
                     }
@@ -1790,7 +1981,8 @@
                     $f.find('input, textarea, select').each(function() {
                         var $el = $(this);
                         var n = this.name;
-                        if (!n || n === '_token' || n.indexOf('precana[') === 0 || n.indexOf('marriage_sponsors[') ===
+                        if (!n || n === '_token' || n.indexOf('precana[') === 0 || n.indexOf(
+                                'marriage_sponsors[') ===
                             0) {
                             return;
                         }
@@ -1808,14 +2000,18 @@
                     out.precana = [];
                     for (var i = 0; i < 7; i++) {
                         out.precana.push({
-                            date: (fieldByName($f, 'precana[' + i + '][date]').val() || '').trim(),
-                            topic: (fieldByName($f, 'precana[' + i + '][topic]').val() || '').trim(),
-                            signature: (fieldByName($f, 'precana[' + i + '][signature]').val() || '').trim()
+                            date: (fieldByName($f, 'precana[' + i + '][date]').val() || '')
+                                .trim(),
+                            topic: (fieldByName($f, 'precana[' + i + '][topic]').val() || '')
+                                .trim(),
+                            signature: (fieldByName($f, 'precana[' + i + '][signature]')
+                            .val() || '').trim()
                         });
                     }
                     out.marriage_sponsors = {};
                     for (var g = 1; g <= 40; g++) {
-                        out.marriage_sponsors[String(g)] = (fieldByName($f, 'marriage_sponsors[' + g + ']').val() ||
+                        out.marriage_sponsors[String(g)] = (fieldByName($f, 'marriage_sponsors[' + g +
+                                ']').val() ||
                             '').trim();
                     }
                     return out;
@@ -1837,7 +2033,8 @@
                     var cid = getSelectedWeddingId();
                     if (!cid) {
                         setSelectedWeddingId('');
-                        $('#weddingTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                        $('#weddingTableBody tr.is-schedule-selected').removeClass(
+                            'is-schedule-selected');
                         if ($marriageAppForm[0]) {
                             $marriageAppForm[0].reset();
                         }
@@ -1851,16 +2048,18 @@
                         window.alert('Marriage application is not configured.');
                         return;
                     }
-                    var marriageBsModal = bootstrap.Modal.getOrCreateInstance($marriageAppModal[0]);
+                    var marriageBsModal = bootstrap.Modal.getOrCreateInstance($marriageAppModal[
+                        0]);
                     fetchJson(buildQueryUrl(marriageAppDetailsUrl, {
-                        wedding_id: cid
-                    }), jsonHeaders)
+                            wedding_id: cid
+                        }), jsonHeaders)
                         .done(function(res) {
                             if (res && res.ok) {
                                 if ($marriageAppForm[0]) {
                                     $marriageAppForm[0].reset();
                                 }
-                                $marriageAppForm.find('input[type=checkbox]').prop('checked', false);
+                                $marriageAppForm.find('input[type=checkbox]').prop(
+                                    'checked', false);
                                 $('#wdMarriageAppWeddingId').val(cid);
                                 applyMarriageApplicationData(res.data || {});
                                 marriageBsModal.show();
@@ -1888,7 +2087,8 @@
                     if (!marriageAppSaveUrl) {
                         return;
                     }
-                    var wid = ($('#wdMarriageAppWeddingId').val() || '').trim() || getSelectedWeddingId();
+                    var wid = ($('#wdMarriageAppWeddingId').val() || '').trim() ||
+                    getSelectedWeddingId();
                     var wn = wid ? parseInt(wid, 10) : 0;
                     if (wid && (isNaN(wn) || wn < 1)) {
                         window.alert('Invalid record.');
@@ -1918,9 +2118,11 @@
                     fetchPostJson(marriageAppSaveUrl, payload, csrf)
                         .done(function(res, textStatus, jqXhr) {
                             var isHttpOk = !!(jqXhr && jqXhr.status >= 200 && jqXhr.status < 300);
-                            var isBusinessOk = !!(res && (res.ok === true || String(res.status || '').toLowerCase() === 'success'));
+                            var isBusinessOk = !!(res && (res.ok === true || String(res.status ||
+                                '').toLowerCase() === 'success'));
                             if (!isHttpOk || !isBusinessOk) {
-                                var failMsg = (res && res.message) ? String(res.message) : 'Could not save marriage application.';
+                                var failMsg = (res && res.message) ? String(res.message) :
+                                    'Could not save marriage application.';
                                 sappcWdSwal({
                                     icon: 'error',
                                     title: 'Error',
@@ -1941,14 +2143,10 @@
                             }
 
                             var shouldReopenFromDashboard = isDashboardEmbeddedAppContextLocal();
-                            if (!shouldReopenFromDashboard && advanceRegistryWorkflow('application', savedId || wid)) {
-                                if (marriageBsModal) {
-                                    marriageBsModal.hide();
-                                }
-                                return;
-                            }
-                            var msg = (res && res.message) ? res.message : 'Marriage application saved.';
+                            var msg = (res && res.message) ? res.message :
+                                'Marriage application saved.';
                             var didNotifySaved = false;
+
                             function notifySavedOnce() {
                                 if (didNotifySaved) {
                                     return;
@@ -2009,7 +2207,8 @@
             var $scheduleForm = $('#weddingScheduleRequestForm');
             var $scheduleBtn = $('#weddingScheduleRequestBtn');
             var $scheduleNewBtn = $('#weddingNewRecordBtn');
-            var scheduleSaveUrl = $scheduleForm.attr('data-schedule-save-url') || $scheduleBtn.attr('data-schedule-save-url') || '';
+            var scheduleSaveUrl = $scheduleForm.attr('data-schedule-save-url') || $scheduleBtn.attr(
+                'data-schedule-save-url') || '';
             var scheduleReservedUrl = ($scheduleForm.attr('data-schedule-reserved-url') || '').trim();
             var calendarReservedLookup = {};
             var $scheduleModal = $('#weddingScheduleRequestModal');
@@ -2114,7 +2313,8 @@
                     var classes = 'sappcScheduleDay';
                     if (dow === 0) classes += ' is-sunday';
                     if (dow === 6) classes += ' is-saturday';
-                    var isSel = selected && selected.getFullYear() === year && selected.getMonth() === month && selected.getDate() === day;
+                    var isSel = selected && selected.getFullYear() === year && selected.getMonth() ===
+                        month && selected.getDate() === day;
                     var isReserved = !!calendarReservedLookup[iso];
                     if (isSel) {
                         classes += ' is-selected';
@@ -2132,7 +2332,8 @@
                     } else {
                         inner = String(day);
                     }
-                    html += '<button type="button" class="' + classes + '" data-date="' + esc(iso) + '" aria-label="' + esc(label) + '">' + inner + '</button>';
+                    html += '<button type="button" class="' + classes + '" data-date="' + esc(iso) +
+                        '" aria-label="' + esc(label) + '">' + inner + '</button>';
                 }
                 $calDayCells.html(html);
             }
@@ -2166,19 +2367,22 @@
             }
 
             function initScheduleCalendar() {
-                if (!$calMonthSel.length || !$calYearSel.length || !$('#wdCalPrev').length || !$('#wdCalNext').length || !$calDayCells.length || !$scheduleDateInput.length) {
+                if (!$calMonthSel.length || !$calYearSel.length || !$('#wdCalPrev').length || !$(
+                        '#wdCalNext').length || !$calDayCells.length || !$scheduleDateInput.length) {
                     return;
                 }
                 populateCalendarSelectors();
                 syncCalendarHeader();
                 renderCalendarDayGrid();
                 $('#wdCalPrev').on('click', function() {
-                    calendarViewDate = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth() - 1, 1);
+                    calendarViewDate = new Date(calendarViewDate.getFullYear(), calendarViewDate
+                        .getMonth() - 1, 1);
                     syncCalendarHeader();
                     renderCalendarDayGrid();
                 });
                 $('#wdCalNext').on('click', function() {
-                    calendarViewDate = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth() + 1, 1);
+                    calendarViewDate = new Date(calendarViewDate.getFullYear(), calendarViewDate
+                        .getMonth() + 1, 1);
                     syncCalendarHeader();
                     renderCalendarDayGrid();
                 });
@@ -2221,12 +2425,14 @@
             $('#weddingTableBody').on('click', 'tr', function(e) {
                 if ($(e.target).closest('a,button').length) return;
                 var $tr = $(this);
-                if ($tr.hasClass('sappc-table-loading') || $tr.hasClass('sappc-table-empty')) return;
+                if ($tr.hasClass('sappc-table-loading') || $tr.hasClass('sappc-table-empty'))
+            return;
                 if ($tr.hasClass('is-schedule-selected')) {
                     if ($scheduleForm.length) {
                         resetScheduleRequestFormForNewEntry();
                     } else {
-                        $('#weddingTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                        $('#weddingTableBody tr.is-schedule-selected').removeClass(
+                            'is-schedule-selected');
                         setSelectedWeddingId('');
                     }
                     return;
@@ -2254,7 +2460,8 @@
                 }
                 var rawContact = ($tds.eq(5).text() || '').trim();
                 $('#wdScheduleContact').val(
-                    (rawContact === '\u2014' || rawContact === '-' || rawContact === '') ? '' : formatPhMobileDisplay(rawContact)
+                    (rawContact === '\u2014' || rawContact === '-' || rawContact === '') ? '' :
+                    formatPhMobileDisplay(rawContact)
                 );
             });
 
@@ -2275,7 +2482,8 @@
                         var n = parseInt(cid, 10);
                         if (!isNaN(n)) payload.wedding_id = n;
                     }
-                    var $submitBtn = $scheduleForm.find('button[type="submit"], input[type="submit"]').first();
+                    var $submitBtn = $scheduleForm.find(
+                        'button[type="submit"], input[type="submit"]').first();
                     $submitBtn.prop('disabled', true);
                     fetchPostJson(scheduleSaveUrl, payload, csrf)
                         .done(function(res) {
@@ -2286,7 +2494,8 @@
                                 }
                                 fetchRecords();
                                 var okMsgWd =
-                                    res && res.message ? String(res.message) : 'Schedule reserved successfully.';
+                                    res && res.message ? String(res.message) :
+                                    'Schedule reserved successfully.';
                                 if (typeof Swal !== 'undefined') {
                                     Swal.fire({
                                         icon: 'success',
@@ -2417,8 +2626,8 @@
                     var cid = getSelectedWeddingId();
                     if (cid && scheduleDetailsUrl) {
                         fetchJson(buildQueryUrl(scheduleDetailsUrl, {
-                            wedding_id: cid,
-                        }), jsonHeaders)
+                                wedding_id: cid,
+                            }), jsonHeaders)
                             .done(function(res) {
                                 if (res && res.ok && res.data) {
                                     applyWeddingScheduleDetailsToForm(res.data);

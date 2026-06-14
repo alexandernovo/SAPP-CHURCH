@@ -1,11 +1,5 @@
-/* Admin login — card on blurred parish photo */
-
-:root {
-    font-family: Arial, Helvetica, sans-serif;
-}
-
 body.admin-login-page {
-    background-color: #1a1a1a;
+    background-color: #1a212b;
 }
 
 .admin-login-root {
@@ -20,18 +14,17 @@ body.admin-login-page {
     position: fixed;
     inset: 0;
     z-index: 0;
-    background-image: url('/assets/landingPage/BACKGROUND.jpg');
     background-size: cover;
     background-position: center;
-    filter: blur(8px);
-    transform: scale(1.06);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
 }
 
 .admin-login-bg::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.45);
+    background: rgba(10, 15, 20, 0.72);
 }
 
 .admin-login-shell {
@@ -55,7 +48,6 @@ body.admin-login-page {
     border-radius: 1rem;
     box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, 0.35);
     position: relative;
-    font-family: Arial, Helvetica, sans-serif;
 }
 
 .admin-login-card__close {
@@ -88,24 +80,21 @@ body.admin-login-page {
 }
 
 .admin-login-card__logo {
-    width: 6.5rem;
-    height: 6.5rem;
-    object-fit: cover;
-    object-position: center;
-    border-radius: 50%;
+    width: auto;
+    height: auto;
+    max-width: 6.5rem;
     display: block;
     margin: 0 auto 1rem;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
 .admin-login-card__title {
     margin: 0;
-    font-size: 0.95rem;
+    font-size: clamp(1.05rem, 2.8vw, 1.45rem);
     font-weight: 700;
     line-height: 1.35;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: #111;
+    color: #b88618;
 }
 
 .admin-login-card__divider {
@@ -121,14 +110,14 @@ body.admin-login-page {
 
 .admin-login-card__intro h2 {
     margin: 0 0 0.5rem;
-    font-size: 1.125rem;
+    font-size: clamp(1.15rem, 2.5vw, 1.35rem);
     font-weight: 600;
     color: #111;
 }
 
 .admin-login-card__intro p {
     margin: 0;
-    font-size: 0.8125rem;
+    font-size: clamp(0.875rem, 2vw, 1rem);
     line-height: 1.45;
     color: #555;
 }
@@ -165,8 +154,8 @@ body.admin-login-page {
 .admin-login-field label {
     display: block;
     margin-bottom: 0.35rem;
-    font-size: 0.875rem;
-    font-weight: 600;
+    font-size: clamp(0.9rem, 2vw, 1rem);
+    font-weight: 400;
     color: #111;
 }
 
@@ -194,7 +183,8 @@ body.admin-login-page {
     min-width: 0;
     padding: 0.65rem 0.75rem;
     border: none;
-    font-size: 0.9375rem;
+    font-size: clamp(0.9375rem, 2vw, 1.0625rem);
+    font-weight: 400;
     outline: none;
 }
 

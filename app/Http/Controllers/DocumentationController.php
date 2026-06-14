@@ -88,8 +88,8 @@ class DocumentationController extends Controller
         $rows = DB::table($table)
             ->whereYear('dateCreated', $carbon->year)
             ->whereMonth('dateCreated', $carbon->month)
-            ->orderBy('dateCreated')
-            ->orderBy($idColumn)
+            ->orderByDesc('dateCreated')
+            ->orderByDesc($idColumn)
             ->get();
 
         $out = [];

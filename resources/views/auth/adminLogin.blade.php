@@ -5,6 +5,11 @@
 @section('body-class', 'admin-login-page bg-light')
 
 @push('styles')
+    <style>
+        body.admin-login-page .admin-login-bg {
+            background-image: url("{{ asset('assets/landingPage/BACKGROUND.jpg') }}");
+        }
+    </style>
     <link rel="stylesheet" href="{{ asset('css/auth/adminLogin.css') }}">
 @endpush
 
@@ -19,8 +24,8 @@
                 <a href="{{ route('landingPage') }}" class="admin-login-card__close" aria-label="Close">&times;</a>
 
                 <div class="admin-login-card__brand">
-                    <img class="admin-login-card__logo" src="{{ asset('assets/landingPage/SAPPC.png') }}" alt=""
-                        width="104" height="104" decoding="async">
+                    <img class="admin-login-card__logo" src="{{ asset('assets/landingPage/SAPPC-transparent.png') }}" alt=""
+                        width="888" height="900" decoding="async">
                     <h1 class="admin-login-card__title">Saint Anthony of Padua Parish Church</h1>
                 </div>
 
@@ -38,7 +43,7 @@
                 <form class="admin-login-form" method="POST" action="{{ route('admin.login.submit') }}" autocomplete="on">
                     @csrf
                     <div class="admin-login-field">
-                        <label for="admin-username">Admin</label>
+                        <label for="admin-username">Username</label>
                         <div class="admin-login-input-wrap">
                             <span class="admin-login-input-wrap__icon" aria-hidden="true">
                                 <i class="fa-solid fa-user"></i>

@@ -338,6 +338,11 @@ class DashboardController extends Controller
             $query->whereDate('dateCreated', '<=', $request->input('date_to'));
         }
 
+        $sortOrder = strtolower(trim((string) $request->input('sort_order', 'desc')));
+        if ($sortOrder === 'asc') {
+            return $query->orderBy('dateCreated')->orderBy('record_id');
+        }
+
         return $query->orderByDesc('dateCreated')->orderByDesc('record_id');
     }
 

@@ -151,6 +151,22 @@
                 window.print();
             });
 
+            (function () {
+                var savedPrintTitle = '';
+
+                window.addEventListener('beforeprint', function () {
+                    savedPrintTitle = document.title;
+                    document.title = ' ';
+                });
+
+                window.addEventListener('afterprint', function () {
+                    if (savedPrintTitle !== '') {
+                        document.title = savedPrintTitle;
+                        savedPrintTitle = '';
+                    }
+                });
+            })();
+
             $(document).on('click', '[data-doc-export]', function () {
                 var fmt = ($(this).attr('data-doc-export') || '').toLowerCase();
                 if (fmt === 'pdf' || fmt === 'docx' || fmt === 'xlsx') {

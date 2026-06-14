@@ -44,6 +44,7 @@
         ])
 
         @include('confirmation.partials.certificationModal')
+        @include('partials.sappcCertificatePreviewModal')
 
         @include('confirmation.partials.recordsTablePanel', [
             'activeSection' => 'certification',

@@ -7,8 +7,8 @@
     --sappc-white: #ffffff;
     --sappc-border: #bdbdbd;
     --sappc-sidebar-width: 15.5rem;
-    --sappc-font-family: Arial, Helvetica, sans-serif;
-    font-family: var(--sappc-font-family);
+    --sappc-header-footer-bg: #1a212b;
+    --sappc-panel-bg: #091d3a;
 }
 
 .sappc-dash {
@@ -16,7 +16,6 @@
     min-height: 100vh;
     background: var(--sappc-main-bg);
     color: var(--sappc-charcoal);
-    font-family: var(--sappc-font-family);
 }
 
 .sappc-dash_layout {
@@ -28,7 +27,7 @@
 .sappc-sidebar {
     width: var(--sappc-sidebar-width);
     flex-shrink: 0;
-    background: var(--sappc-charcoal);
+    background: var(--sappc-panel-bg);
     color: #fff;
     display: flex;
     flex-direction: column;
@@ -66,6 +65,7 @@
 
 .sappc-sidebar_church {
     margin: 0.85rem 0 0;
+    font-family: Arial, sans-serif;
     font-size: 0.95rem;
     font-weight: 800;
     letter-spacing: 0.08em;
@@ -84,6 +84,7 @@
     margin: 1rem 0.65rem 0.4rem;
     padding-top: 0.5rem;
     border-top: 1px solid rgba(255, 255, 255, 0.12);
+    font-family: Arial, sans-serif;
     font-size: 0.65rem;
     font-weight: 700;
     letter-spacing: 0.12em;
@@ -173,7 +174,7 @@
     align-items: center;
     gap: 1rem;
     padding: 0.65rem 1rem;
-    background: var(--sappc-charcoal);
+    background: var(--sappc-header-footer-bg);
     border-bottom: 1px solid #000;
     position: sticky;
     top: 0;
@@ -248,6 +249,7 @@
 }
 
 .sappc-topbar_admin {
+    font-family: Arial, sans-serif;
     font-size: 0.95rem;
     font-weight: 600;
 }
@@ -496,7 +498,6 @@ body.sappc-dash:has(.sappc-registry-page)::-webkit-scrollbar {
     justify-content: center;
     gap: 0.5rem;
     padding: 0.48rem 0.95rem;
-    font-family: var(--sappc-font-family);
     font-size: 0.8rem;
     font-weight: 700;
     letter-spacing: 0.04em;
@@ -659,7 +660,6 @@ a.sappc-registry-toolbar_btn.is-active:hover {
     display: inline-block;
     min-width: 3.25rem;
     padding: 0.28rem 0.7rem;
-    font-family: var(--sappc-font-family);
     font-size: 0.72rem;
     font-weight: 600;
     letter-spacing: 0.03em;
@@ -684,6 +684,7 @@ a.sappc-registry-toolbar_btn.is-active:hover {
 
 .sappc-doc-stat {
     --sappc-stat-gold: #b8860b;
+    container-type: inline-size;
     background: var(--sappc-white);
     border: 1px solid var(--sappc-border);
     border-radius: 0.25rem;
@@ -698,10 +699,12 @@ a.sappc-registry-toolbar_btn.is-active:hover {
 
 .sappc-doc-stat_label {
     margin: 0;
-    font-size: 0.8rem;
-    font-weight: 400;
+    width: 100%;
+    font-size: clamp(0.68rem, 5.5cqi, 0.95rem);
+    font-weight: 600;
     color: var(--sappc-stat-gold);
-    line-height: 1.35;
+    line-height: 1.25;
+    letter-spacing: 0.01em;
 }
 
 .sappc-doc-stat_pipe {
@@ -736,7 +739,7 @@ a.sappc-registry-toolbar_btn.is-active:hover {
 
 .sappc-doc-stat_year {
     font-weight: 600;
-    font-size: 0.72rem;
+    font-size: 1em;
     opacity: 0.9;
 }
 
@@ -764,6 +767,19 @@ button.sappc-doc-stat_clickable:focus-visible {
     max-width: min(42rem, calc(100vw - 2rem));
 }
 
+@media (max-width: 1024px) {
+    #sappcStatMonthlyModal .sappc-stat-monthly-dialog {
+        margin-left: auto;
+        margin-right: 1.25rem;
+    }
+}
+
+@media (max-width: 1024px) and (min-width: 992px) {
+    body:not(.sappc-dash--sidebar-collapsed) #sappcStatMonthlyModal .sappc-stat-monthly-dialog {
+        max-width: min(42rem, calc(100vw - var(--sappc-sidebar-width) - 2.5rem));
+    }
+}
+
 .sappc-stat-monthly-modal {
     border-radius: 0.35rem;
     border: 1px solid var(--sappc-border, #dee2e6);
@@ -777,8 +793,8 @@ button.sappc-doc-stat_clickable:focus-visible {
 .sappc-stat-monthly-modal__head-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
+    justify-content: flex-end;
+    gap: 0.75rem;
 }
 
 .sappc-stat-monthly-modal__controls {
@@ -912,7 +928,6 @@ button.sappc-doc-stat_clickable:focus-visible {
     padding: 0.75rem 1rem;
     border-bottom: 1px solid var(--sappc-border);
     background: #fafafa;
-    font-family: var(--sappc-font-family);
 }
 
 .sappc-table-toolbar_row--primary {
@@ -955,7 +970,6 @@ button.sappc-doc-stat_clickable:focus-visible {
     padding: 0;
     margin: 0;
     gap: 0;
-    font-family: var(--sappc-font-family);
     border: 1px solid #1f1f1f;
     border-radius: 0;
     background: #3a3a3a;
@@ -984,7 +998,6 @@ button.sappc-doc-stat_clickable:focus-visible {
     max-width: 9.75rem;
     margin: 0;
     padding: 0.38rem 0.45rem;
-    font-family: var(--sappc-font-family);
     font-size: 0.75rem;
     line-height: 1.2;
     color: var(--sappc-charcoal);
@@ -1009,7 +1022,6 @@ button.sappc-doc-stat_clickable:focus-visible {
     flex-shrink: 0;
     margin: 0;
     padding: 0.38rem 1rem;
-    font-family: var(--sappc-font-family);
     font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.04em;
@@ -1039,7 +1051,6 @@ button.sappc-doc-stat_clickable:focus-visible {
     padding: 0.45rem 1rem;
     background: #eeeeee;
     border-bottom: 1px solid var(--sappc-border);
-    font-family: var(--sappc-font-family);
 }
 
 .sappc-table-reload-bar_btn {
@@ -1063,7 +1074,6 @@ button.sappc-doc-stat_clickable:focus-visible {
 }
 
 .sappc-table-reload-bar_text {
-    font-family: var(--sappc-font-family);
 }
 
 .sappc-table-reload-bar_btn:hover {
@@ -1192,11 +1202,12 @@ button.sappc-doc-stat_clickable:focus-visible {
 }
 
 .sappc-data-table {
+    font-family: Arial, sans-serif;
     font-size: 0.8rem;
 }
 
 .sappc-data-table thead th {
-    background: var(--sappc-charcoal);
+    background: var(--sappc-panel-bg);
     color: #fff;
     font-weight: 700;
     font-size: 0.7rem;
@@ -1205,6 +1216,7 @@ button.sappc-doc-stat_clickable:focus-visible {
     padding: 0.65rem 0.5rem;
     border-color: #000;
     vertical-align: middle;
+    text-align: center;
 }
 
 .sappc-data-table tbody td {
@@ -1212,6 +1224,7 @@ button.sappc-doc-stat_clickable:focus-visible {
     vertical-align: middle;
     border-color: #e0e0e0;
     background: #fff;
+    text-align: center;
 }
 
 .sappc-action-edit {
@@ -1501,7 +1514,7 @@ body.sappc-dash--registry-embed .sappc-registry-page > *:not(#christeningApplica
     flex-shrink: 0;
     margin-top: auto;
     padding: 0.85rem 1rem;
-    background: #424242;
+    background: var(--sappc-header-footer-bg);
     text-align: center;
     position: sticky;
     bottom: 0;

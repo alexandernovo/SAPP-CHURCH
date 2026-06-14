@@ -358,7 +358,6 @@
                                     data-bs-dismiss="modal">Cancel</button>
                                 <button type="submit" form="burialScheduleRequestForm"
                                     class="sappcScheduleActionBtn is-reserve">Reserved Schedule</button>
-                                <button type="button" class="sappcScheduleActionBtn is-calendar">View Calendar</button>
                             </div>
                         </section>
                     </div>

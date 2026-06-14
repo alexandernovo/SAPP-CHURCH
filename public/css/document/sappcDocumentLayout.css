@@ -1,3 +1,7 @@
+:root {
+    --sappc-panel-bg: #091d3a;
+    --sappc-header-footer-bg: #1a212b;
+}
 
 .sappc-doc-page {
     min-height: calc(100vh - 8rem);
@@ -165,7 +169,6 @@
     width: 100%;
     padding: 0.6rem 0.75rem;
     font-size: 0.95rem;
-    font-family: var(--sappc-font-family, Arial, Helvetica, sans-serif);
     color: var(--sappc-charcoal, #212121);
     background-color: #fff;
     border: 2px solid var(--sappc-gold, #b8860b);
@@ -203,7 +206,6 @@
     width: 100%;
     padding: 0.6rem 2rem 0.6rem 0.75rem;
     font-size: 0.95rem;
-    font-family: var(--sappc-font-family, Arial, Helvetica, sans-serif);
     color: var(--sappc-charcoal, #212121);
     background-color: #fff;
     border: 2px solid var(--sappc-gold, #b8860b);
@@ -228,7 +230,6 @@
     font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    font-family: var(--sappc-font-family, Arial, Helvetica, sans-serif);
     color: #fff;
     background: var(--sappc-gold, #b8860b);
     border: 1px solid var(--sappc-gold-dark, #9a7209);
@@ -338,7 +339,6 @@
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    font-family: var(--sappc-font-family, Arial, Helvetica, sans-serif);
     color: var(--sappc-gold-dark, #9a7209);
     background: #fff;
     border: 2px solid var(--sappc-gold, #b8860b);
@@ -444,7 +444,6 @@
     font-weight: 800;
     text-transform: uppercase;
     color: #111;
-    font-family: var(--sappc-font-family, Arial, Helvetica, sans-serif);
 }
 
 .sappc-doc-letterhead_line--primary {
@@ -472,7 +471,6 @@
     line-height: 1.2;
     margin: 0.85rem 0 1.1rem;
     padding: 0.5rem 0.5rem 0.6rem;
-    font-family: var(--sappc-font-family, Arial, Helvetica, sans-serif);
 }
 
 .sappc-doc-table-wrap {
@@ -498,12 +496,12 @@
 .sappc-doc-table {
     width: 100%;
     border-collapse: collapse;
+    font-family: Arial, sans-serif;
     font-size: clamp(0.72rem, 1.3vw, 0.8rem);
-    font-family: var(--sappc-font-family, Arial, Helvetica, sans-serif);
 }
 
 .sappc-doc-table thead th {
-    background: #2c2c2c;
+    background: var(--sappc-panel-bg, #091d3a);
     color: #fff;
     font-weight: 800;
     text-transform: uppercase;
@@ -520,6 +518,7 @@
     border: 1px solid var(--sappc-border, #bdbdbd);
     color: var(--sappc-charcoal, #212121);
     vertical-align: middle;
+    text-align: center;
 }
 
 .sappc-doc-table tbody td:nth-child(1) {
@@ -574,7 +573,6 @@
         margin: 0;
     }
 
-    /* Match on-screen report: no DataTables chrome in print */
     #sappcDocTableOuter .sappc-doc-dt-controls,
     #sappcDocTableOuter .dataTables_length,
     #sappcDocTableOuter .dataTables_filter,
@@ -610,7 +608,7 @@
 
     #sappcDocDataTable thead th,
     #sappcDocDataTable thead td {
-        background: #2c2c2c !important;
+        background: #091d3a !important;
         color: #fff !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;

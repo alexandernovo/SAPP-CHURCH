@@ -671,6 +671,20 @@
 
         var DEFAULT_CERT_PURPOSE = 'For all legal purposes';
 
+        function measureChristeningGridCharWidth(input) {
+            if (!input) {
+                return 0;
+            }
+            var canvas = document.createElement('canvas');
+            var ctx = canvas.getContext('2d');
+            if (!ctx) {
+                return 0;
+            }
+            var cs = window.getComputedStyle(input);
+            ctx.font = cs.font || (cs.fontStyle + ' ' + cs.fontVariant + ' ' + cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily);
+            return ctx.measureText('0').width;
+        }
+
         function syncChristeningApplicationNameGridMetrics() {
             ['chAppCellsFirst', 'chAppCellsMiddle', 'chAppCellsFamily'].forEach(function(wrapId) {
                 var wrap = document.getElementById(wrapId);
@@ -678,15 +692,18 @@
                     return;
                 }
                 var cell = wrap.querySelector('.sappcChOfficialCell');
-                if (!cell) {
+                var input = wrap.querySelector('.sappcChOfficialCellInput');
+                if (!cell || !input) {
                     return;
                 }
                 var w = cell.getBoundingClientRect().width;
-                if (!(w > 0)) {
+                var charW = measureChristeningGridCharWidth(input);
+                if (!(w > 0) || !(charW > 0)) {
                     return;
                 }
                 wrap.style.setProperty('--ch-name-cell-w', w.toFixed(3) + 'px');
                 wrap.style.setProperty('--ch-name-pitch', (w + 1).toFixed(3) + 'px');
+                wrap.style.setProperty('--ch-name-char-w', charW.toFixed(3) + 'px');
             });
         }
 
@@ -696,15 +713,18 @@
                 return;
             }
             var cell = wrap.querySelector('.sappcChOfficialCell');
-            if (!cell) {
+            var input = wrap.querySelector('.sappcChOfficialCellInput');
+            if (!cell || !input) {
                 return;
             }
             var w = cell.getBoundingClientRect().width;
-            if (!(w > 0)) {
+            var charW = measureChristeningGridCharWidth(input);
+            if (!(w > 0) || !(charW > 0)) {
                 return;
             }
             wrap.style.setProperty('--ch-contact-cell-w', w.toFixed(3) + 'px');
             wrap.style.setProperty('--ch-contact-pitch', (w + 1).toFixed(3) + 'px');
+            wrap.style.setProperty('--ch-contact-char-w', charW.toFixed(3) + 'px');
         }
 
         function syncChristeningApplicationOfficeGridMetrics() {
@@ -1065,8 +1085,6 @@
                                 setTimeout(function() {
                                     $('#christeningApplicationFormBtn').trigger('click');
                                 }, 120);
-                            } else if (advanceRegistryWorkflow('application', savedId)) {
-                                return;
                             }
                         }
                     })
@@ -1369,11 +1387,6 @@
                                 if (inst) inst.hide();
                             }
                             var msg = (res && res.message) ? res.message : 'Payment record saved.';
-                            var payStatus = (res && res.data && res.data.payment_status) ?
-                                String(res.data.payment_status).toLowerCase() : '';
-                            if (payStatus === 'paid' && advanceRegistryWorkflow('payment', cid)) {
-                                return;
-                            }
                             if (typeof Swal !== 'undefined') {
                                 Swal.fire({
                                     icon: 'success',
@@ -1612,42 +1625,17 @@
             };
         }
 
-        function printBaptismCertificationSheet(printWin, shouldPrint) {
-            var tplNode = document.getElementById('baptismCertificatePrintableTemplate');
-            if (!tplNode || !tplNode.content) {
-                window.alert('Print template not found.');
-                return false;
-            }
-            var tplStyleNode = tplNode.content.querySelector('style');
-            var tplWrapNode = tplNode.content.querySelector('.bap-wrap');
-            if (!tplStyleNode || !tplWrapNode) {
-                window.alert('Print template is incomplete.');
-                return false;
-            }
-
-            var openedHere = false;
-            if (!printWin && baptismPrintWindow && !baptismPrintWindow.closed) {
-                printWin = baptismPrintWindow;
-            }
-            if (!printWin || printWin.closed) {
-                printWin = prepareBaptismPrintWindow();
-                openedHere = true;
-            }
-            if (!printWin) {
-                window.alert('Pop-up blocked. Please allow pop-ups to print the certificate.');
-                return false;
-            }
-            baptismPrintWindow = printWin;
-            shouldPrint = shouldPrint !== false;
-
-            var printData = collectBaptismPrintData();
-            var tplWrapClone = tplWrapNode.cloneNode(true);
+        function populateBaptismCertificateClone(tplWrapClone, printData) {
             var bg = tplWrapClone.querySelector('.bap-bg');
-            if (bg) bg.setAttribute('src', baptismCertBgUrl);
+            if (bg) {
+                bg.setAttribute('src', baptismCertBgUrl);
+            }
 
             function setCloneVal(id, value) {
                 var el = tplWrapClone.querySelector('#' + id);
-                if (!el) return;
+                if (!el) {
+                    return;
+                }
                 var v = value || '';
                 if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
                     el.setAttribute('value', v);
@@ -1659,7 +1647,9 @@
 
             function setClonePurpose(value) {
                 var el = tplWrapClone.querySelector('#bapPurpose');
-                if (!el) return;
+                if (!el) {
+                    return;
+                }
                 var v = String(value || '').trim();
                 var isDefault = !v || v.toUpperCase() === 'FOR ALL LEGAL PURPOSES';
                 if (isDefault) {
@@ -1690,10 +1680,176 @@
             setCloneVal('bapPageNo', printData.page_no);
             setCloneVal('bapRegisterNo', printData.register_no);
             setCloneVal('bapDateIssued', printData.date_issued);
+        }
+
+        /* View-only: tight preview template (baptismCertificatePreviewTemplate) */
+        function getBaptismCertificatePreviewStyles() {
+            var tplNode = document.getElementById('baptismCertificatePreviewTemplate');
+            if (!tplNode || !tplNode.content) {
+                return '';
+            }
+            var styleNode = tplNode.content.querySelector('#baptismCertificatePreviewStyles') ||
+                tplNode.content.querySelector('style');
+            return styleNode ? (styleNode.textContent || '') : '';
+        }
+
+        function cloneBaptismCertificatePreviewSheet(printData) {
+            var tplNode = document.getElementById('baptismCertificatePreviewTemplate');
+            if (!tplNode || !tplNode.content) {
+                return null;
+            }
+            var sheetNode = tplNode.content.querySelector('.bap-sheet');
+            if (!sheetNode) {
+                return null;
+            }
+            var sheetClone = sheetNode.cloneNode(true);
+            populateBaptismCertificateClone(sheetClone, printData);
+            return sheetClone;
+        }
+
+        function mountBaptismCertificatePreview(mountEl, printData) {
+            if (!mountEl) {
+                window.alert('Certificate preview mount not found.');
+                return false;
+            }
+            var sheetClone = cloneBaptismCertificatePreviewSheet(printData);
+            if (!sheetClone) {
+                window.alert('Certificate preview template not found.');
+                return false;
+            }
+
+            mountEl.innerHTML = '';
+
+            var styleEl = document.createElement('style');
+            styleEl.textContent = getBaptismCertificatePreviewStyles();
+            mountEl.appendChild(styleEl);
+
+            var frameEl = document.createElement('div');
+            frameEl.className = 'sappcChristeningCertFrame';
+
+            sheetClone.classList.add('bap-sheet--preview');
+            frameEl.appendChild(sheetClone);
+            mountEl.appendChild(frameEl);
+            return true;
+        }
+
+        function loadChristeningCertificationForRecord(id, doneFn, failFn) {
+            if (!id) {
+                return;
+            }
+            if (!paymentDetailsUrl || !certificationDetailsUrl) {
+                window.alert('Certification load is not configured.');
+                return;
+            }
+
+            setSelectedChristeningId(id);
+            selectChristeningTableRow(id);
+
+            ensureRegistryWorkflowStep('certification', id, function(ok) {
+                if (!ok) {
+                    return;
+                }
+                $.when(
+                    fetchJson(buildQueryUrl(paymentDetailsUrl, {
+                        christening_id: id
+                    }), jsonHeaders),
+                    fetchJson(buildQueryUrl(certificationDetailsUrl, {
+                        christening_id: id
+                    }), jsonHeaders)
+                ).done(function(payTuple, certTuple) {
+                    var pay = payTuple && payTuple[0] ? payTuple[0] : null;
+                    var cert = certTuple && certTuple[0] ? certTuple[0] : null;
+                    if (pay && pay.ok && pay.data) {
+                        applyChristeningCertificationTopFromPayment(pay.data);
+                    }
+                    if (cert && cert.ok && cert.data && typeof cert.data === 'object') {
+                        applyChristeningCertificationFromApplicationDetails(cert.data);
+                    }
+                    if (typeof doneFn === 'function') {
+                        doneFn(cert);
+                    }
+                }).fail(function(xhr) {
+                    var msg = 'Could not load certification record.';
+                    var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
+                    if (data && data.message) {
+                        msg = data.message;
+                    }
+                    if (typeof failFn === 'function') {
+                        failFn(msg);
+                        return;
+                    }
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: msg
+                        });
+                    } else {
+                        window.alert(msg);
+                    }
+                });
+            });
+        }
+
+        function showChristeningCertificatePreview(id) {
+            loadChristeningCertificationForRecord(id, function() {
+                if (typeof window.sappcShowCertificatePreview !== 'function') {
+                    window.alert('Certificate preview is not available on this page.');
+                    return;
+                }
+                window.sappcShowCertificatePreview({
+                    title: 'Baptism Certificate',
+                    render: function(mountEl) {
+                        mountBaptismCertificatePreview(mountEl, collectBaptismPrintData());
+                    },
+                    onPrint: function() {
+                        printBaptismCertificationSheet(null, true);
+                    }
+                });
+            });
+        }
+
+        function printBaptismCertificationSheet(printWin, shouldPrint) {
+            var tplNode = document.getElementById('baptismCertificatePrintableTemplate');
+            if (!tplNode || !tplNode.content) {
+                window.alert('Print template not found.');
+                return false;
+            }
+            var tplStyleNode = tplNode.content.querySelector('style');
+            var tplWrapNode = tplNode.content.querySelector('.bap-wrap');
+            if (!tplStyleNode || !tplWrapNode) {
+                window.alert('Print template is incomplete.');
+                return false;
+            }
+
+            var openedHere = false;
+            if (!printWin && baptismPrintWindow && !baptismPrintWindow.closed) {
+                printWin = baptismPrintWindow;
+            }
+            if (!printWin || printWin.closed) {
+                printWin = prepareBaptismPrintWindow();
+                openedHere = true;
+            }
+            if (!printWin) {
+                window.alert('Pop-up blocked. Please allow pop-ups to print the certificate.');
+                return false;
+            }
+            baptismPrintWindow = printWin;
+            shouldPrint = shouldPrint !== false;
+
+            var printData = collectBaptismPrintData();
+            var tplWrapClone = tplWrapNode.cloneNode(true);
+            populateBaptismCertificateClone(tplWrapClone, printData);
 
             var html = '<!doctype html><html><head><meta charset="utf-8"><title>Baptism Certificate</title><style>' +
                 (tplStyleNode.textContent || '') +
                 '</style></head><body>' + (tplWrapClone.outerHTML || '') + '</body></html>';
+
+            if (baptismPrintBlobUrl) {
+                try {
+                    URL.revokeObjectURL(baptismPrintBlobUrl);
+                } catch (eRev) {}
+            }
             baptismPrintBlobUrl = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
             var didPrint = false;
 
@@ -1792,10 +1948,6 @@
                         return;
                     }
                     printBaptismCertificationSheet();
-                    var certId = getSelectedChristeningId();
-                    if (advanceRegistryWorkflow('certification', certId)) {
-                        return;
-                    }
                     var msg = (res && res.message) ? res.message : 'Certification record saved.';
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
@@ -1871,33 +2023,9 @@
                     swalRegistryApplicationRequired();
                     return;
                 }
-                if (!paymentDetailsUrl || !certificationDetailsUrl) {
-                    window.alert('Certification load is not configured.');
-                    return;
-                }
-                ensureRegistryWorkflowStep('certification', cid, function(ok) {
-                    if (!ok) {
-                        return;
-                    }
-                $.when(
-                    fetchJson(buildQueryUrl(paymentDetailsUrl, {
-                        christening_id: cid
-                    }), jsonHeaders),
-                    fetchJson(buildQueryUrl(certificationDetailsUrl, {
-                        christening_id: cid
-                    }), jsonHeaders)
-                ).done(function(payTuple, certTuple) {
-                    var pay = payTuple && payTuple[0] ? payTuple[0] : null;
-                    var cert = certTuple && certTuple[0] ? certTuple[0] : null;
-                    if (pay && pay.ok && pay.data) applyChristeningCertificationTopFromPayment(pay.data);
-                    if (cert && cert.ok && cert.data && typeof cert.data === 'object') {
-                        applyChristeningCertificationFromApplicationDetails(cert.data);
-                    }
+                loadChristeningCertificationForRecord(cid, function() {
                     certBsModal.show();
-                }).fail(function(xhr) {
-                    var msg = 'Could not load record for certification.';
-                    var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
-                    if (data && data.message) msg = data.message;
+                }, function(msg) {
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
                             icon: 'error',
@@ -1907,7 +2035,6 @@
                     } else {
                         window.alert(msg);
                     }
-                });
                 });
             });
 
@@ -1935,8 +2062,9 @@
         }
 
         function rowActionCell(recordId) {
+            var viewLabel = activeSection === 'certification' ? 'View certificate' : 'View record';
             return '<td class="text-center"><div class="sappc-icon-action_group">' +
-                '<a href="#" class="sappc-icon-action sappc-icon-action--view" title="View" aria-label="View record" data-record-id="' + esc(recordId) + '"><i class="fa-solid fa-eye" aria-hidden="true"></i></a>' +
+                '<a href="#" class="sappc-icon-action sappc-icon-action--view" title="' + viewLabel + '" aria-label="' + viewLabel + '" data-record-id="' + esc(recordId) + '"><i class="fa-solid fa-eye" aria-hidden="true"></i></a>' +
                 '<a href="#" class="sappc-icon-action sappc-icon-action--edit" title="Edit" aria-label="Edit record" data-record-id="' + esc(recordId) + '"><i class="fa-solid fa-pen" aria-hidden="true"></i></a>' +
                 '<button type="button" class="sappc-icon-action sappc-icon-action--delete" title="Delete" aria-label="Delete record" data-record-id="' + esc(recordId) + '"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>' +
                 '</div></td>';
@@ -2094,11 +2222,21 @@
         }
         window.sappcRegistryWorkflowOpenRecord = openChristeningSectionRecord;
 
-        $('#christeningTableBody').on('click', '.sappc-icon-action--view, .sappc-icon-action--edit', function(e) {
+        $('#christeningTableBody').on('click', '.sappc-icon-action--view', function(e) {
             e.preventDefault();
             e.stopPropagation();
             var id = ($(this).attr('data-record-id') || '').trim();
+            if (activeSection === 'certification') {
+                showChristeningCertificatePreview(id);
+                return;
+            }
             openChristeningSectionRecord(id);
+        });
+
+        $('#christeningTableBody').on('click', '.sappc-icon-action--edit', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            openChristeningSectionRecord(($(this).attr('data-record-id') || '').trim());
         });
 
         $('#christeningTableBody').on('click', '.sappc-icon-action--delete', function(e) {

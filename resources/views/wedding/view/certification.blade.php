@@ -45,6 +45,7 @@
 
         @include('wedding.partials.certificationModal')
         @include('wedding.partials.marriageCertificatePrintable')
+        @include('partials.sappcCertificatePreviewModal')
 
         @include('wedding.partials.recordsTablePanel', [
             'activeSection' => 'certification',

@@ -2,7 +2,7 @@
     <style>
         .bc-wrap { min-height: 100vh; display: grid; place-items: center; background: #ececec; padding: 1rem; }
         .bc-sheet { width: min(96vw, 53rem); aspect-ratio: 667 / 1024; position: relative; background: #fff url('{{ asset('assets/certificates/burialCert.jpg') }}') center / cover no-repeat; box-shadow: 0 4px 18px rgba(0,0,0,.2); }
-        .bc-field { position: absolute; border: 0; background: transparent; color: #0e285c; font: 600 1.02rem "Times New Roman", serif; padding: .05rem .15rem; }
+        .bc-field { position: absolute; border: 0; background: transparent; color: #0e285c; font: 600 1.02rem Arial, Helvetica, sans-serif; padding: .05rem .15rem; }
         .bc-field:focus { outline: none; }
         .bc-name { left: 18%; top: 36.9%; width: 64%; }
         .bc-birth-day { left: 25%; top: 43.5%; width: 14%; text-align: center; }

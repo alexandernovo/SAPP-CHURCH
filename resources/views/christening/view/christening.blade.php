@@ -280,7 +280,6 @@
                                     data-bs-dismiss="modal">Cancel</button>
                                 <button type="submit" form="christeningScheduleRequestForm"
                                     class="sappcScheduleActionBtn is-reserve">Reserved Schedule</button>
-                                <button type="button" class="sappcScheduleActionBtn is-calendar">View Calendar</button>
                             </div>
                         </section>
                     </div>
@@ -793,6 +792,9 @@
         </div>
     </div>
 
+    @include('partials.sappcCertificatePreviewModal')
+    @include('christening.partials.baptismCertificationCertificate')
+
     <section class="sappc-table-panel" id="christeningRecordsPanel"
         data-records-url="{{ route('admin.dashboard.records') }}" data-registry-type="christening"
         data-application-details-url="{{ route('admin.christening.application-details') }}"
@@ -872,7 +874,6 @@
             <nav class="sappc-pagination" id="christeningPagination" aria-label="Table pagination"></nav>
         </div>
     </section>
-    @include('christening.partials.baptismCertificationCertificate')
     </div>
 @endsection
 

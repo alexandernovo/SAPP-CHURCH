@@ -3,7 +3,6 @@
 #weddingMarriageApplicationModal .modal-dialog.sappcKasalModal {
     max-width: min(98vw, 1020px);
     margin: 0.5rem auto;
-    font-family: "Times New Roman", Times, Georgia, serif;
 }
 
 #weddingMarriageApplicationModal .modal-content.sappcKasalAppModal {
@@ -65,7 +64,6 @@
     font-size: 1.35rem;
     letter-spacing: 0.08em;
     text-align: center;
-    font-family: "Times New Roman", Times, Georgia, serif;
 }
 
 #weddingMarriageApplicationModal .sappcKasalAppCoupleRow {
@@ -336,7 +334,6 @@
     color: #8b1e35;
     text-shadow: 1px 1px 0 #2a4a7a, 2px 2px 0 #1a3a6e;
     letter-spacing: 0.02em;
-    font-family: "Times New Roman", Times, Georgia, serif;
 }
 
 #weddingMarriageApplicationModal .sappcKasalPrecanaFala {

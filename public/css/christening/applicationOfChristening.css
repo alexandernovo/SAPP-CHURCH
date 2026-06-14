@@ -164,7 +164,6 @@
     padding: 0.42rem 0.1rem 0.38rem;
     background: #f1f1f1;
     color: #b1891c;
-    font-family: Arial, Helvetica, sans-serif;
     text-transform: uppercase;
 }
 
@@ -353,17 +352,12 @@
     background: #c29522;
 }
 
-.sappcScheduleActionBtn.is-calendar {
-    background: #585858;
-}
-
 @media (max-width: 991.98px) {
     .sappcScheduleRequestLayout {
         grid-template-columns: 1fr;
     }
 }
 
-/* Dashboard body uses #e0e0e0; Bootstrap modal uses --bs-modal-bg: var(--bs-body-bg). Force white for this modal. */
 #christeningApplicationFormModal.modal {
     --bs-modal-bg: #fff;
     --bs-body-bg: #fff;
@@ -399,7 +393,6 @@
 }
 
 .sappcChristeningAppModal .modal-body {
-    font-family: var(--sappc-font-family, Arial, Helvetica, sans-serif);
     color: #111;
     padding-left: 1.25rem;
     padding-right: 1.25rem;
@@ -425,7 +418,6 @@
 }
 
 .sappcChristeningAppModalFooter .sappcChristeningAppModalBtn {
-    font-family: var(--sappc-font-family, Arial, Helvetica, sans-serif);
     font-size: 0.875rem;
     font-weight: 600;
     padding: 0.5rem 1.5rem;
@@ -520,6 +512,55 @@
 
 #christeningApplicationFormModal #christeningApplicationForm > section {
     background-color: #fff !important;
+}
+
+#christeningApplicationForm {
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+}
+
+#christeningApplicationForm .sappcChOfficialDocTitle,
+#christeningApplicationForm .sappcChOfficialSectionTitle,
+#christeningApplicationForm .sappcChOfficialPage2Title,
+#christeningApplicationForm .sappcChOfficialGpHeading {
+    font-size: 18px;
+}
+
+#christeningApplicationForm .sappcChOfficialMastheadLine,
+#christeningApplicationForm .sappcChOfficialLabel,
+#christeningApplicationForm .sappcChOfficialNameLabel,
+#christeningApplicationForm .sappcChOfficialInput,
+#christeningApplicationForm .sappcChOfficialCellInput,
+#christeningApplicationForm .sappcChOfficialDottedInput,
+#christeningApplicationForm .sappcChOfficialDottedRow,
+#christeningApplicationForm .sappcChOfficialStatusRow,
+#christeningApplicationForm .sappcChOfficialCheck,
+#christeningApplicationForm .sappcChOfficialNote,
+#christeningApplicationForm .sappcChOfficialList,
+#christeningApplicationForm .sappcChOfficialAgeLabel,
+#christeningApplicationForm .sappcChOfficialFeeTable,
+#christeningApplicationForm .sappcChOfficialFeeTable th,
+#christeningApplicationForm .sappcChOfficialFeeTable td,
+#christeningApplicationForm .sappcChOfficialFeeInput,
+#christeningApplicationForm .sappcChOfficialGpLine,
+#christeningApplicationForm .sappcChOfficialApprovalBox,
+#christeningApplicationForm .sappcChOfficialSignLine,
+#christeningApplicationForm .sappcChOfficialSignBlock strong,
+#christeningApplicationForm .sappcChOfficialHiligaynon {
+    font-size: 12px;
+}
+
+#christeningApplicationForm .sappcChOfficialCellsWrapName .sappcChOfficialCellInput,
+#christeningApplicationForm .sappcChOfficialCellsWrapContact .sappcChOfficialCellInput {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+}
+
+#christeningApplicationForm .sappcChOfficialLabelSub,
+#christeningApplicationForm .sappcChOfficialLabelNote,
+#christeningApplicationForm .sappcChOfficialFeeTable em {
+    font-size: 9px;
+    font-style: italic;
 }
 
 .sappcChristeningAppFormMasthead {
@@ -749,7 +790,6 @@
 }
 
 .sappcChristeningAppModal .modal-body .sappcChOfficial:not(#christeningApplicationForm) {
-    font-family: var(--sappc-font-family, Arial, Helvetica, sans-serif);
     color: #111;
     font-size: 0.8rem;
     line-height: 1.45;
@@ -764,7 +804,6 @@
 .sappcChOfficialDocTitle,
 .sappcChOfficialPage2Title,
 .sappcChOfficialGpHeading {
-    font-family: Arial, Helvetica, sans-serif;
 }
 
 .sappcChOfficialHeader {
@@ -973,7 +1012,6 @@
     padding: 0.1rem 0.2rem;
     border: none;
     background: transparent;
-    font-family: Arial, Helvetica, sans-serif;
     font-size: 0.75rem;
     letter-spacing: 0.48rem;
     text-transform: uppercase;
@@ -983,21 +1021,21 @@
 
 .sappcChOfficialCellsWrapName .sappcChOfficialCellInput {
     box-sizing: border-box;
-    font-family: Consolas, "Courier New", Courier, monospace;
+    font-family: 'Courier New', Courier, monospace;
     font-size: 0.72rem;
-    letter-spacing: calc(var(--ch-name-pitch, calc(var(--ch-name-track) + 1px)) - 1ch);
+    letter-spacing: calc(var(--ch-name-pitch, calc(var(--ch-name-track) + 1px)) - var(--ch-name-char-w, 1ch));
     padding: 0.18rem 0 0;
-    padding-left: calc((var(--ch-name-cell-w, var(--ch-name-track)) - 1ch) / 2);
+    padding-left: calc((var(--ch-name-cell-w, var(--ch-name-track)) - var(--ch-name-char-w, 1ch)) / 2);
     line-height: 1.15;
 }
 
 .sappcChOfficialCellsWrapContact .sappcChOfficialCellInput {
     box-sizing: border-box;
-    font-family: Consolas, "Courier New", Courier, monospace;
+    font-family: 'Courier New', Courier, monospace;
     font-size: 0.72rem;
-    letter-spacing: calc(var(--ch-contact-pitch, calc(var(--ch-contact-track) + 1px)) - 1ch);
+    letter-spacing: calc(var(--ch-contact-pitch, calc(var(--ch-contact-track) + 1px)) - var(--ch-contact-char-w, 1ch));
     padding: 0.18rem 0 0;
-    padding-left: calc((var(--ch-contact-cell-w, var(--ch-contact-track)) - 1ch) / 2);
+    padding-left: calc((var(--ch-contact-cell-w, var(--ch-contact-track)) - var(--ch-contact-char-w, 1ch)) / 2);
     line-height: 1.15;
     text-transform: none;
 }
@@ -1114,7 +1152,6 @@
     border-radius: 2px;
     padding: 0.32rem 0.5rem;
     font-size: 0.8rem;
-    font-family: inherit;
     background: #fff;
     box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.07);
 }
@@ -1123,7 +1160,6 @@
     border-radius: 2px;
 }
 
-/* Native date picker: align with official form row height */
 .sappcChOfficialInput[type="date"] {
     min-height: 2.1rem;
     line-height: 1.25;
@@ -1189,7 +1225,6 @@
     border-bottom: 1px dotted #000;
     background: transparent;
     font-size: 0.75rem;
-    font-family: inherit;
     padding: 0.1rem 0.15rem;
 }
 
@@ -1291,7 +1326,6 @@
     border: 1px solid #000;
     border-radius: 2px;
     text-align: right;
-    font-family: inherit;
     font-size: 0.75rem;
     padding: 0.2rem 0.3rem;
     background: #fff;
@@ -1335,7 +1369,6 @@
     padding: 0.28rem 0.35rem;
     min-height: 1.45rem;
     font-size: 0.75rem;
-    font-family: inherit;
     background: #fff;
     box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.06);
 }
@@ -1384,7 +1417,6 @@
     padding: 0.35rem 0.45rem;
     background: #fff;
     box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.06);
-    font-family: inherit;
     font-size: 0.72rem;
     line-height: 1.35;
     color: #111;
@@ -1478,13 +1510,11 @@
 }
 
 .sappcPaymentFeeModal .modal-body {
-    font-family: var(--sappc-font-family, Arial, Helvetica, sans-serif);
     color: #111;
     padding: 0.35rem 1rem 0.85rem;
 }
 
 .sappcPaymentFeeModal .modal-body .sappcPaymentFeeModalOfficial {
-    font-family: var(--sappc-font-family, Arial, Helvetica, sans-serif);
     color: #111;
     font-size: 0.78rem;
     line-height: 1.4;
@@ -1497,15 +1527,12 @@
 
 .sappcPaymentFeeModal .sappcChOfficialHeader {
     margin-bottom: 0.75rem;
-    font-family: var(--sappc-font-family, Arial, Helvetica, sans-serif);
 }
 
 .sappcPaymentFeeModal .sappcChOfficialMasthead {
-    font-family: inherit;
 }
 
 .sappcPaymentFeeModal .sappcChOfficialMastheadLine {
-    font-family: inherit;
 }
 
 .sappcPaymentFeeModal .sappcChOfficialMastheadLineStrong {
@@ -1600,7 +1627,6 @@
     text-transform: uppercase;
     letter-spacing: 0.08em;
     margin: 0 0 0.5rem;
-    font-family: var(--sappc-font-family, Arial, Helvetica, sans-serif);
 }
 
 .sappcPaymentFeeModalTableWrap {
@@ -1883,6 +1909,11 @@
     .sappc-dash_main {
         margin: 0 !important;
     }
+
+    #sappcCertificatePreviewModal,
+    .sappcChristeningCertPreviewModal {
+        display: none !important;
+    }
 }
 
 #christeningTableBody tr.is-schedule-selected td,
@@ -1917,7 +1948,6 @@
     border: 1px solid #c0c0c0;
     border-radius: 0.35rem;
     background: #fff;
-    font-family: var(--sappc-font-family, Arial, Helvetica, sans-serif);
 }
 
 .sappcChristeningCertificationModal .modal-header,
@@ -2124,10 +2154,11 @@
     font-size: 0.8rem;
     background: #fff;
     color: #111;
+    text-align: left;
 }
 
 .sappcCertModalInput--center {
-    text-align: center;
+    text-align: left;
 }
 
 .sappcCertModalInput:focus {
@@ -2162,7 +2193,7 @@
 .sappcCertModalForm h4.sappcCertModalSectionTitle ~ .sappcCertModalRow2 .sappcCertModalSelect,
 .sappcCertModalForm h4.sappcCertModalSectionTitle ~ .sappcCertModalRow2 .sappcCertModalDateWrap .sappcCertModalInput,
 .sappcCertModalForm h4.sappcCertModalSectionTitle ~ .sappcCertModalTrackingGrid .sappcCertModalInput {
-    text-align: right;
+    text-align: left;
 }
 
 .sappcBurialCertificationModal .sappcCertModalRow2 .sappcCertModalField--stack:nth-child(2) {
@@ -2233,4 +2264,87 @@
     padding: 0.85rem 1rem 1rem;
     background: #fff;
     border-top: 1px solid #e0e0e0;
+}
+
+.sappcChristeningCertPreviewModal .modal-dialog.sappcCertPreviewModalDialog {
+    width: 100%;
+    max-width: min(96vw, 1140px);
+    height: auto;
+    max-height: calc(100vh - 2rem);
+    margin: 1rem auto;
+}
+
+.sappcChristeningCertPreviewModal .modal-dialog-scrollable .modal-content {
+    max-height: calc(100vh - 2rem);
+}
+
+#sappcCertificatePreviewModal .modal-content.sappcChristeningAppModal {
+    background-color: #fff !important;
+    --bs-modal-bg: #fff;
+    border: none !important;
+    --bs-modal-border-width: 0;
+    box-shadow: none !important;
+}
+
+#sappcCertificatePreviewModal .sappcChristeningAppModal .modal-header {
+    background-color: #fff !important;
+}
+
+#sappcCertificatePreviewModal .sappcCertPreviewModalBody {
+    padding-left: 0.65rem;
+    padding-right: 0.65rem;
+    padding-bottom: 1rem;
+    background-color: #fff !important;
+    overflow-y: auto;
+}
+
+.sappcChristeningCertFrame {
+    margin: 0 auto;
+    /* Wider preview display; fills modal-xl body (print unchanged) */
+    width: min(100%, 64rem);
+    max-width: 100%;
+    border: 1px solid var(--sappc-border, #bdbdbd);
+    border-radius: 0.25rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    line-height: 0;
+    background: #fff;
+}
+
+.sappcChristeningCertPreviewSheet {
+    display: block;
+    width: 100%;
+}
+
+.sappcChristeningCertFrame .bap-sheet {
+    --bap-cert-aspect: 1164 / 1800;
+    width: 100%;
+    height: auto;
+    aspect-ratio: var(--bap-cert-aspect);
+    max-height: none;
+    min-width: 0;
+    transform: none !important;
+    box-shadow: none;
+}
+
+.sappcChristeningCertFrame .bap-sheet--preview {
+    display: block;
+    line-height: normal;
+}
+
+.sappcChristeningCertPreviewSheet .sappcCertPreviewSheet--burial .bc-sheet {
+    width: min(100%, 53rem);
+    aspect-ratio: 667 / 1024;
+    box-shadow: none;
+}
+
+.sappcChristeningCertPreviewSheet .sappcCertPreviewSheet--marriage .mc-screen-frame {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+.sappcChristeningCertPreviewSheet .sappcCertPreviewSheet--marriage .page.mc-a4 {
+    width: 100%;
+    max-width: 100%;
+    box-shadow: none;
 }

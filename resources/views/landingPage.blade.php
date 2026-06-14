@@ -28,7 +28,6 @@
                     <div class="col-lg-7 sappc-main__copy">
                         <p class="sappc-welcome">Welcome to</p>
                         <h1 class="sappc-main-title">Saint Anthony of Padua Parish Church</h1>
-                        <div class="sappc-main-title-accent" aria-hidden="true"></div>
                         <p class="sappc-main-subtitle">Automated Recording Management System</p>
                         <p class="sappc-main-quote">
                             &ldquo;Digitizing Church Records, Strengthening Faith Communities&rdquo;

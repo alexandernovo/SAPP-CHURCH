@@ -45,10 +45,13 @@
 
         @include('burial.partials.certificationModal')
         @include('burial.partials.burialCertificationCertificate')
+        @include('partials.sappcCertificatePreviewModal')
 
         @include('burial.partials.recordsTablePanel', [
             'activeSection' => 'certification',
             'sectionLabel' => 'certification records',
+            'workflowHasCertification' => true,
+            'sortOrder' => 'desc',
             'tableColumns' => [
                 'NO.', 'REFERENCE CODE', 'CLIENT', 'ADDRESS', 'CONTACT NUMBER', 'DATE CREATED', 'ACTION',
             ],
@@ -57,6 +60,23 @@
 @endsection
 
 @push('scripts')
+    <script>
+        (function () {
+            var savedPrintTitle = '';
+
+            window.addEventListener('beforeprint', function () {
+                savedPrintTitle = document.title;
+                document.title = ' ';
+            });
+
+            window.addEventListener('afterprint', function () {
+                if (savedPrintTitle !== '') {
+                    document.title = savedPrintTitle;
+                    savedPrintTitle = '';
+                }
+            });
+        })();
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @include('burial.js.burialScript', [
         'initialTablePayload' => $initialTablePayload,
