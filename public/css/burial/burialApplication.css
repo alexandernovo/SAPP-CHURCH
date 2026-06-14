@@ -369,6 +369,14 @@
     border-bottom-color: #444;
 }
 
+#burialApplicationFormModal .sappcBurialAppArancelTable td:nth-child(2) {
+    text-align: center;
+}
+
+#burialApplicationFormModal .sappcBurialAppArancelTable td:nth-child(2) .sappcBurialAppIn {
+    text-align: center;
+}
+
 
 #burialApplicationFormModal .sappcBurialAppSignBlock {
     margin-top: 1rem;

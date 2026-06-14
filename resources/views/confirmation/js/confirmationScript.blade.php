@@ -762,7 +762,7 @@
                     '<td><span class="sappcPaymentFeeModalStatus sappcPaymentFeeModalStatusUnpaid">Unpaid</span></td>' +
                     '<td><span class="sappcPaymentFeeModalDatePaid" data-date-paid="">\u2014</span></td>' +
                     '<td class="text-center"><div class="sappcPaymentFeeModalActions">' +
-                    '<button type="button" class="sappcPaymentFeeModalToggleUnpaid">Paid</button>' +
+                    '<button type="button" class="sappcPaymentFeeModalTogglePaid">Paid</button>' +
                     '<button type="button" class="sappcPaymentFeeModalBtnRemove" aria-label="Remove row">' +
                     '<i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>' +
                     '</div></td></tr>';
@@ -811,10 +811,10 @@
                 $tr.find('.sappcPaymentFeeModalItemInput').val(label);
                 var $status = $tr.find('.sappcPaymentFeeModalStatus');
                 var $date = $tr.find('.sappcPaymentFeeModalDatePaid');
-                var $toggle = $tr.find('.sappcPaymentFeeModalToggleUnpaid');
+                var $toggle = $tr.find('.sappcPaymentFeeModalTogglePaid, .sappcPaymentFeeModalToggleUnpaid');
                 if (paid) {
                     $status.removeClass('sappcPaymentFeeModalStatusUnpaid').addClass('sappcPaymentFeeModalStatusPaid').text('Paid');
-                    $toggle.text('Unpaid');
+                    $toggle.removeClass('sappcPaymentFeeModalTogglePaid').addClass('sappcPaymentFeeModalToggleUnpaid').text('Unpaid');
                     if (dateIso) {
                         $date.attr('data-date-paid', dateIso);
                         $date.text(formatPaymentFeeDateDisplay(dateIso));
@@ -825,7 +825,7 @@
                     }
                 } else {
                     $status.removeClass('sappcPaymentFeeModalStatusPaid').addClass('sappcPaymentFeeModalStatusUnpaid').text('Unpaid');
-                    $toggle.text('Paid');
+                    $toggle.removeClass('sappcPaymentFeeModalToggleUnpaid').addClass('sappcPaymentFeeModalTogglePaid').text('Paid');
                     $date.removeAttr('data-date-paid');
                     $date.text('\u2014');
                 }
@@ -875,7 +875,7 @@
                 }
             });
 
-            $feeItemsBody.on('click', '.sappcPaymentFeeModalToggleUnpaid', function() {
+            $feeItemsBody.on('click', '.sappcPaymentFeeModalTogglePaid, .sappcPaymentFeeModalToggleUnpaid', function() {
                 var $btn = $(this);
                 var $row = $btn.closest('[data-fee-row]');
                 var $status = $row.find('.sappcPaymentFeeModalStatus');
@@ -883,13 +883,13 @@
                 var isPaid = $status.hasClass('sappcPaymentFeeModalStatusPaid');
                 if (isPaid) {
                     $status.removeClass('sappcPaymentFeeModalStatusPaid').addClass('sappcPaymentFeeModalStatusUnpaid').text('Unpaid');
-                    $btn.text('Paid');
+                    $btn.removeClass('sappcPaymentFeeModalToggleUnpaid').addClass('sappcPaymentFeeModalTogglePaid').text('Paid');
                     $date.removeAttr('data-date-paid');
                     $date.text('\u2014');
                 } else {
                     var iso = new Date().toISOString().slice(0, 10);
                     $status.addClass('sappcPaymentFeeModalStatusPaid').removeClass('sappcPaymentFeeModalStatusUnpaid').text('Paid');
-                    $btn.text('Unpaid');
+                    $btn.removeClass('sappcPaymentFeeModalTogglePaid').addClass('sappcPaymentFeeModalToggleUnpaid').text('Unpaid');
                     $date.attr('data-date-paid', iso);
                     $date.text(formatPaymentFeeDateDisplay(iso));
                 }

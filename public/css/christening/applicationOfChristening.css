@@ -744,11 +744,12 @@
 
 .sappcChristeningAppFormFeeTable td:last-child {
     width: 8rem;
+    text-align: center;
 }
 
 .sappcChristeningAppFormFeeTable .sappcChristeningAppFormInput {
     border-bottom: none;
-    text-align: right;
+    text-align: center;
 }
 
 .sappcChristeningAppFormGpGrid {
@@ -1319,11 +1320,15 @@
     font-weight: 700;
 }
 
+.sappcChOfficialFeeTable tbody td:last-child {
+    text-align: center;
+}
+
 .sappcChOfficialFeeInput {
     width: 100%;
     border: 1px solid #000;
     border-radius: 2px;
-    text-align: right;
+    text-align: center;
     font-size: 0.75rem;
     padding: 0.2rem 0.3rem;
     background: #fff;
@@ -1641,7 +1646,7 @@
 }
 
 .sappcPaymentFeeModalTable thead th {
-    background: #444;
+    background: #091d3a;
     color: #fff;
     font-weight: 700;
     text-transform: uppercase;
@@ -1719,12 +1724,12 @@
 }
 
 .sappcPaymentFeeModalStatusPaid {
-    background: #22a047;
+    background: #b88618;
     color: #fff;
 }
 
 .sappcPaymentFeeModalStatusUnpaid {
-    background: #6b7280;
+    background: #30435d;
     color: #fff;
 }
 
@@ -1741,11 +1746,11 @@
     justify-content: center;
 }
 
+.sappcPaymentFeeModalTogglePaid,
 .sappcPaymentFeeModalToggleUnpaid {
     appearance: none;
     -webkit-appearance: none;
     border: 1px solid #111;
-    background: #9b1c2e;
     color: #fff;
     font-size: 0.62rem;
     font-weight: 700;
@@ -1756,8 +1761,21 @@
     line-height: 1.2;
 }
 
+.sappcPaymentFeeModalTogglePaid {
+    background: #b88618;
+}
+
+.sappcPaymentFeeModalTogglePaid:hover {
+    background: #9a7114;
+    color: #fff;
+}
+
+.sappcPaymentFeeModalToggleUnpaid {
+    background: #30435d;
+}
+
 .sappcPaymentFeeModalToggleUnpaid:hover {
-    background: #7a1628;
+    background: #243649;
     color: #fff;
 }
 
@@ -1769,7 +1787,7 @@
     height: 1.85rem;
     padding: 0;
     border: 1px solid #111;
-    background: #9b1c2e;
+    background: #30435d;
     color: #fff;
     border-radius: 0.25rem;
     cursor: pointer;
@@ -1777,7 +1795,7 @@
 }
 
 .sappcPaymentFeeModalBtnRemove:hover {
-    background: #7a1628;
+    background: #243649;
     color: #fff;
 }
 
@@ -1794,7 +1812,7 @@
     align-items: center;
     gap: 0.35rem;
     border: 1px solid #111;
-    background: #1e88c7;
+    background: #091d3a;
     color: #fff;
     font-size: 0.72rem;
     font-weight: 700;
@@ -1805,11 +1823,12 @@
 }
 
 .sappcPaymentFeeModalBtnAddItem:hover {
-    background: #1773a8;
+    background: #061428;
     color: #fff;
 }
 
 .sappcPaymentFeeModalBtnAddItem:focus-visible,
+.sappcPaymentFeeModalTogglePaid:focus-visible,
 .sappcPaymentFeeModalToggleUnpaid:focus-visible,
 .sappcPaymentFeeModalBtnRemove:focus-visible {
     outline: 2px solid #333;
@@ -2020,7 +2039,7 @@
     text-align: left;
 }
 
-/* Top block (reference, client, contact, address): value text left-aligned */
+
 .sappcCertModalMetaGrid .sappcCertModalInput {
     text-align: left;
 }
@@ -2067,7 +2086,7 @@
     margin-bottom: 0.65rem;
 }
 
-/* Side-by-side label + control (replaces stacked block labels inside certification form) */
+
 .sappcCertModalForm .sappcCertModalField--stack {
     display: grid;
     grid-template-columns: var(--sappc-cert-label-col) minmax(0, 1fr);
@@ -2297,7 +2316,6 @@
 
 .sappcChristeningCertFrame {
     margin: 0 auto;
-    /* Wider preview display; fills modal-xl body (print unchanged) */
     width: min(100%, 64rem);
     max-width: 100%;
     border: 1px solid var(--sappc-border, #bdbdbd);

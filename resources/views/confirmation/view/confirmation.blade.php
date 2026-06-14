@@ -150,7 +150,7 @@
                                                 <td class="text-center">
                                                     <div class="sappcPaymentFeeModalActions">
                                                         <button type="button"
-                                                            class="sappcPaymentFeeModalToggleUnpaid">Paid</button>
+                                                            class="sappcPaymentFeeModalTogglePaid">Paid</button>
                                                         <button type="button" class="sappcPaymentFeeModalBtnRemove"
                                                             aria-label="Remove row">
                                                             <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
