@@ -5,6 +5,11 @@
 @push('styles')
     <link rel="stylesheet" href="{{ asset('css/christening/applicationOfChristening.css') }}">
     <link rel="stylesheet" href="{{ asset('css/burial/burialApplication.css') }}">
+    <style>
+        .sappc-doc-picker_btn:disabled {
+            opacity: 1;
+        }
+    </style>
 @endpush
 
 @section('content')

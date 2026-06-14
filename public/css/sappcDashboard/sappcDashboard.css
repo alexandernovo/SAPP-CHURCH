@@ -66,7 +66,7 @@
 .sappc-sidebar_church {
     margin: 0.85rem 0 0;
     font-family: Arial, sans-serif;
-    font-size: 0.95rem;
+    font-size: 1.05rem;
     font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -85,7 +85,7 @@
     padding-top: 0.5rem;
     border-top: 1px solid rgba(255, 255, 255, 0.12);
     font-family: Arial, sans-serif;
-    font-size: 0.65rem;
+    font-size: 0.78rem;
     font-weight: 700;
     letter-spacing: 0.12em;
     color: rgba(255, 255, 255, 0.55);
@@ -101,12 +101,12 @@
     display: flex;
     align-items: center;
     gap: 0.65rem;
-    padding: 0.55rem 0.75rem;
+    padding: 0.6rem 0.75rem;
     margin: 0 0.25rem;
     border-radius: 0.25rem;
     color: #fff;
     text-decoration: none;
-    font-size: 0.875rem;
+    font-size: 1rem;
     font-weight: 500;
     border: none;
     background: transparent;
@@ -131,11 +131,11 @@
 }
 
 .sappc-sidebar_link i {
-    width: 1.2rem;
+    width: 1.3rem;
     text-align: center;
     color: var(--sappc-gold);
     flex-shrink: 0;
-    font-size: 0.95rem;
+    font-size: 1.05rem;
 }
 
 

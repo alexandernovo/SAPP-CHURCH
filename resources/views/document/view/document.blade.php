@@ -4,6 +4,12 @@
 
 @push('styles')
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" crossorigin="anonymous">
+    <style>
+        #sappcDocViewReportBtn.sappc-doc-picker_btn:disabled,
+        .sappc-doc-picker_btn:disabled {
+            opacity: 1;
+        }
+    </style>
 @endpush
 
 @section('document')
