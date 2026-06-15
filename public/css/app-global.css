@@ -3,9 +3,12 @@
  * Load via layouts/cdn.blade.php before all other stylesheets.
  */
 :root {
-    --sappc-font-family: Arial, Helvetica, sans-serif;
+    --sappc-font-family: Arial;
+    --sappc-font-weight-regular: 400;
     --bs-body-font-family: var(--sappc-font-family);
     --bs-font-sans-serif: var(--sappc-font-family);
+    --bs-body-font-weight: var(--sappc-font-weight-regular);
+    --bs-font-weight-bold: var(--sappc-font-weight-regular);
 }
 
 html {
@@ -14,6 +17,7 @@ html {
 
 body {
     font-family: var(--sappc-font-family);
+    font-weight: var(--sappc-font-weight-regular);
 }
 
 *,

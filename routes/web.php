@@ -80,6 +80,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/certification', [ChristeningController::class, 'certificationPage'])->name('admin.certification');
     Route::get('/certification/report-window', [ChristeningController::class, 'certificationReportWindow'])->name('admin.certification.report-window');
     Route::get('/certification/records', [ChristeningController::class, 'certificationRecords'])->name('admin.certification.records');
+    Route::get('/christening/next-reference-code', [ChristeningController::class, 'nextChristeningReferenceCode'])->name('admin.christening.next-reference-code');
+    Route::get('/confirmation/next-reference-code', [ConfirmationController::class, 'nextConfirmationReferenceCode'])->name('admin.confirmation.next-reference-code');
+    Route::get('/wedding/next-reference-code', [WeddingController::class, 'nextWeddingReferenceCode'])->name('admin.wedding.next-reference-code');
+    Route::get('/burial/next-reference-code', [BurialController::class, 'nextBurialReferenceCode'])->name('admin.burial.next-reference-code');
     Route::post('/christening/schedule-request', [ChristeningController::class, 'scheduleChristening'])->name('admin.christening.schedule-request');
     Route::get('/christening/schedule-details', [ChristeningController::class, 'christeningScheduleDetails'])->name('admin.christening.schedule-details');
     Route::post('/christening/application-form', [ChristeningController::class, 'christeningApplicationForm'])->name('admin.christening.application-form');

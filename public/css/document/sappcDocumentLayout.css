@@ -1,14 +1,73 @@
 :root {
     --sappc-panel-bg: #091d3a;
     --sappc-header-footer-bg: #1a212b;
+    --sappc-doc-font: Arial;
+}
+
+.sappc-doc-page,
+.sappc-doc-page * {
+    font-family: var(--sappc-doc-font);
 }
 
 .sappc-doc-page {
-    min-height: calc(100vh - 8rem);
+    flex: 1 1 auto;
+    min-height: 0;
     display: flex;
     flex-direction: column;
-    padding: 0.5rem 1rem 2rem;
+    padding: 0.5rem 1rem 1.25rem;
     box-sizing: border-box;
+    overflow: hidden;
+}
+
+body.sappc-dash--locked-viewport .sappc-doc-page {
+    min-height: 0;
+    max-height: none;
+}
+
+body.sappc-dash--locked-viewport .sappc-doc-page_head,
+body.sappc-dash--locked-viewport .sappc-doc-picker-wrap {
+    flex-shrink: 0;
+}
+
+body.sappc-dash--locked-viewport .sappc-doc-picker-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+}
+
+body.sappc-dash--locked-viewport .sappc-doc-page--report-active .sappc-doc-sheet,
+body.sappc-dash--locked-viewport .sappc-doc-page--report-active #sappcDocumentSheet {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex !important;
+    flex-direction: column;
+    overflow: hidden;
+    margin-top: 0;
+}
+
+body.sappc-dash--locked-viewport .sappc-doc-page--report-active .sappc-doc-sheet__actions {
+    flex-shrink: 0;
+}
+
+body.sappc-dash--locked-viewport .sappc-doc-page--report-active .sappc-doc-table-wrap,
+body.sappc-dash--locked-viewport .sappc-doc-page--report-active .sappc-doc-letterhead,
+body.sappc-dash--locked-viewport .sappc-doc-page--report-active .sappc-doc-report-title,
+body.sappc-dash--locked-viewport .sappc-doc-page--report-active .sappc-doc-signature {
+    flex-shrink: 0;
+}
+
+body.sappc-dash--locked-viewport .sappc-doc-page--report-active .sappc-doc-table-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+}
+
+body.sappc-dash--locked-viewport .sappc-registry-page {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .sappc-doc-page_head {
@@ -19,8 +78,9 @@
 
 .sappc-doc-page_title {
     margin: 0 0 0.35rem;
+    font-family: var(--sappc-doc-font);
     font-size: 1.65rem;
-    font-weight: 800;
+    font-weight: 400;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--sappc-charcoal, #212121);
@@ -84,12 +144,12 @@
 .sappc-doc-picker-card {
     position: relative;
     width: 100%;
-    max-width: 26.5rem;
-    min-height: 20.5rem;
+    max-width: 22rem;
+    min-height: 0;
     background: var(--sappc-white, #fff);
     border-radius: 0.75rem;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
-    padding: 2rem 1.75rem 2rem;
+    padding: 1.35rem 1.5rem 1.25rem;
     box-sizing: border-box;
 }
 
@@ -118,26 +178,27 @@
 
 .sappc-doc-picker_header {
     text-align: center;
-    padding-right: 1.5rem;
-    padding-left: 1.5rem;
+    padding-right: 1rem;
+    padding-left: 1rem;
 }
 
 .sappc-doc-picker_logo {
-    width: 7.5rem;
-    height: 7.5rem;
+    width: 5.5rem;
+    height: 5.5rem;
     object-fit: contain;
     border-radius: 50%;
     display: block;
-    margin: 0 auto 0.75rem;
+    margin: 0 auto 0.55rem;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
     background: #fff;
 }
 
 .sappc-doc-picker_title {
     margin: 0;
-    font-size: 0.8rem;
-    font-weight: 800;
-    letter-spacing: 0.07em;
+    font-family: var(--sappc-doc-font);
+    font-size: 1.05rem;
+    font-weight: 400;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
     color: var(--sappc-gold, #b8860b);
     line-height: 1.35;
@@ -146,13 +207,13 @@
 .sappc-doc-picker_divider {
     border: 0;
     border-top: 1px solid var(--sappc-border, #bdbdbd);
-    margin: 1.4rem 0 1.5rem;
+    margin: 0.85rem 0 1rem;
 }
 
 .sappc-doc-picker_body {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.75rem;
 }
 
 .sappc-doc-picker_field {
@@ -167,20 +228,20 @@
 
 .sappc-doc-picker_month {
     width: 100%;
-    padding: 0.6rem 0.75rem;
-    font-size: 0.95rem;
+    padding: 0.45rem 0.65rem;
+    font-size: 0.875rem;
     color: var(--sappc-charcoal, #212121);
     background-color: #fff;
     border: 2px solid var(--sappc-gold, #b8860b);
     border-radius: 0.35rem;
-    min-height: 2.75rem;
+    min-height: 2.35rem;
     box-sizing: border-box;
 }
 
 .sappc-doc-picker_label {
-    margin: 0 0 0.55rem;
-    font-size: 0.95rem;
-    font-weight: 600;
+    margin: 0 0 0.35rem;
+    font-size: 0.875rem;
+    font-weight: 400;
     color: var(--sappc-charcoal, #212121);
 }
 
@@ -204,8 +265,8 @@
 
 .sappc-doc-picker_select {
     width: 100%;
-    padding: 0.6rem 2rem 0.6rem 0.75rem;
-    font-size: 0.95rem;
+    padding: 0.45rem 2rem 0.45rem 0.65rem;
+    font-size: 0.875rem;
     color: var(--sappc-charcoal, #212121);
     background-color: #fff;
     border: 2px solid var(--sappc-gold, #b8860b);
@@ -214,7 +275,7 @@
     -moz-appearance: none;
     appearance: none;
     background-image: none;
-    min-height: 2.75rem;
+    min-height: 2.35rem;
     box-sizing: border-box;
 }
 
@@ -223,12 +284,12 @@
 }
 
 .sappc-doc-picker_btn {
-    margin-top: 0.75rem;
+    margin-top: 0.35rem;
     width: 100%;
-    padding: 1.05rem 1.1rem;
-    font-size: 0.95rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
+    padding: 0.65rem 0.85rem;
+    font-size: 0.875rem;
+    font-weight: 400;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     color: #fff;
     background: var(--sappc-gold, #b8860b);
@@ -316,7 +377,7 @@
 .sappc-doc-toolbar_month-label {
     margin: 0;
     font-size: 0.95rem;
-    font-weight: 600;
+    font-weight: 400;
     color: var(--sappc-charcoal, #212121);
 }
 
@@ -336,7 +397,7 @@
     gap: 0.45rem;
     padding: 0.65rem 1rem;
     font-size: 0.88rem;
-    font-weight: 700;
+    font-weight: 400;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: var(--sappc-gold-dark, #9a7209);
@@ -393,17 +454,17 @@
 @media (max-width: 768px) {
     .sappc-doc-picker-card {
         max-width: 100%;
-        padding: 1.65rem 1.1rem 1.5rem;
+        padding: 1.15rem 1rem 1.1rem;
     }
 
     .sappc-doc-picker_header {
-        padding-right: 1rem;
-        padding-left: 1rem;
+        padding-right: 0.75rem;
+        padding-left: 0.75rem;
     }
 
     .sappc-doc-picker_logo {
-        width: 6.35rem;
-        height: 6.35rem;
+        width: 4.75rem;
+        height: 4.75rem;
     }
 }
 
@@ -414,6 +475,7 @@
     align-items: center;
     margin-bottom: 1.35rem;
     padding: 0.35rem 0 0.15rem;
+    font-family: var(--sappc-doc-font);
 }
 
 .sappc-doc-letterhead_crest,
@@ -441,7 +503,8 @@
 
 .sappc-doc-letterhead_line {
     margin: 0;
-    font-weight: 800;
+    font-family: var(--sappc-doc-font);
+    font-weight: 400;
     text-transform: uppercase;
     color: #111;
 }
@@ -463,8 +526,9 @@
 
 .sappc-doc-report-title {
     text-align: center;
+    font-family: var(--sappc-doc-font);
     font-size: clamp(1.15rem, 3.5vw, 1.8rem);
-    font-weight: 800;
+    font-weight: 400;
     letter-spacing: 0.07em;
     text-transform: uppercase;
     color: var(--sappc-gold, #b8860b);
@@ -496,14 +560,14 @@
 .sappc-doc-table {
     width: 100%;
     border-collapse: collapse;
-    font-family: Arial, sans-serif;
+    font-family: Arial;
     font-size: clamp(0.72rem, 1.3vw, 0.8rem);
 }
 
 .sappc-doc-table thead th {
     background: var(--sappc-panel-bg, #091d3a);
     color: #fff;
-    font-weight: 800;
+    font-weight: 400;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     padding: 0.55rem 0.5rem;
@@ -535,8 +599,9 @@
 
 .sappc-doc-signature_name {
     margin: 0 0 0.2rem;
+    font-family: var(--sappc-doc-font);
     font-size: 0.8rem;
-    font-weight: 800;
+    font-weight: 400;
     letter-spacing: 0.05em;
     text-transform: uppercase;
     color: var(--sappc-charcoal, #212121);
@@ -549,6 +614,16 @@
 }
 
 @media print {
+    .sappc-doc-page,
+    .sappc-doc-page *,
+    .sappc-doc-letterhead,
+    .sappc-doc-letterhead_line,
+    .sappc-doc-report-title,
+    .sappc-doc-signature_name,
+    .sappc-doc-table {
+        font-family: Arial !important;
+    }
+
     .no-print,
     .sappc-sidebar,
     .sappc-topbar,

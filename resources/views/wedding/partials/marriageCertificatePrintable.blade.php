@@ -44,7 +44,7 @@
             background: #fff;
             color: var(--mc-ink);
             border: 0.85pt double var(--mc-red);
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: Arial;
             font-size: var(--mc-fs);
             line-height: var(--mc-lh);
             overflow: hidden;
@@ -105,7 +105,7 @@
         }
 
         .mc-meta strong {
-            font-weight: 700;
+            font-weight: 400;
         }
 
         .mc-header-row td {
@@ -148,7 +148,7 @@
         .mc-title {
             margin: 0.65mm 0 0;
             font-size: 12.6pt;
-            font-weight: 700;
+            font-weight: 400;
             line-height: 1.08;
             letter-spacing: 0.015em;
             text-transform: uppercase;
@@ -170,7 +170,7 @@
             min-height: 4.25mm;
             margin-top: 0.35mm;
             font-size: 9pt;
-            font-weight: 700;
+            font-weight: 400;
             line-height: 1.08;
             color: var(--mc-ink);
         }
@@ -189,11 +189,11 @@
             min-width: 52%;
             vertical-align: baseline;
             color: var(--mc-ink);
-            font-weight: 700;
+            font-weight: 400;
         }
 
         .mc-party-band td {
-            font-weight: 700;
+            font-weight: 400;
             text-align: center;
             font-size: 7.55pt;
             text-transform: uppercase;
@@ -218,7 +218,7 @@
         .mc-num {
             width: 7mm;
             text-align: center;
-            font-weight: 700;
+            font-weight: 400;
             font-size: 7.05pt;
             vertical-align: middle;
             color: var(--mc-red);
@@ -233,7 +233,7 @@
         }
 
         .mc-lbl strong {
-            font-weight: 700;
+            font-weight: 400;
             font-size: 7.35pt;
             color: var(--mc-red);
         }
@@ -259,7 +259,7 @@
         .mc-val {
             min-height: 4.75mm;
             font-size: 8.45pt;
-            font-weight: 700;
+            font-weight: 400;
             line-height: 1.12;
             border-bottom: 0.35pt dotted var(--mc-red);
             padding: 0.42mm 0 0.18mm;
@@ -305,14 +305,14 @@
         .mc-sec-title {
             margin: 0 0 0.28mm;
             font-size: 7.35pt;
-            font-weight: 700;
+            font-weight: 400;
             text-transform: uppercase;
             line-height: 1.08;
             color: var(--mc-red);
         }
 
         .mc-k {
-            font-weight: 700;
+            font-weight: 400;
         }
 
         .mc-ch {
@@ -345,7 +345,7 @@
             min-height: 2.85mm;
             vertical-align: baseline;
             color: var(--mc-ink);
-            font-weight: 700;
+            font-weight: 400;
             font-size: 7.35pt;
             line-height: 1;
         }
@@ -418,7 +418,7 @@
             min-height: 3.1mm;
             border-bottom: 0.35pt dotted var(--mc-red);
             font-size: 7.25pt;
-            font-weight: 700;
+            font-weight: 400;
             color: var(--mc-ink);
         }
 
@@ -433,7 +433,7 @@
 
         .mc-admin-h {
             font-size: 7.05pt;
-            font-weight: 700;
+            font-weight: 400;
             margin-bottom: 0.18mm;
             line-height: 1.05;
             color: var(--mc-red);
@@ -465,7 +465,7 @@
             border-bottom: 0.35pt dotted var(--mc-red);
             min-height: 3.55mm;
             font-size: 7pt;
-            font-weight: 700;
+            font-weight: 400;
             color: var(--mc-ink);
         }
 
@@ -498,7 +498,7 @@
             padding: 0.35mm 1mm;
             text-align: center;
             font-size: 7.2pt;
-            font-weight: 700;
+            font-weight: 400;
             letter-spacing: 0.015em;
             line-height: 1.06;
             color: var(--mc-red);
@@ -520,7 +520,7 @@
             height: 3.65mm;
             border: var(--mc-border);
             font-size: 5.1pt;
-            font-weight: 600;
+            font-weight: 400;
             color: var(--mc-red);
             display: flex;
             align-items: center;
@@ -533,7 +533,7 @@
             padding: 0.28mm 1mm 0.1mm;
             text-align: center;
             font-size: 7.45pt;
-            font-weight: 600;
+            font-weight: 400;
             line-height: 1.08;
         }
 
@@ -547,8 +547,8 @@
             padding: 8px 16px;
             border-radius: 3px;
             cursor: pointer;
-            font-weight: 600;
-            font-family: Arial, Helvetica, sans-serif;
+            font-weight: 400;
+            font-family: Arial;
         }
 
         .mc-btn-print {

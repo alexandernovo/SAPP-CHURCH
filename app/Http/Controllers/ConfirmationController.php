@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Support\ClientNameDisplay;
 use App\Support\DocumentationApplicationReportWriter;
 use App\Support\SacramentApplicationGate;
+use App\Support\SacramentRegistrySectionFilter;
+use App\Support\SacramentScheduleReservedDates;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -27,30 +29,41 @@ class ConfirmationController extends Controller
 
     public function scheduleIndex(Request $request): View
     {
-        return view('confirmation.view.schedule', $this->confirmationSectionViewData($request));
+        return view('confirmation.view.schedule', $this->confirmationSectionViewData($request, SacramentRegistrySectionFilter::SECTION_SCHEDULE));
     }
 
     public function certificationIndex(Request $request): View
     {
-        return view('confirmation.view.certification', $this->confirmationSectionViewData($request));
+        return view('confirmation.view.certification', $this->confirmationSectionViewData($request, SacramentRegistrySectionFilter::SECTION_CERTIFICATION));
     }
 
     public function paymentIndex(Request $request): View
     {
-        return view('confirmation.view.payment', $this->confirmationSectionViewData($request));
+        return view('confirmation.view.payment', $this->confirmationSectionViewData($request, SacramentRegistrySectionFilter::SECTION_PAYMENT));
     }
 
     public function applicationIndex(Request $request): View
     {
-        return view('confirmation.view.application-form', $this->confirmationSectionViewData($request));
+        return view('confirmation.view.application-form', $this->confirmationSectionViewData($request, SacramentRegistrySectionFilter::SECTION_APPLICATION));
+    }
+
+    public function nextConfirmationReferenceCode(): JsonResponse
+    {
+        return response()->json([
+            'ok' => true,
+            'reference_code' => $this->generateUniqueConfirmationReferenceCode(),
+        ]);
     }
 
     /**
      * @return array<string, mixed>
      */
-    private function confirmationSectionViewData(Request $request): array
+    private function confirmationSectionViewData(Request $request, string $section): array
     {
-        $request->merge(['registry_type' => 'confirmation']);
+        $request->merge([
+            'registry_type' => 'confirmation',
+            'registry_section' => $section,
+        ]);
 
         $dashboard = app(DashboardController::class);
         $data = $dashboard->registryIndexData($request);
@@ -168,6 +181,12 @@ class ConfirmationController extends Controller
                         'dateCreated' => now(),
                         'customerId' => $customerId,
                     ];
+                    if (Schema::hasColumn('confirmation', 'scheduleCompletedAt')) {
+                        $insertData['scheduleCompletedAt'] = now();
+                    }
+                    if (Schema::hasColumn('confirmation', 'workflowStep')) {
+                        $insertData['workflowStep'] = SacramentRegistrySectionFilter::SECTION_SCHEDULE;
+                    }
                     $insertData = array_filter($insertData, fn ($v) => $v !== null);
 
                     return (int) DB::table('confirmation')->insertGetId($insertData);
@@ -214,6 +233,12 @@ class ConfirmationController extends Controller
             }
         }
         $updateData = ['scheduleRequested' => $scheduleAt];
+        if (Schema::hasColumn('confirmation', 'scheduleCompletedAt')) {
+            $updateData['scheduleCompletedAt'] = now();
+        }
+        if (Schema::hasColumn('confirmation', 'workflowStep')) {
+            $updateData['workflowStep'] = SacramentRegistrySectionFilter::SECTION_SCHEDULE;
+        }
         if (! empty($validated['contact_number'])) {
             $updateData['contactNum'] = $validated['contact_number'];
         }
@@ -311,21 +336,12 @@ class ConfirmationController extends Controller
 
         $year = (int) $validated['year'];
         $month = (int) $validated['month'];
-
-        $dates = DB::table('confirmation')
-            ->whereNotNull('scheduleRequested')
-            ->whereYear('scheduleRequested', $year)
-            ->whereMonth('scheduleRequested', $month)
-            ->selectRaw('DATE(scheduleRequested) as d')
-            ->distinct()
-            ->pluck('d')
-            ->map(fn ($d) => Carbon::parse($d)->format('Y-m-d'))
-            ->values()
-            ->all();
+        $byDate = SacramentScheduleReservedDates::forMonth($year, $month);
 
         return response()->json([
             'ok' => true,
-            'dates' => $dates,
+            'by_date' => $byDate,
+            'dates' => array_keys($byDate),
         ]);
     }
 
@@ -442,6 +458,12 @@ class ConfirmationController extends Controller
             ], 422);
         }
         $update['paymentFeeRows'] = $encoded;
+        if (Schema::hasColumn('confirmation', 'paymentCompletedAt')) {
+            $update['paymentCompletedAt'] = now();
+        }
+        if (Schema::hasColumn('confirmation', 'workflowStep')) {
+            $update['workflowStep'] = SacramentRegistrySectionFilter::SECTION_PAYMENT;
+        }
 
         if ($existing === null) {
             if ($clientTrim === '' || $last === null || $last === '') {
@@ -479,7 +501,10 @@ class ConfirmationController extends Controller
                         'customerId' => $customerId,
                     ], $update);
                     if (Schema::hasColumn('confirmation', 'workflowStep')) {
-                        $insertData['workflowStep'] = 'payment';
+                        $insertData['workflowStep'] = SacramentRegistrySectionFilter::SECTION_PAYMENT;
+                    }
+                    if (Schema::hasColumn('confirmation', 'paymentCompletedAt')) {
+                        $insertData['paymentCompletedAt'] = now();
                     }
                     $insertData = array_filter($insertData, fn ($v) => $v !== null);
 
@@ -639,12 +664,19 @@ class ConfirmationController extends Controller
         }
 
         try {
-            DB::table('confirmation')->where('confirmationId', $id)->update([
+            $headerUpdate = [
                 'clientFName' => $firstName,
                 'clientMName' => $middleName !== '' ? $middleName : null,
                 'clientLName' => $familyName,
                 'confirmationApplication' => $encoded,
-            ]);
+            ];
+            if (Schema::hasColumn('confirmation', 'applicationCompletedAt')) {
+                $headerUpdate['applicationCompletedAt'] = now();
+            }
+            if (Schema::hasColumn('confirmation', 'workflowStep')) {
+                $headerUpdate['workflowStep'] = SacramentRegistrySectionFilter::SECTION_APPLICATION;
+            }
+            DB::table('confirmation')->where('confirmationId', $id)->update($headerUpdate);
             $this->syncConfirmationDetailsFromApplicationPayload($id, $data);
         } catch (QueryException $e) {
             report($e);

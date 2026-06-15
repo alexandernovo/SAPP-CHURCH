@@ -7,9 +7,10 @@
     @include('layouts.cdn')
     <link rel="stylesheet" href="{{ asset('css/sappcDashboard/sappcDashboard.css') }}?v={{ filemtime(public_path('css/sappcDashboard/sappcDashboard.css')) }}">
     @stack('styles')
+    <link rel="stylesheet" href="{{ asset('css/app-typography.css') }}?v={{ filemtime(public_path('css/app-typography.css')) }}">
 </head>
 <body
-    class="sappc-dash{{ request()->boolean('embed') ? ' sappc-dash--registry-embed' : '' }}"
+    class="sappc-dash @yield('dash_body_class'){{ request()->boolean('embed') ? ' sappc-dash--registry-embed' : '' }}"
     data-sappc-sidebar-collapsed="0">
     <div class="sappc-dash_backdrop" id="sappcSidebarBackdrop" aria-hidden="true"></div>
 

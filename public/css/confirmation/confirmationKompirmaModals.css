@@ -7,9 +7,11 @@
 #confirmationApplicationModal .sappcCnApp,
 #confirmationApplicationModal .sappcCnAr {
     color: #111;
-    font-size: 0.8rem;
+    font-size: 1rem;
     line-height: 1.35;
     padding: 0.15rem 0.1rem 0.75rem;
+    --sappc-app-label-col: 11.75rem;
+    --sappc-app-field-gap: 0.5rem;
 }
 
 #confirmationApplicationModal .sappcCnAppHeader,
@@ -46,8 +48,8 @@
 #confirmationApplicationModal .sappcCnArMasthead p {
     margin: 0;
     line-height: 1.2;
-    font-size: 0.65rem;
-    font-weight: 800;
+    font-size: 0.8125rem;
+    font-weight: 400;
     letter-spacing: 0.03em;
     text-transform: uppercase;
 }
@@ -55,8 +57,8 @@
 #confirmationApplicationModal .sappcCnAppTitle {
     text-align: center;
     color: #b1891c;
-    font-weight: 800;
-    font-size: 1.1rem;
+    font-weight: 400;
+    font-size: 1.25rem;
     letter-spacing: 0.1em;
     margin: 0.35rem 0 0.5rem;
     text-transform: uppercase;
@@ -64,8 +66,8 @@
 
 #confirmationApplicationModal .sappcCnArTitle {
     text-align: center;
-    font-weight: 800;
-    font-size: 1.05rem;
+    font-weight: 400;
+    font-size: 1.2rem;
     letter-spacing: 0.08em;
     margin: 0.25rem 0 0.45rem;
     text-transform: uppercase;
@@ -73,69 +75,72 @@
 }
 
 #confirmationApplicationModal .sappcCnAppRow {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: var(--sappc-app-label-col) minmax(0, 1fr);
+    gap: var(--sappc-app-field-gap);
     align-items: center;
-    gap: 0.35rem 0.5rem;
     margin-bottom: 0.4rem;
 }
 
 #confirmationApplicationModal .sappcCnAppLabel {
-    flex: 0 0 11.5rem;
-    max-width: 100%;
-    font-weight: 800;
-    font-size: 0.68rem;
+    flex: unset;
+    max-width: none;
+    width: auto;
+    font-weight: 400;
+    font-size: 0.875rem;
     line-height: 1.2;
     text-transform: uppercase;
     letter-spacing: 0.02em;
     margin: 0;
-}
-
-#confirmationApplicationModal .sappcCnAppLabel .sappcCnAppHint {
-    display: block;
-    font-size: 0.58rem;
-    font-style: italic;
-    font-weight: 600;
-    text-transform: none;
-    color: #333;
-    margin-top: 0.1rem;
+    align-self: center;
 }
 
 #confirmationApplicationModal .sappcCnAppIn {
-    flex: 1 1 12rem;
+    width: 100%;
     min-width: 0;
     border: 1px solid #1a1a1a;
     border-radius: 0.1rem;
-    padding: 0.2rem 0.4rem;
-    font-size: 0.75rem;
-    min-height: 1.6rem;
+    padding: 0.25rem 0.45rem;
+    font-size: 0.9375rem;
+    min-height: 1.85rem;
     background: #fff;
 }
 
 #confirmationApplicationModal .sappcCnAppIn--dob,
 #confirmationApplicationModal .sappcCnRegIn {
-    max-width: 10rem;
+    max-width: none;
 }
 
 #confirmationApplicationModal .sappcCnRegRow {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    gap: 0.5rem 0.75rem;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--sappc-app-field-gap);
+    align-items: end;
     margin-bottom: 0.4rem;
-    margin-left: 0;
+    margin-left: calc(var(--sappc-app-label-col) + var(--sappc-app-field-gap));
     padding-left: 0;
 }
 
 #confirmationApplicationModal .sappcCnRegItem {
-    flex: 0 0 auto;
+    flex: unset;
+    min-width: 0;
+}
+
+#confirmationApplicationModal .sappcCnAppLabel .sappcCnAppHint {
+    display: block;
+    font-size: 0.75rem;
+    font-style: italic;
+    font-weight: 400;
+    text-transform: none;
+    color: #333;
+    margin-top: 0.1rem;
 }
 
 #confirmationApplicationModal .sappcCnRegItem label,
 #confirmationApplicationModal .sappcCnGpHead {
     display: block;
-    font-size: 0.62rem;
-    font-weight: 800;
+    font-size: 0.8125rem;
+    font-weight: 400;
     text-transform: uppercase;
     margin-bottom: 0.1rem;
 }
@@ -146,8 +151,8 @@
 
 #confirmationApplicationModal .sappcCnGpHead {
     text-align: center;
-    font-size: 0.65rem;
-    font-weight: 800;
+    font-size: 0.8125rem;
+    font-weight: 400;
     line-height: 1.2;
     margin-bottom: 0.35rem;
     text-transform: none;
@@ -155,9 +160,9 @@
 
 #confirmationApplicationModal .sappcCnGpHead .sappcCnAppHint {
     display: block;
-    font-size: 0.58rem;
+    font-size: 0.75rem;
     font-style: italic;
-    font-weight: 600;
+    font-weight: 400;
     text-transform: none;
     color: #333;
     margin-top: 0.15rem;
@@ -179,8 +184,8 @@
 
 #confirmationApplicationModal .sappcCnPahTitle {
     display: table;
-    font-size: 0.72rem;
-    font-weight: 800;
+    font-size: 0.875rem;
+    font-weight: 400;
     text-transform: uppercase;
     text-decoration: underline;
     text-underline-offset: 2px;
@@ -190,7 +195,7 @@
 #confirmationApplicationModal .sappcCnPah ul {
     margin: 0;
     padding-left: 1.1rem;
-    font-size: 0.68rem;
+    font-size: 0.875rem;
     line-height: 1.35;
 }
 
@@ -211,7 +216,7 @@
 #confirmationApplicationModal .sappcCnArTable {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.75rem;
+    font-size: 0.9375rem;
     margin-bottom: 0.5rem;
 }
 
@@ -220,8 +225,8 @@
     max-width: 100%;
     border: 1px solid #999;
     border-radius: 0.1rem;
-    padding: 0.1rem 0.25rem;
-    font-size: 0.72rem;
+    padding: 0.15rem 0.3rem;
+    font-size: 0.875rem;
     text-align: left;
 }
 
@@ -234,7 +239,7 @@
 
 #confirmationApplicationModal .sappcCnArTable th {
     background: #f2f0eb;
-    font-weight: 700;
+    font-weight: 400;
 }
 
 #confirmationApplicationModal .sappcCnArTable .sappcCnArNum {
@@ -248,12 +253,12 @@
     border: none;
     text-align: center;
     background: #fff;
-    font-size: 0.8rem;
-    padding: 0.15rem 0.1rem;
+    font-size: 0.9375rem;
+    padding: 0.2rem 0.15rem;
 }
 
 #confirmationApplicationModal .sappcCnArTable tr.sappcCnArTotal td {
-    font-weight: 800;
+    font-weight: 400;
 }
 
 #confirmationApplicationModal .sappcCnArTable tr.sappcCnArTotal .sappcCnArNum {
@@ -286,13 +291,13 @@
     background: transparent;
     min-height: 1.4rem;
     text-align: center;
-    font-size: 0.7rem;
+    font-size: 0.875rem;
     margin-bottom: 0.1rem;
 }
 
 #confirmationApplicationModal .sappcCnArSignCap {
-    font-size: 0.5rem;
-    font-weight: 800;
+    font-size: 0.6875rem;
+    font-weight: 400;
     letter-spacing: 0.03em;
     line-height: 1.15;
     text-transform: uppercase;
@@ -300,8 +305,13 @@
 }
 
 @media (max-width: 600px) {
-    #confirmationApplicationModal .sappcCnAppLabel {
-        flex: 1 1 100%;
+    #confirmationApplicationModal .sappcCnAppRow {
+        grid-template-columns: 1fr;
+    }
+
+    #confirmationApplicationModal .sappcCnRegRow {
+        margin-left: 0;
+        grid-template-columns: 1fr;
     }
 
     #confirmationApplicationModal .sappcCnGpGrid,

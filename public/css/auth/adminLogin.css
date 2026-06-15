@@ -43,7 +43,7 @@ body.admin-login-page {
     --admin-gold-dark: #8a6600;
     width: 100%;
     max-width: 28rem;
-    padding: 2rem 1.75rem 1.75rem;
+    padding: 1.35rem 1.5rem 1.25rem;
     background: #fff;
     border-radius: 1rem;
     box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, 0.35);
@@ -76,49 +76,49 @@ body.admin-login-page {
 
 .admin-login-card__brand {
     text-align: center;
-    padding-top: 0.25rem;
+    padding-top: 0;
 }
 
 .admin-login-card__logo {
     width: auto;
     height: auto;
-    max-width: 6.5rem;
+    max-width: 5rem;
     display: block;
-    margin: 0 auto 1rem;
+    margin: 0 auto 0.65rem;
 }
 
 .admin-login-card__title {
     margin: 0;
-    font-size: clamp(1.05rem, 2.8vw, 1.45rem);
-    font-weight: 700;
-    line-height: 1.35;
+    font-size: clamp(0.95rem, 2.5vw, 1.2rem);
+    font-weight: 400;
+    line-height: 1.25;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: #b88618;
 }
 
 .admin-login-card__divider {
-    margin: 1.25rem 0 1.5rem;
+    margin: 0.85rem 0 1rem;
     border: none;
     border-top: 1px solid #e8e8e8;
 }
 
 .admin-login-card__intro {
     text-align: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
 }
 
 .admin-login-card__intro h2 {
-    margin: 0 0 0.5rem;
-    font-size: clamp(1.15rem, 2.5vw, 1.35rem);
-    font-weight: 600;
+    margin: 0 0 0.25rem;
+    font-size: clamp(1rem, 2.2vw, 1.15rem);
+    font-weight: 400;
     color: #111;
 }
 
 .admin-login-card__intro p {
     margin: 0;
-    font-size: clamp(0.875rem, 2vw, 1rem);
-    line-height: 1.45;
+    font-size: clamp(0.8125rem, 1.8vw, 0.9375rem);
+    line-height: 1.35;
     color: #555;
 }
 
@@ -148,13 +148,13 @@ body.admin-login-page {
 .admin-login-form {
     display: flex;
     flex-direction: column;
-    gap: 1.1rem;
+    gap: 0.75rem;
 }
 
 .admin-login-field label {
     display: block;
-    margin-bottom: 0.35rem;
-    font-size: clamp(0.9rem, 2vw, 1rem);
+    margin-bottom: 0.25rem;
+    font-size: clamp(0.875rem, 1.8vw, 0.9375rem);
     font-weight: 400;
     color: #111;
 }
@@ -169,21 +169,21 @@ body.admin-login-page {
 }
 
 .admin-login-input-wrap__icon {
-    flex: 0 0 2.75rem;
+    flex: 0 0 2.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
     background: var(--admin-gold);
     color: #fff;
-    font-size: 1rem;
+    font-size: 0.9rem;
 }
 
 .admin-login-input {
     flex: 1 1 auto;
     min-width: 0;
-    padding: 0.65rem 0.75rem;
+    padding: 0.5rem 0.65rem;
     border: none;
-    font-size: clamp(0.9375rem, 2vw, 1.0625rem);
+    font-size: clamp(0.875rem, 1.8vw, 1rem);
     font-weight: 400;
     outline: none;
 }
@@ -210,7 +210,7 @@ body.admin-login-page {
 }
 
 .admin-login-toggle-pw:hover {
-    background: rgba(166, 124, 0, 0.1);
+    background: rgba(166, 124, 0, 0.1);  
 }
 
 .admin-login-input-wrap--password {
@@ -218,15 +218,15 @@ body.admin-login-page {
 }
 
 .admin-login-submit {
-    margin-top: 0.25rem;
+    margin-top: 0.1rem;
     width: 100%;
-    padding: 0.75rem 1rem;
+    padding: 0.6rem 1rem;
     border: none;
     border-radius: 0.5rem;
     background: linear-gradient(180deg, #b8890a 0%, var(--admin-gold) 100%);
     color: #fff;
-    font-size: 1rem;
-    font-weight: 700;
+    font-size: 0.9375rem;
+    font-weight: 400;
     cursor: pointer;
     transition: filter 0.15s ease, transform 0.05s ease;
 }

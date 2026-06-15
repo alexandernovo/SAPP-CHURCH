@@ -1,0 +1,37 @@
+.sappc-dash,
+.sappc-doc-page,
+.sappc-doc-report-window,
+.admin-login-page {
+    font-weight: 400;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+strong,
+b,
+.fw-bold,
+.fw-bolder,
+.fw-semibold,
+.modal-title,
+.swal2-title,
+[class*="sappc"],
+[class*="Sappc"],
+[class*="SAPPC"],
+[class*="sappcCh"],
+[class*="sappcPayment"],
+[class*="sappcCert"],
+[class*="admin-login"] {
+    font-weight: 400 !important;
+}
+
+.sappc-dash i[class*="fa-"],
+.sappc-doc-page i[class*="fa-"],
+.sappc-doc-report-window i[class*="fa-"],
+.admin-login-page i[class*="fa-"],
+.swal2-popup i[class*="fa-"] {
+    font-weight: 900 !important;
+}

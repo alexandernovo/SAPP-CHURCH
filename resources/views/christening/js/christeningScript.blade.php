@@ -4,7 +4,8 @@
             'letterSlots' => 22,
             'nameGroupEndIndices' => [7, 15],
             'contactSlots' => 11,
-            'godparentLines' => 13,
+            'initialGodparentLines' => 13,
+            'godparentMaxLines' => 26,
         ],
         $chApplicationFormConfig ?? [],
     );
@@ -552,32 +553,87 @@
             }
         }
 
-        function initChristeningApplicationGodparentGrid() {
+        function christeningGodparentInitialRows() {
             var cfg = chApplicationFormConfig || {};
-            var godparentLines = parseInt(cfg.godparentLines, 10) || 13;
+            var initial = parseInt(cfg.initialGodparentLines, 10);
+            return isNaN(initial) ? 13 : initial;
+        }
+
+        function christeningGodparentMaxRows() {
+            var cfg = chApplicationFormConfig || {};
+            return parseInt(cfg.godparentMaxLines, 10) || 26;
+        }
+
+        var christeningGodparentRowCount = 0;
+
+        function updateChristeningGodparentAddBtn() {
+            var $btn = $('#chAppGpAddBtn');
+            if (!$btn.length) return;
+            $btn.prop('disabled', christeningGodparentRowCount >= christeningGodparentMaxRows());
+        }
+
+        function appendChristeningGodparentRow() {
+            if (christeningGodparentRowCount >= christeningGodparentMaxRows()) {
+                updateChristeningGodparentAddBtn();
+                return;
+            }
+            christeningGodparentRowCount += 1;
+            var g = christeningGodparentRowCount;
             var $colA = $('#chAppGpColA');
             var $colB = $('#chAppGpColB');
-            if ($colA.length && $colB.length) {
-                $colA.empty();
-                $colB.empty();
-                for (var g = 1; g <= godparentLines; g++) {
-                    $('<input/>', {
-                        type: 'text',
-                        class: 'sappcChOfficialGpLine',
-                        name: 'godparent_' + g + 'a',
-                        'aria-label': 'Godparent line ' + g + ' (left)',
-                        placeholder: 'Juan D. Cruz',
-                    }).appendTo($colA);
+            if (!$colA.length || !$colB.length) return;
 
-                    $('<input/>', {
-                        type: 'text',
-                        class: 'sappcChOfficialGpLine',
-                        name: 'godparent_' + g + 'b',
-                        'aria-label': 'Godparent line ' + g + ' (right)',
-                        placeholder: 'Juan D. Cruz',
-                    }).appendTo($colB);
-                }
+            $('<input/>', {
+                type: 'text',
+                class: 'sappcChOfficialGpLine',
+                name: 'godparent_' + g + 'a',
+                'aria-label': 'Maninoy ' + g,
+                placeholder: 'Juan D. Cruz',
+            }).appendTo($colA);
+
+            $('<input/>', {
+                type: 'text',
+                class: 'sappcChOfficialGpLine',
+                name: 'godparent_' + g + 'b',
+                'aria-label': 'Maninay ' + g,
+                placeholder: 'Maria D. Cruz',
+            }).appendTo($colB);
+
+            updateChristeningGodparentAddBtn();
+        }
+
+        function resetChristeningGodparentRows() {
+            var $colA = $('#chAppGpColA');
+            var $colB = $('#chAppGpColB');
+            if (!$colA.length || !$colB.length) return;
+            $colA.empty();
+            $colB.empty();
+            christeningGodparentRowCount = 0;
+            ensureChristeningGodparentRows(christeningGodparentInitialRows());
+        }
+
+        function ensureChristeningGodparentRows(minRows) {
+            var max = christeningGodparentMaxRows();
+            var target = Math.max(1, Math.min(max, parseInt(minRows, 10) || 1));
+            while (christeningGodparentRowCount < target) {
+                appendChristeningGodparentRow();
             }
+        }
+
+        function maxGodparentIndexInSnap(snap) {
+            var max = 0;
+            if (!snap || typeof snap !== 'object') return 0;
+            Object.keys(snap).forEach(function(key) {
+                var m = /^godparent_(\d+)[ab]$/.exec(key);
+                if (m) {
+                    max = Math.max(max, parseInt(m[1], 10));
+                }
+            });
+            return max;
+        }
+
+        function initChristeningApplicationGodparentGrid() {
+            resetChristeningGodparentRows();
         }
 
         function initChristeningApplicationFormGrids() {
@@ -679,6 +735,9 @@
         }
 
         initChristeningApplicationFormGrids();
+        $(document).on('click', '#chAppGpAddBtn', function() {
+            appendChristeningGodparentRow();
+        });
         applyChristeningFieldFormatGuides();
         requestAnimationFrame(function() {
             requestAnimationFrame(syncChristeningApplicationOfficeGridMetrics);
@@ -802,6 +861,7 @@
             if (!$form.length) return;
             $form.find('input[type="text"], input[type="date"], input[type="email"], input[type="tel"], textarea').val('');
             $form.find('input[type="checkbox"]').prop('checked', false);
+            resetChristeningGodparentRows();
             updateChristeningApplicationFeeTotal();
             var $bp = $('#chAppBaptismPlace');
             if ($bp.length) {
@@ -814,6 +874,10 @@
             var $form = $('#christeningApplicationForm');
             if (!$form.length) return;
             clearChristeningApplicationFormFields();
+            var gpNeeded = Math.max(christeningGodparentInitialRows(), maxGodparentIndexInSnap(snap));
+            if (gpNeeded > christeningGodparentRowCount) {
+                ensureChristeningGodparentRows(gpNeeded);
+            }
             $.each(snap, function(key, val) {
                 if (key === 'parent_status' && Array.isArray(val)) {
                     val.forEach(function(v) {
@@ -1197,12 +1261,18 @@
         function resetChristeningPaymentFormForNewEntry() {
             setSelectedChristeningId('');
             $('#christeningTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
-            applyChristeningPaymentFeeFormObject({
-                reference_code: ($paymentFeeForm.attr('data-default-reference-code') || '').trim(),
-                client: '',
-                contact_number: '',
-                address: '',
-                fee_rows: null,
+            fetchNextReferenceCode(function(ref) {
+                var code = ref || ($paymentFeeForm.attr('data-default-reference-code') || '').trim();
+                if ($paymentFeeForm.length && code) {
+                    $paymentFeeForm.attr('data-default-reference-code', code);
+                }
+                applyChristeningPaymentFeeFormObject({
+                    reference_code: code,
+                    client: '',
+                    contact_number: '',
+                    address: '',
+                    fee_rows: null,
+                });
             });
         }
 
@@ -1263,6 +1333,8 @@
 
         var url = $panel.attr('data-records-url');
         var registryType = ($panel.attr('data-registry-type') || '').trim();
+        var registrySection = ($panel.attr('data-section') || activeSection || '').trim();
+        var nextReferenceUrl = ($panel.attr('data-next-reference-url') || '').trim();
         var applicationDetailsUrl = ($panel.attr('data-application-details-url') || '').trim();
         var paymentDetailsUrl = ($panel.attr('data-payment-details-url') || '').trim();
         var paymentSaveUrl = ($panel.attr('data-payment-save-url') || '').trim();
@@ -2261,6 +2333,23 @@
             }, runDelete);
         });
 
+        function fetchNextReferenceCode(done) {
+            if (typeof done !== 'function') {
+                return;
+            }
+            if (!nextReferenceUrl) {
+                done('');
+                return;
+            }
+            fetchJson(nextReferenceUrl, jsonHeaders)
+                .done(function(res) {
+                    done(res && res.reference_code != null ? String(res.reference_code) : '');
+                })
+                .fail(function() {
+                    done('');
+                });
+        }
+
         function fetchQueryParams() {
             var q = {
                 page: state.page,
@@ -2271,6 +2360,7 @@
                 date_to: state.date_to,
             };
             if (registryType) q.registry_type = registryType;
+            if (registrySection) q.registry_section = registrySection;
             return q;
         }
 
@@ -2401,8 +2491,9 @@
             $scheduleBtn.attr('data-schedule-reserved-url') ||
             ''
         ).trim();
-        /** ISO date (Y-m-d) -> true for current calendar month view */
+        /** ISO date (Y-m-d) -> service label for current calendar month view */
         var calendarReservedLookup = {};
+        var scheduleServiceLabel = 'Christening';
         var $scheduleModal = $('#christeningScheduleRequestModal');
         var $calMonthSel = $('#chCalMonth');
         var $calYearSel = $('#chCalYear');
@@ -2432,6 +2523,41 @@
             return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August',
                 'September', 'October', 'November', 'December'
             ][m0] || 'January';
+        }
+
+        function formatTime12h(hhmm) {
+            var raw = (hhmm || '').trim();
+            if (!raw) return '';
+            var parts = raw.split(':');
+            if (parts.length < 2) return raw;
+            var h = parseInt(parts[0], 10);
+            var m = parseInt(parts[1], 10);
+            if (isNaN(h) || isNaN(m)) return raw;
+            var ampm = h >= 12 ? 'PM' : 'AM';
+            var h12 = h % 12;
+            if (h12 === 0) h12 = 12;
+            return h12 + ':' + String(m).padStart(2, '0') + ' ' + ampm;
+        }
+
+        function formatScheduleDayCaption(serviceText, timeText) {
+            var service = (serviceText || '').trim();
+            var time = (timeText || '').trim();
+            if (!service) return '';
+            return time ? (service + ' · ' + time) : service;
+        }
+
+        function buildScheduleDayCaptionHtml(captionText) {
+            var text = (captionText || '').trim();
+            if (!text) return '';
+            if (text.indexOf(' / ') !== -1) {
+                return esc(text);
+            }
+            var sep = text.indexOf(' · ');
+            if (sep === -1) {
+                return esc(text);
+            }
+            return '<span class="sappcScheduleDayService">' + esc(text.slice(0, sep)) + '</span>' +
+                '<span class="sappcScheduleDayWhen">' + esc(text.slice(sep + 3)) + '</span>';
         }
 
         var calendarViewDate = (function() {
@@ -2477,9 +2603,11 @@
                 dataType: 'json',
                 headers: jsonHeaders,
             }).done(function(res) {
-                if (res && res.ok && res.dates && res.dates.length) {
+                if (res && res.ok && res.by_date && typeof res.by_date === 'object') {
+                    calendarReservedLookup = res.by_date;
+                } else if (res && res.ok && res.dates && res.dates.length) {
                     res.dates.forEach(function(d) {
-                        if (d) calendarReservedLookup[String(d)] = true;
+                        if (d) calendarReservedLookup[String(d)] = scheduleServiceLabel;
                     });
                 }
             }).always(function() {
@@ -2515,20 +2643,29 @@
                 if (dow === 0) classes += ' is-sunday';
                 if (dow === 6) classes += ' is-saturday';
                 var isSel = selected && selected.getFullYear() === year && selected.getMonth() === month && selected.getDate() === day;
-                var isReserved = !!calendarReservedLookup[iso];
+                var reservedCaption = calendarReservedLookup[iso] || '';
+                var isReserved = !!reservedCaption;
                 if (isSel) {
                     classes += ' is-selected';
                 } else if (isReserved) {
                     classes += ' is-reserved';
                 }
+                var cellCaptionText = reservedCaption;
+                if (!cellCaptionText && isSel) {
+                    cellCaptionText = formatScheduleDayCaption(
+                        scheduleServiceLabel,
+                        formatTime12h($scheduleTimeInput.val())
+                    );
+                }
                 var label = monthNameFromIndex(month) + ' ' + day + ', ' + year;
                 if (isSel || isReserved) {
-                    label += ', reserved';
+                    label += ', ' + cellCaptionText;
                 }
                 var inner;
                 if (isSel || isReserved) {
                     inner = '<span class="sappcScheduleDayNum" aria-hidden="true">' + day +
-                        '</span><span class="sappcScheduleDayLabel" aria-hidden="true">Reserved</span>';
+                        '</span><span class="sappcScheduleDayLabel" aria-hidden="true">' +
+                        buildScheduleDayCaptionHtml(cellCaptionText) + '</span>';
                 } else {
                     inner = String(day);
                 }
@@ -2540,13 +2677,19 @@
         function resetScheduleRequestFormForNewEntry() {
             if (!$scheduleForm.length) return;
             setSelectedChristeningId('');
-            $('#chScheduleRefCode').val($scheduleForm.attr('data-default-reference-code') || '');
             $('#chScheduleContact').val('');
             $('#chScheduleClient').val('');
             $('#chScheduleAddress').val('');
             $scheduleDateInput.val('');
             $scheduleTimeInput.val('10:00');
             $('#christeningTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+            fetchNextReferenceCode(function(ref) {
+                var code = ref || ($scheduleForm.attr('data-default-reference-code') || '');
+                if (code) {
+                    $scheduleForm.attr('data-default-reference-code', code);
+                }
+                $('#chScheduleRefCode').val(code);
+            });
             var sel = parseIsoDate($scheduleDateInput.val());
             if (sel) {
                 calendarViewDate = new Date(sel.getFullYear(), sel.getMonth(), 1);
@@ -2606,6 +2749,9 @@
                 calendarViewDate = new Date(sel.getFullYear(), sel.getMonth(), 1);
                 syncCalendarHeader();
                 renderCalendarDayGrid();
+            });
+            $scheduleTimeInput.on('change input', function() {
+                renderCalendarDayGridPaint();
             });
         }
 

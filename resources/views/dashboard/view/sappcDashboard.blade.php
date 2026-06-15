@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="{{ asset('css/wedding/marriageApplicationKasal.css') }}">
     <link rel="stylesheet" href="{{ asset('css/burial/burialApplication.css') }}">
     @stack('styles')
+    <link rel="stylesheet" href="{{ asset('css/app-typography.css') }}?v={{ filemtime(public_path('css/app-typography.css')) }}">
 </head>
 
 <body class="sappc-dash sappc-dash--dashboard" data-sappc-sidebar-collapsed="0">

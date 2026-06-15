@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Support\ClientNameDisplay;
 use App\Support\DocumentationApplicationReportWriter;
 use App\Support\SacramentApplicationGate;
+use App\Support\SacramentRegistrySectionFilter;
+use App\Support\SacramentScheduleReservedDates;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -29,30 +31,39 @@ class WeddingController extends Controller
 
     public function scheduleIndex(Request $request): View
     {
-        return view('wedding.view.schedule', $this->weddingSectionViewData($request));
+        return view('wedding.view.schedule', $this->weddingSectionViewData($request, SacramentRegistrySectionFilter::SECTION_SCHEDULE));
     }
 
     public function certificationIndex(Request $request): View
     {
-        return view('wedding.view.certification', $this->weddingSectionViewData($request));
+        return view('wedding.view.certification', $this->weddingSectionViewData($request, SacramentRegistrySectionFilter::SECTION_CERTIFICATION));
     }
 
     public function paymentIndex(Request $request): View
     {
-        return view('wedding.view.payment', $this->weddingSectionViewData($request));
+        return view('wedding.view.payment', $this->weddingSectionViewData($request, SacramentRegistrySectionFilter::SECTION_PAYMENT));
     }
 
     public function applicationIndex(Request $request): View
     {
-        return view('wedding.view.application-form', $this->weddingSectionViewData($request));
+        return view('wedding.view.application-form', $this->weddingSectionViewData($request, SacramentRegistrySectionFilter::SECTION_APPLICATION));
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    private function weddingSectionViewData(Request $request): array
+    public function nextWeddingReferenceCode(): JsonResponse
     {
-        $request->merge(['registry_type' => 'wedding']);
+        return response()->json([
+            'ok' => true,
+            'reference_code' => $this->generateUniqueWeddingReferenceCode(),
+        ]);
+    }
+
+
+    private function weddingSectionViewData(Request $request, string $section): array
+    {
+        $request->merge([
+            'registry_type' => 'wedding',
+            'registry_section' => $section,
+        ]);
 
         $dashboard = app(DashboardController::class);
         $data = $dashboard->registryIndexData($request);
@@ -170,6 +181,12 @@ class WeddingController extends Controller
                         'dateCreated' => now(),
                         'customerId' => $customerId,
                     ];
+                    if (Schema::hasColumn('wedding', 'scheduleCompletedAt')) {
+                        $insertData['scheduleCompletedAt'] = now();
+                    }
+                    if (Schema::hasColumn('wedding', 'workflowStep')) {
+                        $insertData['workflowStep'] = SacramentRegistrySectionFilter::SECTION_SCHEDULE;
+                    }
                     $insertData = array_filter($insertData, fn ($v) => $v !== null);
 
                     return (int) DB::table('wedding')->insertGetId($insertData);
@@ -219,6 +236,12 @@ class WeddingController extends Controller
             }
         }
         $updateData = ['scheduleRequested' => $scheduleAt];
+        if (Schema::hasColumn('wedding', 'scheduleCompletedAt')) {
+            $updateData['scheduleCompletedAt'] = now();
+        }
+        if (Schema::hasColumn('wedding', 'workflowStep')) {
+            $updateData['workflowStep'] = SacramentRegistrySectionFilter::SECTION_SCHEDULE;
+        }
         if (! empty($validated['contact_number'])) {
             $updateData['contactNum'] = $validated['contact_number'];
         }
@@ -319,21 +342,12 @@ class WeddingController extends Controller
 
         $year = (int) $validated['year'];
         $month = (int) $validated['month'];
-
-        $dates = DB::table('wedding')
-            ->whereNotNull('scheduleRequested')
-            ->whereYear('scheduleRequested', $year)
-            ->whereMonth('scheduleRequested', $month)
-            ->selectRaw('DATE(scheduleRequested) as d')
-            ->distinct()
-            ->pluck('d')
-            ->map(fn ($d) => Carbon::parse($d)->format('Y-m-d'))
-            ->values()
-            ->all();
+        $byDate = SacramentScheduleReservedDates::forMonth($year, $month);
 
         return response()->json([
             'ok' => true,
-            'dates' => $dates,
+            'by_date' => $byDate,
+            'dates' => array_keys($byDate),
         ]);
     }
 
@@ -450,6 +464,12 @@ class WeddingController extends Controller
             ], 422);
         }
         $update['paymentFeeRows'] = $encoded;
+        if (Schema::hasColumn('wedding', 'paymentCompletedAt')) {
+            $update['paymentCompletedAt'] = now();
+        }
+        if (Schema::hasColumn('wedding', 'workflowStep')) {
+            $update['workflowStep'] = SacramentRegistrySectionFilter::SECTION_PAYMENT;
+        }
 
         if ($existing === null) {
             if ($clientTrim === '' || $last === null || $last === '') {
@@ -487,7 +507,10 @@ class WeddingController extends Controller
                         'customerId' => $customerId,
                     ], $update);
                     if (Schema::hasColumn('wedding', 'workflowStep')) {
-                        $insertData['workflowStep'] = 'payment';
+                        $insertData['workflowStep'] = SacramentRegistrySectionFilter::SECTION_PAYMENT;
+                    }
+                    if (Schema::hasColumn('wedding', 'paymentCompletedAt')) {
+                        $insertData['paymentCompletedAt'] = now();
                     }
                     $insertData = array_filter($insertData, fn ($v) => $v !== null);
 
@@ -604,12 +627,19 @@ class WeddingController extends Controller
         try {
             DB::transaction(function () use ($weddingId, $encoded, $data, $groomName) {
                 $nameParts = $this->splitRegistryClientName($groomName);
-                DB::table('wedding')->where('weddingId', $weddingId)->update(array_filter([
+                $headerUpdate = array_filter([
                     'clientFName' => $nameParts['first'] !== '' ? $nameParts['first'] : null,
                     'clientMName' => $nameParts['middle'],
                     'clientLName' => $nameParts['last'] !== '' ? $nameParts['last'] : null,
                     'marriageApplication' => $encoded,
-                ], fn ($v) => $v !== null));
+                ], fn ($v) => $v !== null);
+                if (Schema::hasColumn('wedding', 'applicationCompletedAt')) {
+                    $headerUpdate['applicationCompletedAt'] = now();
+                }
+                if (Schema::hasColumn('wedding', 'workflowStep')) {
+                    $headerUpdate['workflowStep'] = SacramentRegistrySectionFilter::SECTION_APPLICATION;
+                }
+                DB::table('wedding')->where('weddingId', $weddingId)->update($headerUpdate);
                 $this->upsertWeddingDetailsFromMarriageApplication($weddingId, $data);
             });
         } catch (QueryException $e) {
@@ -776,10 +806,17 @@ class WeddingController extends Controller
 
                 DB::table('certification_details')->insert($certificationDetailsRow);
 
-                DB::table('wedding')->where('weddingId', $weddingId)->update([
+                $headerUpdate = [
                     'contactNum' => $this->nullableText($request->input('contact_number')),
                     'address' => ClientNameDisplay::nullableFormattedAddress($request->input('top_address')),
-                ]);
+                ];
+                if (Schema::hasColumn('wedding', 'certificationCompletedAt')) {
+                    $headerUpdate['certificationCompletedAt'] = now();
+                }
+                if (Schema::hasColumn('wedding', 'workflowStep')) {
+                    $headerUpdate['workflowStep'] = SacramentRegistrySectionFilter::SECTION_CERTIFICATION;
+                }
+                DB::table('wedding')->where('weddingId', $weddingId)->update($headerUpdate);
             });
         } catch (QueryException $e) {
             report($e);

@@ -547,6 +547,25 @@
             };
 
             var recordsUrl = ($panel.attr('data-records-url') || '').trim();
+            var registrySection = ($panel.attr('data-section') || activeSection || '').trim();
+            var nextReferenceUrl = ($panel.attr('data-next-reference-url') || '').trim();
+
+            function fetchNextReferenceCode(done) {
+                if (typeof done !== 'function') {
+                    return;
+                }
+                if (!nextReferenceUrl) {
+                    done('');
+                    return;
+                }
+                fetchJson(nextReferenceUrl, jsonHeaders)
+                    .done(function(res) {
+                        done(res && res.reference_code != null ? String(res.reference_code) : '');
+                    })
+                    .fail(function() {
+                        done('');
+                    });
+            }
             var paymentDetailsUrl = ($panel.attr('data-payment-details-url') || '').trim();
             var paymentSaveUrlPanel = ($panel.attr('data-payment-save-url') || '').trim();
             var $weddingAppFormBtn = $('#weddingApplicationFormBtn');
@@ -684,6 +703,7 @@
                         date_from: state.date_from,
                         date_to: state.date_to,
                         registry_type: 'wedding',
+                        registry_section: registrySection,
                     });
 
                     $.ajax({
@@ -1075,12 +1095,18 @@
             function resetWeddingPaymentFormForNewEntry() {
                 setSelectedWeddingId('');
                 $('#weddingTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
-                applyConfirmationPaymentFeeFormObject({
-                    reference_code: ($paymentFeeForm.attr('data-default-reference-code') || '').trim(),
-                    client: '',
-                    contact_number: '',
-                    address: '',
-                    fee_rows: null,
+                fetchNextReferenceCode(function(ref) {
+                    var code = ref || ($paymentFeeForm.attr('data-default-reference-code') || '').trim();
+                    if ($paymentFeeForm.length && code) {
+                        $paymentFeeForm.attr('data-default-reference-code', code);
+                    }
+                    applyConfirmationPaymentFeeFormObject({
+                        reference_code: code,
+                        client: '',
+                        contact_number: '',
+                        address: '',
+                        fee_rows: null,
+                    });
                 });
             }
 
@@ -2192,6 +2218,7 @@
                 'data-schedule-save-url') || '';
             var scheduleReservedUrl = ($scheduleForm.attr('data-schedule-reserved-url') || '').trim();
             var calendarReservedLookup = {};
+            var scheduleServiceLabel = 'Wedding';
             var $scheduleModal = $('#weddingScheduleRequestModal');
             var $calMonthSel = $('#wdCalMonth');
             var $calYearSel = $('#wdCalYear');
@@ -2221,6 +2248,41 @@
                 return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August',
                     'September', 'October', 'November', 'December'
                 ][m0] || 'January';
+            }
+
+            function formatTime12h(hhmm) {
+                var raw = (hhmm || '').trim();
+                if (!raw) return '';
+                var parts = raw.split(':');
+                if (parts.length < 2) return raw;
+                var h = parseInt(parts[0], 10);
+                var m = parseInt(parts[1], 10);
+                if (isNaN(h) || isNaN(m)) return raw;
+                var ampm = h >= 12 ? 'PM' : 'AM';
+                var h12 = h % 12;
+                if (h12 === 0) h12 = 12;
+                return h12 + ':' + String(m).padStart(2, '0') + ' ' + ampm;
+            }
+
+            function formatScheduleDayCaption(serviceText, timeText) {
+                var service = (serviceText || '').trim();
+                var time = (timeText || '').trim();
+                if (!service) return '';
+                return time ? (service + ' · ' + time) : service;
+            }
+
+            function buildScheduleDayCaptionHtml(captionText) {
+                var text = (captionText || '').trim();
+                if (!text) return '';
+                if (text.indexOf(' / ') !== -1) {
+                    return esc(text);
+                }
+                var sep = text.indexOf(' · ');
+                if (sep === -1) {
+                    return esc(text);
+                }
+                return '<span class="sappcScheduleDayService">' + esc(text.slice(0, sep)) + '</span>' +
+                    '<span class="sappcScheduleDayWhen">' + esc(text.slice(sep + 3)) + '</span>';
             }
 
             var calendarViewDate = (function() {
@@ -2266,9 +2328,11 @@
                     dataType: 'json',
                     headers: jsonHeaders,
                 }).done(function(res) {
-                    if (res && res.ok && res.dates && res.dates.length) {
+                    if (res && res.ok && res.by_date && typeof res.by_date === 'object') {
+                        calendarReservedLookup = res.by_date;
+                    } else if (res && res.ok && res.dates && res.dates.length) {
                         res.dates.forEach(function(d) {
-                            if (d) calendarReservedLookup[String(d)] = true;
+                            if (d) calendarReservedLookup[String(d)] = scheduleServiceLabel;
                         });
                     }
                 }).always(function() {
@@ -2296,20 +2360,29 @@
                     if (dow === 6) classes += ' is-saturday';
                     var isSel = selected && selected.getFullYear() === year && selected.getMonth() ===
                         month && selected.getDate() === day;
-                    var isReserved = !!calendarReservedLookup[iso];
+                    var reservedCaption = calendarReservedLookup[iso] || '';
+                    var isReserved = !!reservedCaption;
                     if (isSel) {
                         classes += ' is-selected';
                     } else if (isReserved) {
                         classes += ' is-reserved';
                     }
+                    var cellCaptionText = reservedCaption;
+                    if (!cellCaptionText && isSel) {
+                        cellCaptionText = formatScheduleDayCaption(
+                            scheduleServiceLabel,
+                            formatTime12h($scheduleTimeInput.val())
+                        );
+                    }
                     var label = monthNameFromIndex(month) + ' ' + day + ', ' + year;
                     if (isSel || isReserved) {
-                        label += ', reserved';
+                        label += ', ' + cellCaptionText;
                     }
                     var inner;
                     if (isSel || isReserved) {
                         inner = '<span class="sappcScheduleDayNum" aria-hidden="true">' + day +
-                            '</span><span class="sappcScheduleDayLabel" aria-hidden="true">Reserved</span>';
+                            '</span><span class="sappcScheduleDayLabel" aria-hidden="true">' +
+                            buildScheduleDayCaptionHtml(cellCaptionText) + '</span>';
                     } else {
                         inner = String(day);
                     }
@@ -2331,7 +2404,6 @@
             function resetScheduleRequestFormForNewEntry() {
                 if (!$scheduleForm.length) return;
                 setSelectedWeddingId('');
-                $('#wdScheduleRefCode').val($scheduleForm.attr('data-default-reference-code') || '');
                 $('#wdScheduleContact').val('');
                 $('#wdScheduleClient').val('');
                 $('#wdScheduleAddress').val('');
@@ -2339,6 +2411,13 @@
                 $scheduleDateInput.val(new Date().toISOString().slice(0, 10));
                 $scheduleTimeInput.val('10:00');
                 $('#weddingTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                fetchNextReferenceCode(function(ref) {
+                    var code = ref || ($scheduleForm.attr('data-default-reference-code') || '');
+                    if (code) {
+                        $scheduleForm.attr('data-default-reference-code', code);
+                    }
+                    $('#wdScheduleRefCode').val(code);
+                });
                 var sel = parseIsoDate($scheduleDateInput.val());
                 if (sel) {
                     calendarViewDate = new Date(sel.getFullYear(), sel.getMonth(), 1);
@@ -2398,6 +2477,9 @@
                     calendarViewDate = new Date(sel.getFullYear(), sel.getMonth(), 1);
                     syncCalendarHeader();
                     renderCalendarDayGrid();
+                });
+                $scheduleTimeInput.on('change input', function() {
+                    renderCalendarDayGridPaint();
                 });
             }
 

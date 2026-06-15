@@ -1,7 +1,11 @@
 @extends('layouts.adminDashboard')
 
+@section('dash_body_class')
+    sappc-dash--locked-viewport
+@endsection
+
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/document/sappcDocumentLayout.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/document/sappcDocumentLayout.css') }}?v={{ filemtime(public_path('css/document/sappcDocumentLayout.css')) }}">
 @endpush
 
 @section('content')
@@ -19,15 +23,15 @@
         </header>
 
         <div class="sappc-doc-picker-wrap" id="sappcDocPickerWrap">
-            <div class="sappc-doc-picker-card">
+            <div class="sappc-doc-picker-card sappc-doc-picker-card--compact">
                 <a href="{{ route('admin.document') }}" class="sappc-doc-picker_close" title="Close" aria-label="Close">&times;</a>
 
                 <div class="sappc-doc-picker_header">
                     <img
                         class="sappc-doc-picker_logo"
                         src="{{ asset('assets/logos/SAPPC.png') }}"
-                        width="120"
-                        height="120"
+                        width="88"
+                        height="88"
                         alt="Saint Anthony of Padua Parish Church"
                     >
 

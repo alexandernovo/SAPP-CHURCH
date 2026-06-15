@@ -11,6 +11,7 @@
     data-table-colspan="{{ $tableColspan }}"
     data-records-url="{{ route('admin.dashboard.records') }}" data-registry-type="confirmation"
     data-section="{{ $activeSection ?? 'application' }}"
+    data-next-reference-url="{{ route('admin.confirmation.next-reference-code') }}"
     data-workflow-has-certification="0"
     data-workflow-application-url="{{ route('admin.confirmation.application') }}"
     data-workflow-payment-url="{{ route('admin.confirmation.payment') }}"

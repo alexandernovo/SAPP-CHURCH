@@ -414,25 +414,11 @@
 
                                 <div class="sappcChOfficialDottedRow">
                                     <span>Date</span>
-                                    <input type="date" class="sappcChOfficialDottedInput" name="marriage_date_1"
-                                        aria-label="Marriage date (first)">
-                                    <span>Date</span>
-                                    <input type="date" class="sappcChOfficialDottedInput" name="marriage_date_2"
-                                        aria-label="Marriage date (second)">
-                                    <span>Date</span>
-                                    <input type="date" class="sappcChOfficialDottedInput" name="marriage_date_3"
-                                        aria-label="Marriage date (third)">
-                                </div>
-                                <div class="sappcChOfficialDottedRow">
+                                    <input type="date" class="sappcChOfficialDottedInput" name="marriage_date"
+                                        aria-label="Marriage date">
                                     <span>Place</span>
-                                    <input type="text" class="sappcChOfficialDottedInput" name="marriage_place_1"
-                                        aria-label="Marriage place (first)">
-                                    <span>Place</span>
-                                    <input type="text" class="sappcChOfficialDottedInput" name="marriage_place_2"
-                                        aria-label="Marriage place (second)">
-                                    <span>Place</span>
-                                    <input type="text" class="sappcChOfficialDottedInput" name="marriage_place_3"
-                                        aria-label="Marriage place (third)">
+                                    <input type="text" class="sappcChOfficialDottedInput" name="marriage_place"
+                                        aria-label="Marriage place">
                                 </div>
 
                                 <p class="sappcChOfficialNote">* If parent&rsquo;s are married, indicate Marriage Contract
@@ -545,6 +531,13 @@
 
                                     <h2 class="sappcChOfficialGpHeading">Listahan kang mga maninoy kag maninay sa pagbunyag
                                     </h2>
+                                    <div class="sappcChOfficialGpToolbar">
+                                        <div class="sappcChOfficialGpColHeads" aria-hidden="true">
+                                            <span>Maninoy</span>
+                                            <span>Maninay</span>
+                                        </div>
+                                        <button type="button" class="sappcChOfficialGpAddBtn" id="chAppGpAddBtn">Add</button>
+                                    </div>
                                     <div class="sappcChOfficialGpCols">
                                         <div class="sappcChOfficialGpCol" id="chAppGpColA"></div>
                                         <div class="sappcChOfficialGpCol" id="chAppGpColB"></div>

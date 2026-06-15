@@ -52,8 +52,8 @@
             border: 0;
             background: transparent;
             color: #0e285c;
-            font-family: Arial, Helvetica, sans-serif;
-            font-weight: 600;
+            font-family: Arial;
+            font-weight: 400;
             font-size: 3.45mm;
             letter-spacing: .02em;
             line-height: 1;
@@ -74,7 +74,7 @@
             top: 38.45%;
             width: 80%;
             font-size: 4.85mm;
-            font-weight: 700;
+            font-weight: 400;
             letter-spacing: .03em;
             text-align: center;
         }
@@ -252,8 +252,8 @@
             border: 0;
             background: transparent;
             color: #0e285c;
-            font-family: Arial, Helvetica, sans-serif;
-            font-weight: 600;
+            font-family: Arial;
+            font-weight: 400;
             font-size: 3.45mm;
             letter-spacing: .02em;
             line-height: 1;
@@ -272,7 +272,7 @@
             top: 38.45%;
             width: 80%;
             font-size: 4.85mm;
-            font-weight: 700;
+            font-weight: 400;
             letter-spacing: .03em;
             text-align: center;
         }

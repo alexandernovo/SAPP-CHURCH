@@ -11,6 +11,7 @@
     data-table-colspan="{{ $tableColspan }}"
     data-records-url="{{ route('admin.dashboard.records') }}" data-registry-type="wedding"
     data-section="{{ $activeSection ?? 'application' }}"
+    data-next-reference-url="{{ route('admin.wedding.next-reference-code') }}"
     data-workflow-has-certification="1"
     data-workflow-application-url="{{ route('admin.wedding.application') }}"
     data-workflow-payment-url="{{ route('admin.wedding.payment') }}"

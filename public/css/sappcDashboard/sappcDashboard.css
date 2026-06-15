@@ -65,9 +65,9 @@
 
 .sappc-sidebar_church {
     margin: 0.85rem 0 0;
-    font-family: Arial, sans-serif;
+    font-family: Arial;
     font-size: 1.05rem;
-    font-weight: 800;
+    font-weight: 400;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: #fff;
@@ -84,9 +84,9 @@
     margin: 1rem 0.65rem 0.4rem;
     padding-top: 0.5rem;
     border-top: 1px solid rgba(255, 255, 255, 0.12);
-    font-family: Arial, sans-serif;
+    font-family: Arial;
     font-size: 0.78rem;
-    font-weight: 700;
+    font-weight: 400;
     letter-spacing: 0.12em;
     color: rgba(255, 255, 255, 0.55);
 }
@@ -107,7 +107,7 @@
     color: #fff;
     text-decoration: none;
     font-size: 1rem;
-    font-weight: 500;
+    font-weight: 400;
     border: none;
     background: transparent;
     width: calc(100% - 0.5rem);
@@ -249,9 +249,9 @@
 }
 
 .sappc-topbar_admin {
-    font-family: Arial, sans-serif;
+    font-family: Arial;
     font-size: 0.95rem;
-    font-weight: 600;
+    font-weight: 400;
 }
 
 .sappc-topbar_dropdown-menu {
@@ -272,7 +272,7 @@
     align-items: center;
     gap: 0.5rem;
     width: 100%;
-    font-weight: 600;
+    font-weight: 400;
     font-size: 1.05rem;
     padding: 0.75rem 1.15rem;
     border: none;
@@ -388,6 +388,77 @@ body.sappc-dash:has(.sappc-registry-page)::-webkit-scrollbar {
     height: 0;
 }
 
+/* Explicit viewport lock (document layout, burial certification, etc.) */
+html:has(body.sappc-dash--locked-viewport) {
+    height: 100%;
+    max-height: 100%;
+    overflow: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+html:has(body.sappc-dash--locked-viewport)::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+body.sappc-dash--locked-viewport {
+    height: 100vh;
+    max-height: 100vh;
+    min-height: 0 !important;
+    overflow: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+body.sappc-dash--locked-viewport::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+body.sappc-dash--locked-viewport.sappc-dash {
+    max-height: 100vh;
+    overflow: hidden;
+}
+
+body.sappc-dash--locked-viewport .sappc-dash_layout {
+    min-height: 0;
+    max-height: 100vh;
+    height: 100%;
+    overflow: hidden;
+}
+
+body.sappc-dash--locked-viewport .sappc-dash_main {
+    height: 100vh;
+    max-height: 100vh;
+    min-height: 0;
+    overflow: hidden;
+}
+
+body.sappc-dash--locked-viewport .sappc-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 1.25rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+body.sappc-dash--locked-viewport .sappc-content::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+body.sappc-dash--locked-viewport.modal-open {
+    overflow: hidden !important;
+    padding-right: 0 !important;
+}
+
 .sappc-dash:has(.sappc-registry-page) {
     min-height: 0;
     max-height: 100vh;
@@ -426,7 +497,7 @@ body.sappc-dash:has(.sappc-registry-page)::-webkit-scrollbar {
     gap: 0.6rem;
     margin: 0 0 1.25rem;
     font-size: 1.65rem;
-    font-weight: 800;
+    font-weight: 400;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: #000;
@@ -473,7 +544,7 @@ body.sappc-dash:has(.sappc-registry-page)::-webkit-scrollbar {
 
 .sappc-registry-toolbar_record {
     font-size: 1.05rem;
-    font-weight: 800;
+    font-weight: 400;
     letter-spacing: 0.06em;
     color: #fff;
     margin-right: 0.35rem;
@@ -499,7 +570,7 @@ body.sappc-dash:has(.sappc-registry-page)::-webkit-scrollbar {
     gap: 0.5rem;
     padding: 0.48rem 0.95rem;
     font-size: 0.8rem;
-    font-weight: 700;
+    font-weight: 400;
     letter-spacing: 0.04em;
     text-transform: none;
     border-radius: 0.2rem;
@@ -508,7 +579,9 @@ body.sappc-dash:has(.sappc-registry-page)::-webkit-scrollbar {
     transition:
         background 0.15s ease,
         color 0.15s ease,
-        border-color 0.15s ease;
+        border-color 0.15s ease,
+        box-shadow 0.15s ease,
+        transform 0.15s ease;
     white-space: nowrap;
 }
 
@@ -524,18 +597,22 @@ body.sappc-dash:has(.sappc-registry-page)::-webkit-scrollbar {
 .sappc-registry-toolbar_btn--reload:hover {
     background: #525252;
     color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+    transform: translateY(-1px);
 }
 
 .sappc-registry-toolbar_btn--outline {
-    background: #fff;
-    border-color: #e0e0e0;
-    color: var(--sappc-gold);
+    background: transparent;
+    border-color: #fff;
+    color: #fff;
 }
 
 .sappc-registry-toolbar_btn--outline:hover {
-    background: #fafafa;
-    border-color: var(--sappc-gold);
-    color: var(--sappc-gold-dark);
+    background: rgba(255, 255, 255, 0.12);
+    border-color: #fff;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    transform: translateY(-1px);
 }
 
 .sappc-registry-toolbar_btn--cta {
@@ -548,6 +625,8 @@ body.sappc-dash:has(.sappc-registry-page)::-webkit-scrollbar {
     background: var(--sappc-gold-dark);
     border-color: #7a5f08;
     color: #fff;
+    box-shadow: 0 2px 10px rgba(154, 114, 9, 0.25);
+    transform: translateY(-1px);
 }
 
 .sappc-registry-toolbar_btn i {
@@ -560,16 +639,18 @@ a.sappc-registry-toolbar_btn {
 
 .sappc-registry-toolbar_btn.is-active,
 a.sappc-registry-toolbar_btn.is-active {
-    background: var(--sappc-gold);
-    border-color: var(--sappc-gold-dark);
-    color: #fff;
+    background: #fff;
+    border-color: #fff;
+    color: var(--sappc-panel-bg);
 }
 
 .sappc-registry-toolbar_btn.is-active:hover,
 a.sappc-registry-toolbar_btn.is-active:hover {
-    background: var(--sappc-gold-dark);
-    border-color: #7a5f08;
-    color: #fff;
+    background: #f0f0f0;
+    border-color: #fff;
+    color: var(--sappc-panel-bg);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    transform: translateY(-1px);
 }
 
 .sappc-registry-page_actions {
@@ -661,7 +742,7 @@ a.sappc-registry-toolbar_btn.is-active:hover {
     min-width: 3.25rem;
     padding: 0.28rem 0.7rem;
     font-size: 0.72rem;
-    font-weight: 600;
+    font-weight: 400;
     letter-spacing: 0.03em;
     text-align: center;
     border-radius: 0.2rem;
@@ -688,7 +769,7 @@ button.sappc-payment-badge {
 
 .sappcPaymentFeeModalTable .sappc-payment-badge {
     font-size: 0.65rem;
-    font-weight: 700;
+    font-weight: 400;
     min-width: auto;
     padding: 0.22rem 0.55rem;
     border-radius: 0.3rem;
@@ -751,8 +832,8 @@ button.sappc-payment-badge {
 .sappc-doc-stat_label {
     margin: 0;
     width: 100%;
-    font-size: clamp(0.68rem, 5.5cqi, 0.95rem);
-    font-weight: 600;
+    font-size: clamp(0.9rem, 7.5cqi, 1.2rem);
+    font-weight: 400;
     color: var(--sappc-stat-gold);
     line-height: 1.25;
     letter-spacing: 0.01em;
@@ -782,14 +863,14 @@ button.sappc-payment-badge {
 .sappc-doc-stat_value {
     margin: 0;
     font-size: 2rem;
-    font-weight: 800;
+    font-weight: 400;
     color: var(--sappc-stat-gold);
     line-height: 1;
     letter-spacing: -0.02em;
 }
 
 .sappc-doc-stat_year {
-    font-weight: 600;
+    font-weight: 400;
     font-size: 1em;
     opacity: 0.9;
 }
@@ -874,7 +955,7 @@ button.sappc-doc-stat_clickable:focus-visible {
     height: 2.25rem;
     padding-top: 0.25rem;
     padding-bottom: 0.25rem;
-    font-weight: 500;
+    font-weight: 400;
     color: #212529;
     background-color: #fff;
     border: 1px solid #212529;
@@ -935,7 +1016,7 @@ button.sappc-doc-stat_clickable:focus-visible {
 
 .sappc-stat-monthly-tile_label {
     font-size: 0.6875rem;
-    font-weight: 800;
+    font-weight: 400;
     letter-spacing: 0.08em;
     line-height: 1;
     text-transform: uppercase;
@@ -943,7 +1024,7 @@ button.sappc-doc-stat_clickable:focus-visible {
 
 .sappc-stat-monthly-tile_value {
     font-size: 1.5rem;
-    font-weight: 800;
+    font-weight: 400;
     line-height: 1;
     font-variant-numeric: tabular-nums;
 }
@@ -1004,7 +1085,7 @@ button.sappc-doc-stat_clickable:focus-visible {
     max-width: 4.25rem;
     padding: 0.25rem 1.65rem 0.25rem 0.45rem;
     font-size: 0.8rem;
-    font-weight: 600;
+    font-weight: 400;
     border: 1px solid var(--sappc-border);
     border-radius: 0.2rem;
     background-color: #fff;
@@ -1035,7 +1116,7 @@ button.sappc-doc-stat_clickable:focus-visible {
     margin: 0;
     padding: 0 0.55rem 0 0.65rem;
     font-size: 0.75rem;
-    font-weight: 700;
+    font-weight: 400;
     color: #f0f0f0;
     white-space: nowrap;
     background: #424242;
@@ -1074,7 +1155,7 @@ button.sappc-doc-stat_clickable:focus-visible {
     margin: 0;
     padding: 0.38rem 1rem;
     font-size: 0.75rem;
-    font-weight: 700;
+    font-weight: 400;
     letter-spacing: 0.04em;
     line-height: 1.2;
     color: #fff;
@@ -1113,7 +1194,7 @@ button.sappc-doc-stat_clickable:focus-visible {
     margin: 0;
     padding: 0.38rem 0.95rem;
     font-size: 0.75rem;
-    font-weight: 700;
+    font-weight: 400;
     letter-spacing: 0.04em;
     line-height: 1.2;
     color: #fff;
@@ -1158,7 +1239,7 @@ button.sappc-doc-stat_clickable:focus-visible {
 .sappc-table-toolbar_search-heading {
     margin: 0;
     font-size: 0.8rem;
-    font-weight: 600;
+    font-weight: 400;
     color: #333;
     white-space: nowrap;
 }
@@ -1230,7 +1311,7 @@ button.sappc-doc-stat_clickable:focus-visible {
     background: var(--sappc-charcoal);
     color: #fff;
     font-size: 0.78rem;
-    font-weight: 700;
+    font-weight: 400;
     cursor: pointer;
     transition:
         background 0.15s ease,
@@ -1253,14 +1334,14 @@ button.sappc-doc-stat_clickable:focus-visible {
 }
 
 .sappc-data-table {
-    font-family: Arial, sans-serif;
+    font-family: Arial;
     font-size: 0.8rem;
 }
 
 .sappc-data-table thead th {
     background: var(--sappc-panel-bg);
     color: #fff;
-    font-weight: 700;
+    font-weight: 400;
     font-size: 0.7rem;
     letter-spacing: 0.03em;
     white-space: nowrap;
@@ -1458,7 +1539,7 @@ body.sappc-dash--registry-embed .sappc-registry-page > *:not(#christeningApplica
     background: #fff;
     color: #333;
     font-size: 0.85rem;
-    font-weight: 600;
+    font-weight: 400;
     cursor: pointer;
 }
 
@@ -1484,7 +1565,7 @@ body.sappc-dash--registry-embed .sappc-registry-page > *:not(#christeningApplica
 .sappc-chart-section_title {
     margin: 0 0 0.75rem;
     font-size: 1rem;
-    font-weight: 800;
+    font-weight: 400;
     letter-spacing: 0.06em;
     text-align: center;
     color: #000;
@@ -1515,7 +1596,7 @@ body.sappc-dash--registry-embed .sappc-registry-page > *:not(#christeningApplica
     flex: 0 1 auto;
     text-align: center;
     font-size: 0.95rem;
-    font-weight: 700;
+    font-weight: 400;
     color: #333;
 }
 

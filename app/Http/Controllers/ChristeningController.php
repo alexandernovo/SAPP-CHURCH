@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Support\ClientNameDisplay;
 use App\Support\DocumentationApplicationReportWriter;
 use App\Support\SacramentApplicationGate;
+use App\Support\SacramentRegistrySectionFilter;
+use App\Support\SacramentScheduleReservedDates;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -16,7 +18,7 @@ use Illuminate\View\View;
 
 class ChristeningController extends Controller
 {
-    private const CHRISTENING_GODPARENT_FORM_ROWS = 13;
+    private const CHRISTENING_GODPARENT_FORM_ROWS = 26;
 
     private const CHRISTENING_FIXED_BAPTISM_PLACE = 'Saint Anthony of Padua Parish Church';
 
@@ -33,30 +35,41 @@ class ChristeningController extends Controller
 
     public function scheduleIndex(Request $request): View
     {
-        return view('christening.view.schedule', $this->christeningSectionViewData($request));
+        return view('christening.view.schedule', $this->christeningSectionViewData($request, SacramentRegistrySectionFilter::SECTION_SCHEDULE));
     }
 
     public function certificationIndex(Request $request): View
     {
-        return view('christening.view.certification', $this->christeningSectionViewData($request));
+        return view('christening.view.certification', $this->christeningSectionViewData($request, SacramentRegistrySectionFilter::SECTION_CERTIFICATION));
     }
 
     public function paymentIndex(Request $request): View
     {
-        return view('christening.view.payment', $this->christeningSectionViewData($request));
+        return view('christening.view.payment', $this->christeningSectionViewData($request, SacramentRegistrySectionFilter::SECTION_PAYMENT));
     }
 
     public function applicationIndex(Request $request): View
     {
-        return view('christening.view.application-form', $this->christeningSectionViewData($request));
+        return view('christening.view.application-form', $this->christeningSectionViewData($request, SacramentRegistrySectionFilter::SECTION_APPLICATION));
+    }
+
+    public function nextChristeningReferenceCode(): JsonResponse
+    {
+        return response()->json([
+            'ok' => true,
+            'reference_code' => $this->generateUniqueChristeningReferenceCode(),
+        ]);
     }
 
     /**
      * @return array<string, mixed>
      */
-    private function christeningSectionViewData(Request $request): array
+    private function christeningSectionViewData(Request $request, string $section): array
     {
-        $request->merge(['registry_type' => 'christening']);
+        $request->merge([
+            'registry_type' => 'christening',
+            'registry_section' => $section,
+        ]);
 
         $dashboard = app(DashboardController::class);
         $data = $dashboard->registryIndexData($request);
@@ -294,6 +307,12 @@ class ChristeningController extends Controller
                         'dateCreated' => now(),
                         'customerId' => $customerId,
                     ];
+                    if (Schema::hasColumn('christening', 'scheduleCompletedAt')) {
+                        $insertData['scheduleCompletedAt'] = now();
+                    }
+                    if (Schema::hasColumn('christening', 'workflowStep')) {
+                        $insertData['workflowStep'] = SacramentRegistrySectionFilter::SECTION_SCHEDULE;
+                    }
                     $insertData = array_filter($insertData, fn ($v) => $v !== null);
 
                     return (int) DB::table('christening')->insertGetId($insertData);
@@ -343,6 +362,12 @@ class ChristeningController extends Controller
             }
         }
         $updateData = ['scheduleRequested' => $scheduleAt];
+        if (Schema::hasColumn('christening', 'scheduleCompletedAt')) {
+            $updateData['scheduleCompletedAt'] = now();
+        }
+        if (Schema::hasColumn('christening', 'workflowStep')) {
+            $updateData['workflowStep'] = SacramentRegistrySectionFilter::SECTION_SCHEDULE;
+        }
         if (! empty($validated['contact_number'])) {
             $updateData['contactNum'] = $validated['contact_number'];
         }
@@ -547,7 +572,7 @@ class ChristeningController extends Controller
                     $headerUpdate['applicationCompletedAt'] = now();
                 }
                 if (Schema::hasColumn('christening', 'workflowStep')) {
-                    $headerUpdate['workflowStep'] = 'payment';
+                    $headerUpdate['workflowStep'] = SacramentRegistrySectionFilter::SECTION_APPLICATION;
                 }
                 $headerUpdate = array_filter($headerUpdate, fn ($v) => $v !== null);
                 DB::table('christening')->where('christeningId', $christeningId)->update($headerUpdate);
@@ -861,6 +886,12 @@ class ChristeningController extends Controller
             ], 422);
         }
         $update['paymentFeeRows'] = $encoded;
+        if (Schema::hasColumn('christening', 'paymentCompletedAt')) {
+            $update['paymentCompletedAt'] = now();
+        }
+        if (Schema::hasColumn('christening', 'workflowStep')) {
+            $update['workflowStep'] = SacramentRegistrySectionFilter::SECTION_PAYMENT;
+        }
 
         if ($existing === null) {
             if ($clientTrim === '' || $last === null || $last === '') {
@@ -898,7 +929,10 @@ class ChristeningController extends Controller
                         'customerId' => $customerId,
                     ], $update);
                     if (Schema::hasColumn('christening', 'workflowStep')) {
-                        $insertData['workflowStep'] = 'payment';
+                        $insertData['workflowStep'] = SacramentRegistrySectionFilter::SECTION_PAYMENT;
+                    }
+                    if (Schema::hasColumn('christening', 'paymentCompletedAt')) {
+                        $insertData['paymentCompletedAt'] = now();
                     }
                     $insertData = array_filter($insertData, fn ($v) => $v !== null);
 
@@ -985,24 +1019,12 @@ class ChristeningController extends Controller
 
         $year = (int) $validated['year'];
         $month = (int) $validated['month'];
-
-        $start = Carbon::create($year, $month, 1)->startOfDay();
-        $end = (clone $start)->endOfMonth()->endOfDay();
-
-        $dates = DB::table('christening')
-            ->whereNotNull('scheduleRequested')
-            ->whereBetween('scheduleRequested', [$start->format('Y-m-d H:i:s'), $end->format('Y-m-d H:i:s')])
-            ->selectRaw('DATE(scheduleRequested) as d')
-            ->distinct()
-            ->orderBy('d')
-            ->pluck('d')
-            ->map(fn ($d) => Carbon::parse($d)->format('Y-m-d'))
-            ->values()
-            ->all();
+        $byDate = SacramentScheduleReservedDates::forMonth($year, $month);
 
         return response()->json([
             'ok' => true,
-            'dates' => $dates,
+            'by_date' => $byDate,
+            'dates' => array_keys($byDate),
         ]);
     }
 
@@ -1019,12 +1041,8 @@ class ChristeningController extends Controller
             'mother_maiden_name' => '',
             'parent_address' => '',
             'parent_status' => [],
-            'marriage_date_1' => '',
-            'marriage_place_1' => '',
-            'marriage_date_2' => '',
-            'marriage_place_2' => '',
-            'marriage_date_3' => '',
-            'marriage_place_3' => '',
+            'marriage_date' => '',
+            'marriage_place' => '',
             'marriage_contract_no' => '',
             'guardian_contact' => '',
             'baptism_date' => '',
@@ -1062,12 +1080,7 @@ class ChristeningController extends Controller
         $out['father_name'] = (string) ($row->fatherName ?? '');
         $out['mother_maiden_name'] = (string) ($row->motherMaidenName ?? '');
         $out['parent_address'] = (string) ($row->parentAddress ?? '');
-        $out['marriage_date_1'] = $this->dateForForm($row->civillyMarriedDate ?? null);
-        $out['marriage_place_1'] = (string) ($row->civillyMarriedPlace ?? '');
-        $out['marriage_date_2'] = $this->dateForForm($row->marriedOtherDenominationDate ?? null);
-        $out['marriage_place_2'] = (string) ($row->marriedOtherDenominationPlace ?? '');
-        $out['marriage_date_3'] = $this->dateForForm($row->churchMarriageDate ?? null);
-        $out['marriage_place_3'] = (string) ($row->churchMarriagePlace ?? '');
+        [$out['marriage_date'], $out['marriage_place']] = $this->marriageDatePlaceForForm($row);
         $out['marriage_contract_no'] = (string) ($row->marriageContractNumber ?? '');
         $out['guardian_contact'] = (string) ($row->parentGuardianContact ?? '');
         $out['baptism_date'] = $this->dateForForm($row->dateOfBaptism ?? null);
@@ -1149,6 +1162,11 @@ class ChristeningController extends Controller
             $parentStatus = [];
         }
         $parentStatusText = implode(', ', array_filter(array_map('strval', $parentStatus)));
+        $marriageFields = $this->mapMarriageDatePlaceToDetailsColumns(
+            $parentStatus,
+            $request->input('marriage_date'),
+            $request->input('marriage_place')
+        );
 
         $godparents = [];
         for ($i = 1; $i <= self::CHRISTENING_GODPARENT_FORM_ROWS; $i++) {
@@ -1182,12 +1200,12 @@ class ChristeningController extends Controller
             'motherMaidenName' => ClientNameDisplay::nullableFormattedFamilyName($request->input('mother_maiden_name')),
             'parentAddress' => ClientNameDisplay::nullableFormattedAddress($request->input('parent_address')),
             'parentStatus' => $parentStatusText !== '' ? $parentStatusText : null,
-            'civillyMarriedDate' => $this->parseFlexibleDate($request->input('marriage_date_1')),
-            'civillyMarriedPlace' => $this->nullableText($request->input('marriage_place_1')),
-            'marriedOtherDenominationDate' => $this->parseFlexibleDate($request->input('marriage_date_2')),
-            'marriedOtherDenominationPlace' => $this->nullableText($request->input('marriage_place_2')),
-            'churchMarriageDate' => $this->parseFlexibleDate($request->input('marriage_date_3')),
-            'churchMarriagePlace' => $this->nullableText($request->input('marriage_place_3')),
+            'civillyMarriedDate' => $marriageFields['civillyMarriedDate'],
+            'civillyMarriedPlace' => $marriageFields['civillyMarriedPlace'],
+            'marriedOtherDenominationDate' => $marriageFields['marriedOtherDenominationDate'],
+            'marriedOtherDenominationPlace' => $marriageFields['marriedOtherDenominationPlace'],
+            'churchMarriageDate' => $marriageFields['churchMarriageDate'],
+            'churchMarriagePlace' => $marriageFields['churchMarriagePlace'],
             'marriageContractNumber' => $this->nullableText($request->input('marriage_contract_no')),
             'parentGuardianContact' => $this->nullableText($request->input('guardian_contact')),
             'dateOfBaptism' => $this->parseFlexibleDate($request->input('baptism_date')),
@@ -1206,6 +1224,76 @@ class ChristeningController extends Controller
             'approvedByParishSecretary' => ClientNameDisplay::nullableFormattedFamilyName($request->input('approval_parish_secretary')),
             'approvedByParishPriest' => ClientNameDisplay::nullableFormattedPriest($request->input('approval_parish_priest')),
         ];
+    }
+
+    private function marriageDatePlaceForForm(object $row): array
+    {
+        $pairs = [
+            [$row->civillyMarriedDate ?? null, $row->civillyMarriedPlace ?? null],
+            [$row->marriedOtherDenominationDate ?? null, $row->marriedOtherDenominationPlace ?? null],
+            [$row->churchMarriageDate ?? null, $row->churchMarriagePlace ?? null],
+        ];
+
+        foreach ($pairs as [$date, $place]) {
+            $placeText = trim((string) $place);
+            if ($date !== null && trim((string) $date) !== '') {
+                return [$this->dateForForm($date), $placeText];
+            }
+            if ($placeText !== '') {
+                return ['', $placeText];
+            }
+        }
+
+        return ['', ''];
+    }
+
+    /**
+     * @param  array<int, string>  $parentStatus
+     * @return array<string, mixed>
+     */
+    private function mapMarriageDatePlaceToDetailsColumns(array $parentStatus, mixed $dateInput, mixed $placeInput): array
+    {
+        $empty = [
+            'civillyMarriedDate' => null,
+            'civillyMarriedPlace' => null,
+            'marriedOtherDenominationDate' => null,
+            'marriedOtherDenominationPlace' => null,
+            'churchMarriageDate' => null,
+            'churchMarriagePlace' => null,
+        ];
+
+        $marriageDate = $this->parseFlexibleDate($dateInput);
+        $marriagePlace = $this->nullableText($placeInput);
+        if ($marriageDate === null && $marriagePlace === null) {
+            return $empty;
+        }
+
+        $statusKeys = array_map('strval', $parentStatus);
+        $target = null;
+        if (in_array('civilly_married', $statusKeys, true)) {
+            $target = 'civilly';
+        } elseif (in_array('married_other', $statusKeys, true)) {
+            $target = 'other';
+        } elseif (in_array('church_marriage', $statusKeys, true)) {
+            $target = 'church';
+        } else {
+            $target = 'civilly';
+        }
+
+        return match ($target) {
+            'other' => array_merge($empty, [
+                'marriedOtherDenominationDate' => $marriageDate,
+                'marriedOtherDenominationPlace' => $marriagePlace,
+            ]),
+            'church' => array_merge($empty, [
+                'churchMarriageDate' => $marriageDate,
+                'churchMarriagePlace' => $marriagePlace,
+            ]),
+            default => array_merge($empty, [
+                'civillyMarriedDate' => $marriageDate,
+                'civillyMarriedPlace' => $marriagePlace,
+            ]),
+        };
     }
 
     private function nullableText(mixed $value): ?string
@@ -1315,10 +1403,17 @@ class ChristeningController extends Controller
 
                 DB::table('certification_details')->insert($certificationDetailsRow);
 
-                DB::table('christening')->where('christeningId', $christeningId)->update([
+                $headerUpdate = [
                     'contactNum' => $this->nullableText($request->input('contact_number')),
                     'address' => ClientNameDisplay::nullableFormattedAddress($request->input('top_address')),
-                ]);
+                ];
+                if (Schema::hasColumn('christening', 'certificationCompletedAt')) {
+                    $headerUpdate['certificationCompletedAt'] = now();
+                }
+                if (Schema::hasColumn('christening', 'workflowStep')) {
+                    $headerUpdate['workflowStep'] = SacramentRegistrySectionFilter::SECTION_CERTIFICATION;
+                }
+                DB::table('christening')->where('christeningId', $christeningId)->update($headerUpdate);
             });
         } catch (QueryException $e) {
             report($e);

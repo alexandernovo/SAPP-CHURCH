@@ -2,12 +2,24 @@
 
 @section('title', 'Burial — Certification — ' . config('app.name', 'SAPP Church'))
 
+@section('dash_body_class')
+    sappc-dash--locked-viewport
+@endsection
+
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/christening/applicationOfChristening.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/christening/applicationOfChristening.css') }}?v={{ filemtime(public_path('css/christening/applicationOfChristening.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/burial/burialApplication.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/document/sappcDocumentLayout.css') }}?v={{ filemtime(public_path('css/document/sappcDocumentLayout.css')) }}">
     <style>
         .sappc-doc-picker_btn:disabled {
             opacity: 1;
+        }
+
+        .sappc-registry-page_head,
+        .sappc-page-title,
+        .sappc-page-breadcrumb,
+        .sappc-page-breadcrumb a {
+            font-family: Arial;
         }
     </style>
 @endpush

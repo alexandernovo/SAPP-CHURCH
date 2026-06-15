@@ -111,7 +111,7 @@
 
 .sappcScheduleCalendarMonthNo {
     color: #fff;
-    font-weight: 700;
+    font-weight: 400;
     font-size: 1.05rem;
     line-height: 1;
     padding: 0 0.25rem;
@@ -124,7 +124,7 @@
     background: #3a3f46;
     color: #fff;
     text-transform: uppercase;
-    font-weight: 700;
+    font-weight: 400;
     letter-spacing: 0.16em;
     font-size: 0.75rem;
     min-height: 2rem;
@@ -156,7 +156,7 @@
     border-right: 1px solid #bebebe;
     border-bottom: 1px solid #bebebe;
     text-align: center;
-    font-weight: 800;
+    font-weight: 400;
     font-size: 1.82rem;
     letter-spacing: 0.02em;
     line-height: 1;
@@ -178,7 +178,7 @@
     border-bottom: 1px solid #bebebe;
     background: #fff;
     font-size: 2rem;
-    font-weight: 700;
+    font-weight: 400;
     color: #b1891c;
     display: flex;
     align-items: center;
@@ -223,18 +223,37 @@
 
 .sappcScheduleDayNum {
     font-size: 2rem;
-    font-weight: 700;
+    font-weight: 400;
     line-height: 1.05;
 }
 
 .sappcScheduleDayLabel {
-    display: block;
-    font-size: 0.56rem;
-    font-weight: 600;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.12rem 0.28rem;
+    font-size: 0.5rem;
+    font-weight: 400;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
-    line-height: 1.2;
+    letter-spacing: 0.04em;
+    line-height: 1.1;
     margin-top: 0.12rem;
+    max-width: 100%;
+    padding: 0 0.12rem;
+    text-align: center;
+    white-space: normal;
+    word-break: break-word;
+}
+
+.sappcScheduleDayService,
+.sappcScheduleDayWhen {
+    display: inline;
+}
+
+.sappcScheduleDayWhen {
+    letter-spacing: 0.02em;
+    opacity: 0.95;
 }
 
 .sappcScheduleFormCard {
@@ -259,7 +278,7 @@
 .sappcScheduleFormHeader h2 {
     margin: 0;
     font-size: clamp(1.05rem, 2vw, 1.55rem);
-    font-weight: 700;
+    font-weight: 400;
     color: #b1891c;
     text-transform: uppercase;
     line-height: 1.1;
@@ -283,7 +302,7 @@
 .sappcScheduleFormField label {
     margin: 0;
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 400;
     color: #1f1f1f;
 }
 
@@ -418,7 +437,7 @@
 
 .sappcChristeningAppModalFooter .sappcChristeningAppModalBtn {
     font-size: 0.875rem;
-    font-weight: 600;
+    font-weight: 400;
     padding: 0.5rem 1.5rem;
     border-radius: 0.35rem;
     border: 1px solid transparent;
@@ -513,16 +532,103 @@
     background-color: #fff !important;
 }
 
+#christeningApplicationFormModal #christeningApplicationForm .sappcChOfficialMastheadLine {
+    font-size: 0.875rem;
+}
+
+#christeningApplicationFormModal #christeningApplicationForm .sappcChOfficialDocTitle {
+    font-size: 1.35rem;
+}
+
 #christeningApplicationForm {
-    font-family: Arial, sans-serif;
-    font-size: 12px;
+    font-family: Arial;
+    font-size: 15px;
+    --sappc-ch-official-label-col: 11.75rem;
+    --sappc-ch-official-field-gap: 0.5rem;
+}
+
+#christeningApplicationForm .sappcChOfficialNameStrip .sappcChOfficialNameLabel,
+#christeningApplicationForm .sappcChOfficialNameRowContact .sappcChOfficialNameStrip .sappcChOfficialNameLabel {
+    flex: 0 0 var(--sappc-ch-official-label-col);
+    width: var(--sappc-ch-official-label-col);
+    max-width: var(--sappc-ch-official-label-col);
+}
+
+#christeningApplicationForm .sappcChOfficialField {
+    display: grid;
+    grid-template-columns: var(--sappc-ch-official-label-col) minmax(0, 1fr);
+    gap: var(--sappc-ch-official-field-gap);
+    align-items: center;
+}
+
+#christeningApplicationForm .sappcChOfficialField .sappcChOfficialLabel {
+    flex: unset;
+    max-width: none;
+    width: auto;
+    padding: 0.2rem 0;
+}
+
+#christeningApplicationForm .sappcChOfficialRowDob {
+    display: grid;
+    grid-template-columns: var(--sappc-ch-official-label-col) minmax(0, 1fr) minmax(5.75rem, 7rem) minmax(0, 10rem);
+    gap: var(--sappc-ch-official-field-gap);
+    align-items: center;
+    flex-wrap: nowrap;
+    margin-bottom: 0.55rem;
+}
+
+#christeningApplicationForm .sappcChOfficialRowDob .sappcChOfficialField {
+    display: contents;
+}
+
+#christeningApplicationForm .sappcChOfficialRowDob .sappcChOfficialLabel {
+    max-width: none;
+    padding: 0.2rem 0;
+}
+
+#christeningApplicationForm .sappcChOfficialDottedRow {
+    display: grid;
+    grid-template-columns: var(--sappc-ch-official-label-col) minmax(0, 8.5rem) 3.25rem minmax(0, 1fr);
+    gap: 0.35rem var(--sappc-ch-official-field-gap);
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+
+#christeningApplicationForm .sappcChOfficialDottedRow > span {
+    font-size: 0.8125rem;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+#christeningApplicationForm .sappcChOfficialDottedRow .sappcChOfficialDottedInput[type="date"] {
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+}
+
+#christeningApplicationForm .sappcChOfficialDottedRow .sappcChOfficialDottedInput:not([type="date"]) {
+    flex: unset;
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+}
+
+#christeningApplicationForm .sappcChOfficialDottedInputFull {
+    display: block;
+    width: auto;
+    max-width: none;
+    margin-top: 0.25rem;
+    margin-bottom: 0.5rem;
+    margin-left: calc(var(--sappc-ch-official-label-col) + var(--sappc-ch-official-field-gap));
+    margin-right: 0;
 }
 
 #christeningApplicationForm .sappcChOfficialDocTitle,
 #christeningApplicationForm .sappcChOfficialSectionTitle,
 #christeningApplicationForm .sappcChOfficialPage2Title,
 #christeningApplicationForm .sappcChOfficialGpHeading {
-    font-size: 18px;
+    font-size: 21px;
 }
 
 #christeningApplicationForm .sappcChOfficialMastheadLine,
@@ -546,26 +652,26 @@
 #christeningApplicationForm .sappcChOfficialSignLine,
 #christeningApplicationForm .sappcChOfficialSignBlock strong,
 #christeningApplicationForm .sappcChOfficialHiligaynon {
-    font-size: 12px;
+    font-size: 15px;
 }
 
 #christeningApplicationForm .sappcChOfficialCellsWrapName .sappcChOfficialCellInput,
 #christeningApplicationForm .sappcChOfficialCellsWrapContact .sappcChOfficialCellInput {
     font-family: 'Courier New', Courier, monospace;
-    font-size: 12px;
+    font-size: 14px;
 }
 
 #christeningApplicationForm .sappcChOfficialLabelSub,
 #christeningApplicationForm .sappcChOfficialLabelNote,
 #christeningApplicationForm .sappcChOfficialFeeTable em {
-    font-size: 9px;
+    font-size: 11px;
     font-style: italic;
 }
 
 .sappcChristeningAppFormMasthead {
     text-align: center;
     text-transform: uppercase;
-    font-weight: 700;
+    font-weight: 400;
     font-size: 0.72rem;
     line-height: 1.45;
     letter-spacing: 0.04em;
@@ -581,7 +687,7 @@
 .sappcChristeningAppFormTitle {
     text-align: center;
     font-size: 1.05rem;
-    font-weight: 800;
+    font-weight: 400;
     letter-spacing: 0.06em;
     margin: 1rem 0 0.35rem;
     text-transform: uppercase;
@@ -630,7 +736,7 @@
 
 .sappcChristeningAppFormLabel {
     font-size: 0.68rem;
-    font-weight: 700;
+    font-weight: 400;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     color: #222;
@@ -660,7 +766,7 @@
 
 .sappcChristeningAppFormSectionTitle {
     font-size: 0.72rem;
-    font-weight: 800;
+    font-weight: 400;
     text-transform: uppercase;
     margin: 1rem 0 0.5rem;
     letter-spacing: 0.04em;
@@ -738,7 +844,7 @@
 
 .sappcChristeningAppFormFeeTable th {
     background: #f0f0f0;
-    font-weight: 700;
+    font-weight: 400;
     text-align: left;
 }
 
@@ -899,13 +1005,13 @@
 }
 
 .sappcChOfficialMastheadLineStrong {
-    font-weight: 700;
+    font-weight: 400;
 }
 
 .sappcChOfficialDocTitle {
     margin: 0.55rem 0 0;
     font-size: 1.1rem;
-    font-weight: 700;
+    font-weight: 400;
     letter-spacing: 0.08em;
     color: #7a5a12;
 }
@@ -935,7 +1041,7 @@
     width: 6.85rem;
     max-width: 6.85rem;
     font-size: 0.62rem;
-    font-weight: 700;
+    font-weight: 400;
     text-transform: uppercase;
     letter-spacing: 0.03em;
     line-height: 1.25;
@@ -1110,7 +1216,7 @@
     display: flex;
     align-items: center;
     font-size: 0.62rem;
-    font-weight: 700;
+    font-weight: 400;
     text-transform: uppercase;
     letter-spacing: 0.03em;
     margin-bottom: 0;
@@ -1139,7 +1245,7 @@
 
 .sappcChOfficialHiligaynon {
     text-transform: none;
-    font-weight: 700;
+    font-weight: 400;
 }
 
 .sappcChOfficialInput {
@@ -1172,7 +1278,7 @@
 
 .sappcChOfficialSectionTitle {
     font-size: 0.68rem;
-    font-weight: 800;
+    font-weight: 400;
     text-transform: uppercase;
     margin: 0.85rem 0 0.35rem;
     letter-spacing: 0.04em;
@@ -1264,7 +1370,7 @@
 }
 
 .sappcChOfficialAgeLabel {
-    font-weight: 700;
+    font-weight: 400;
     font-size: 0.68rem;
     margin: 0;
 }
@@ -1282,7 +1388,7 @@
 
 .sappcChOfficialTextRed {
     color: #c62828;
-    font-weight: 700;
+    font-weight: 400;
 }
 
 .sappcChOfficialPage2 {
@@ -1295,7 +1401,7 @@
     margin: 0 0 0.65rem;
     text-align: center;
     font-size: 0.95rem;
-    font-weight: 800;
+    font-weight: 400;
     text-transform: uppercase;
     letter-spacing: 0.06em;
 }
@@ -1317,7 +1423,7 @@
 .sappcChOfficialFeeThAmount {
     width: 6.5rem;
     text-align: center;
-    font-weight: 700;
+    font-weight: 400;
 }
 
 .sappcChOfficialFeeTable tbody td:last-child {
@@ -1337,17 +1443,70 @@
 
 .sappcChOfficialFeeTotalRow th,
 .sappcChOfficialFeeTotalRow td {
-    font-weight: 700;
+    font-weight: 400;
 }
 
 .sappcChOfficialGpHeading {
     text-align: center;
     font-size: 0.78rem;
-    font-weight: 800;
+    font-weight: 400;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     margin: 0.75rem 0 0.5rem;
     line-height: 1.35;
+}
+
+.sappcChOfficialGpToolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 0.75rem;
+    margin-bottom: 0.35rem;
+}
+
+.sappcChOfficialGpColHeads {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem 1.75rem;
+    flex: 1 1 12rem;
+    min-width: 0;
+}
+
+.sappcChOfficialGpColHeads span {
+    font-size: 0.62rem;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    text-align: center;
+    color: #111;
+}
+
+.sappcChOfficialGpAddBtn {
+    flex: 0 0 auto;
+    border: 1px solid #b1891c;
+    background: #fff;
+    color: #7a5a12;
+    padding: 0.28rem 0.85rem;
+    font-size: 0.72rem;
+    font-weight: 400;
+    border-radius: 0.2rem;
+    cursor: pointer;
+    line-height: 1.2;
+}
+
+.sappcChOfficialGpAddBtn:hover:not(:disabled) {
+    background: #faf6eb;
+}
+
+.sappcChOfficialGpAddBtn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.sappcChOfficialGpAddBtn:focus-visible {
+    outline: 2px solid rgba(178, 137, 40, 0.45);
+    outline-offset: 1px;
 }
 
 .sappcChOfficialGpCols {
@@ -1440,7 +1599,7 @@
 .sappcChOfficialSignBlock strong {
     display: block;
     font-size: 0.58rem;
-    font-weight: 700;
+    font-weight: 400;
     letter-spacing: 0.04em;
     margin: 0;
     padding: 0;
@@ -1480,6 +1639,28 @@
 
     .sappcChOfficialField {
         flex-direction: column;
+    }
+
+    #christeningApplicationForm .sappcChOfficialField {
+        grid-template-columns: 1fr;
+    }
+
+    #christeningApplicationForm .sappcChOfficialRowDob {
+        grid-template-columns: 1fr;
+    }
+
+    #christeningApplicationForm .sappcChOfficialRowDob .sappcChOfficialField {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    #christeningApplicationForm .sappcChOfficialDottedRow {
+        grid-template-columns: 1fr;
+    }
+
+    #christeningApplicationForm .sappcChOfficialDottedInputFull {
+        margin-left: 0;
+        width: 100%;
     }
 
     .sappcChOfficialLabel {
@@ -1539,13 +1720,13 @@
 
 .sappcPaymentFeeModal .sappcChOfficialMastheadLineStrong {
     font-size: 0.74rem;
-    font-weight: 700;
+    font-weight: 400;
     letter-spacing: 0.03em;
 }
 
 .sappcPaymentFeeModal .sappcChOfficialMastheadLine:not(.sappcChOfficialMastheadLineStrong) {
     font-size: 0.66rem;
-    font-weight: 600;
+    font-weight: 400;
 }
 
 .sappcPaymentFeeModal .sappcChOfficialLogoImg {
@@ -1594,7 +1775,7 @@
 
 .sappcPaymentFeeModalLabel {
     font-size: 0.68rem;
-    font-weight: 700;
+    font-weight: 400;
     text-transform: uppercase;
     letter-spacing: 0.03em;
     text-align: right;
@@ -1625,7 +1806,7 @@
 .sappcPaymentFeeModalFeeHeading {
     text-align: center;
     font-size: 0.82rem;
-    font-weight: 800;
+    font-weight: 400;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     margin: 0 0 0.5rem;
@@ -1648,12 +1829,13 @@
 .sappcPaymentFeeModalTable thead th {
     background: #091d3a;
     color: #fff;
-    font-weight: 700;
+    font-weight: 400;
     text-transform: uppercase;
     font-size: 0.62rem;
     letter-spacing: 0.05em;
     border-color: #111 !important;
     vertical-align: middle;
+    text-align: center;
     padding: 0.4rem 0.3rem;
 }
 
@@ -1694,7 +1876,7 @@
 
 .sappcPaymentFeeModalCellNo {
     text-align: center;
-    font-weight: 600;
+    font-weight: 400;
 }
 
 .sappcPaymentFeeModalItemInput {
@@ -1718,7 +1900,7 @@
     padding: 0.22rem 0.55rem;
     border-radius: 0.3rem;
     font-size: 0.65rem;
-    font-weight: 700;
+    font-weight: 400;
     text-transform: capitalize;
     border: 1px solid rgba(0, 0, 0, 0.2);
     background-color: #9b1c2e;
@@ -1760,7 +1942,7 @@
     border: 1px solid #111;
     color: #fff;
     font-size: 0.62rem;
-    font-weight: 700;
+    font-weight: 400;
     text-transform: capitalize;
     padding: 0.25rem 0.5rem;
     border-radius: 0.25rem;
@@ -1826,7 +2008,7 @@
     background: #091d3a;
     color: #fff;
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 400;
     padding: 0.35rem 0.75rem;
     border-radius: 0.25rem;
     cursor: pointer;
@@ -1993,7 +2175,9 @@
 }
 
 .sappcCertModalForm {
-    --sappc-cert-label-col: minmax(7.75rem, 10.75rem);
+    --sappc-cert-label-col: 6.75rem;
+    --sappc-cert-field-gap: 0.4rem;
+    --sappc-cert-row-gap: 0.5rem;
     font-size: 0.8rem;
 }
 
@@ -2024,8 +2208,8 @@
 
 .sappcCertModalTitle {
     margin: 0;
-    font-size: 1rem;
-    font-weight: 800;
+    font-size: 1.35rem;
+    font-weight: 400;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--sappc-gold, #b8860b);
@@ -2039,9 +2223,9 @@
 .sappcCertModalMetaRow {
     display: grid;
     grid-template-columns: var(--sappc-cert-label-col) minmax(0, 1fr) var(--sappc-cert-label-col) minmax(0, 1fr);
-    gap: 0.4rem 0.65rem;
+    gap: var(--sappc-cert-row-gap) var(--sappc-cert-field-gap);
     align-items: center;
-    margin-bottom: 0.45rem;
+    margin-bottom: var(--sappc-cert-row-gap);
 }
 
 .sappcCertModalMetaRow .sappcCertModalLabel:nth-child(1),
@@ -2063,7 +2247,7 @@
 
 .sappcCertModalSectionTitle {
     font-size: 0.85rem;
-    font-weight: 800;
+    font-weight: 400;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     margin: 0.35rem 0 0.75rem;
@@ -2074,7 +2258,7 @@
 
 .sappcCertModalLabel {
     font-size: 0.72rem;
-    font-weight: 600;
+    font-weight: 400;
     color: #111;
     margin: 0;
     white-space: nowrap;
@@ -2101,9 +2285,9 @@
 .sappcCertModalForm .sappcCertModalField--stack {
     display: grid;
     grid-template-columns: var(--sappc-cert-label-col) minmax(0, 1fr);
-    gap: 0.45rem 0.65rem;
+    gap: var(--sappc-cert-field-gap);
     align-items: center;
-    margin-bottom: 0.65rem;
+    margin-bottom: var(--sappc-cert-row-gap);
 }
 
 .sappcCertModalForm .sappcCertModalField--stack .sappcCertModalLabel--block {
@@ -2119,9 +2303,9 @@
 .sappcCertModalForm .sappcCertModalField--triple {
     display: grid;
     grid-template-columns: var(--sappc-cert-label-col) minmax(0, 1fr);
-    gap: 0.45rem 0.65rem;
+    gap: var(--sappc-cert-field-gap);
     align-items: center;
-    margin-bottom: 0.65rem;
+    margin-bottom: var(--sappc-cert-row-gap);
 }
 
 .sappcCertModalForm .sappcCertModalField--triple .sappcCertModalLabel--block {
@@ -2139,15 +2323,24 @@
 .sappcCertModalAddress3 {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.4rem;
+    gap: 0.35rem;
+    min-width: 0;
 }
 
 .sappcCertModalRow2 {
     display: grid;
-    grid-template-columns: 1fr 1.35fr;
-    gap: 0.65rem;
-    margin-bottom: 0.65rem;
+    grid-template-columns: var(--sappc-cert-label-col) minmax(0, 1fr) var(--sappc-cert-label-col) minmax(0, 1fr);
+    gap: var(--sappc-cert-row-gap) var(--sappc-cert-field-gap);
+    margin-bottom: var(--sappc-cert-row-gap);
     align-items: center;
+}
+
+.sappcCertModalRow2 > .sappcCertModalField--stack {
+    display: contents;
+}
+
+.sappcCertModalRow2 > .sappcCertModalField--stack .sappcCertModalDateWrap {
+    min-width: 0;
 }
 
 @media (max-width: 767.98px) {
@@ -2156,6 +2349,12 @@
     .sappcCertModalAddress3,
     .sappcCertModalRow2 {
         grid-template-columns: 1fr;
+    }
+
+    .sappcCertModalRow2 > .sappcCertModalField--stack {
+        display: grid;
+        grid-template-columns: var(--sappc-cert-label-col) minmax(0, 1fr);
+        gap: var(--sappc-cert-field-gap);
     }
 }
 
@@ -2175,6 +2374,9 @@
 
 .sappcCertModalInput {
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
     border: 1px solid #b0b0b0;
     border-radius: 0.25rem;
     padding: 0.35rem 0.5rem;
@@ -2202,7 +2404,7 @@
 .sappcCertModalField--inline {
     display: grid;
     grid-template-columns: var(--sappc-cert-label-col) minmax(0, 1fr);
-    gap: 0.45rem 0.55rem;
+    gap: var(--sappc-cert-field-gap);
     align-items: center;
     margin-bottom: 0;
     min-width: 0;
@@ -2223,55 +2425,31 @@
     text-align: left;
 }
 
-.sappcBurialCertificationModal .sappcCertModalRow2 .sappcCertModalField--stack:nth-child(2) {
-    padding-left: 0.55rem;
-}
-
-.sappcBurialCertificationModal label[for="brCertBirthplace"] {
-    margin-left: 0;
-}
-
 .sappcCertModalTrackingGrid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto;
-    gap: 0.5rem 1.25rem;
+    grid-template-columns: var(--sappc-cert-label-col) minmax(0, 1fr) var(--sappc-cert-label-col) minmax(0, 1fr);
+    gap: var(--sappc-cert-row-gap) var(--sappc-cert-field-gap);
     margin-top: 0.15rem;
     align-items: center;
 }
 
-.sappcCertModalTrackingGrid .sappcCertModalField--inline:nth-child(1) {
-    grid-column: 1;
-    grid-row: 1;
+.sappcCertModalTrackingGrid .sappcCertModalField--inline {
+    display: contents;
 }
 
-.sappcCertModalTrackingGrid .sappcCertModalField--inline:nth-child(2) {
-    grid-column: 2;
-    grid-row: 1;
+.sappcCertModalTrackingGrid .sappcCertModalField--inline .sappcCertModalDateWrap {
+    min-width: 0;
 }
 
-.sappcCertModalTrackingGrid .sappcCertModalField--inline:nth-child(3) {
-    grid-column: 1;
-    grid-row: 2;
-}
-
-.sappcCertModalTrackingGrid .sappcCertModalField--inline:nth-child(4) {
-    grid-column: 2;
-    grid-row: 2;
-}
-
-@media (max-width: 575.98px) {
+@media (max-width: 767.98px) {
     .sappcCertModalTrackingGrid {
         grid-template-columns: 1fr;
-        grid-template-rows: auto;
     }
 
-    .sappcCertModalTrackingGrid .sappcCertModalField--inline:nth-child(1),
-    .sappcCertModalTrackingGrid .sappcCertModalField--inline:nth-child(2),
-    .sappcCertModalTrackingGrid .sappcCertModalField--inline:nth-child(3),
-    .sappcCertModalTrackingGrid .sappcCertModalField--inline:nth-child(4) {
-        grid-column: 1;
-        grid-row: auto;
+    .sappcCertModalTrackingGrid .sappcCertModalField--inline {
+        display: grid;
+        grid-template-columns: var(--sappc-cert-label-col) minmax(0, 1fr);
+        gap: var(--sappc-cert-field-gap);
     }
 }
 
@@ -2279,6 +2457,8 @@
     position: relative;
     display: flex;
     align-items: center;
+    width: 100%;
+    min-width: 0;
 }
 
 .sappcChristeningCertificationModal .modal-footer.sappcChristeningAppModalFooter,

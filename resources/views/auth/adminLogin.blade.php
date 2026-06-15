@@ -11,6 +11,7 @@
         }
     </style>
     <link rel="stylesheet" href="{{ asset('css/auth/adminLogin.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/app-typography.css') }}?v={{ filemtime(public_path('css/app-typography.css')) }}">
 @endpush
 
 @section('content')

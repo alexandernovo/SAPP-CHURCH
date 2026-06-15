@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Support\ClientNameDisplay;
 use App\Support\DocumentationApplicationReportWriter;
 use App\Support\SacramentApplicationGate;
+use App\Support\SacramentRegistrySectionFilter;
+use App\Support\SacramentScheduleReservedDates;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -27,30 +29,41 @@ class BurialController extends Controller
 
     public function scheduleIndex(Request $request): View
     {
-        return view('burial.view.schedule', $this->burialSectionViewData($request));
+        return view('burial.view.schedule', $this->burialSectionViewData($request, SacramentRegistrySectionFilter::SECTION_SCHEDULE));
     }
 
     public function certificationIndex(Request $request): View
     {
-        return view('burial.view.certification', $this->burialSectionViewData($request));
+        return view('burial.view.certification', $this->burialSectionViewData($request, SacramentRegistrySectionFilter::SECTION_CERTIFICATION));
     }
 
     public function paymentIndex(Request $request): View
     {
-        return view('burial.view.payment', $this->burialSectionViewData($request));
+        return view('burial.view.payment', $this->burialSectionViewData($request, SacramentRegistrySectionFilter::SECTION_PAYMENT));
     }
 
     public function applicationIndex(Request $request): View
     {
-        return view('burial.view.application-form', $this->burialSectionViewData($request));
+        return view('burial.view.application-form', $this->burialSectionViewData($request, SacramentRegistrySectionFilter::SECTION_APPLICATION));
+    }
+
+    public function nextBurialReferenceCode(): JsonResponse
+    {
+        return response()->json([
+            'ok' => true,
+            'reference_code' => $this->generateUniqueBurialReferenceCode(),
+        ]);
     }
 
     /**
      * @return array<string, mixed>
      */
-    private function burialSectionViewData(Request $request): array
+    private function burialSectionViewData(Request $request, string $section): array
     {
-        $request->merge(['registry_type' => 'burial']);
+        $request->merge([
+            'registry_type' => 'burial',
+            'registry_section' => $section,
+        ]);
 
         $dashboard = app(DashboardController::class);
         $data = $dashboard->registryIndexData($request);
@@ -168,6 +181,12 @@ class BurialController extends Controller
                         'dateCreated' => now(),
                         'customerId' => $customerId,
                     ];
+                    if (Schema::hasColumn('burial', 'scheduleCompletedAt')) {
+                        $insertData['scheduleCompletedAt'] = now();
+                    }
+                    if (Schema::hasColumn('burial', 'workflowStep')) {
+                        $insertData['workflowStep'] = SacramentRegistrySectionFilter::SECTION_SCHEDULE;
+                    }
                     $insertData = array_filter($insertData, fn ($v) => $v !== null);
 
                     return (int) DB::table('burial')->insertGetId($insertData);
@@ -214,6 +233,12 @@ class BurialController extends Controller
             }
         }
         $updateData = ['scheduleRequested' => $scheduleAt];
+        if (Schema::hasColumn('burial', 'scheduleCompletedAt')) {
+            $updateData['scheduleCompletedAt'] = now();
+        }
+        if (Schema::hasColumn('burial', 'workflowStep')) {
+            $updateData['workflowStep'] = SacramentRegistrySectionFilter::SECTION_SCHEDULE;
+        }
         if (! empty($validated['contact_number'])) {
             $updateData['contactNum'] = $validated['contact_number'];
         }
@@ -311,21 +336,12 @@ class BurialController extends Controller
 
         $year = (int) $validated['year'];
         $month = (int) $validated['month'];
-
-        $dates = DB::table('burial')
-            ->whereNotNull('scheduleRequested')
-            ->whereYear('scheduleRequested', $year)
-            ->whereMonth('scheduleRequested', $month)
-            ->selectRaw('DATE(scheduleRequested) as d')
-            ->distinct()
-            ->pluck('d')
-            ->map(fn ($d) => Carbon::parse($d)->format('Y-m-d'))
-            ->values()
-            ->all();
+        $byDate = SacramentScheduleReservedDates::forMonth($year, $month);
 
         return response()->json([
             'ok' => true,
-            'dates' => $dates,
+            'by_date' => $byDate,
+            'dates' => array_keys($byDate),
         ]);
     }
 
@@ -442,6 +458,12 @@ class BurialController extends Controller
             ], 422);
         }
         $update['paymentFeeRows'] = $encoded;
+        if (Schema::hasColumn('burial', 'paymentCompletedAt')) {
+            $update['paymentCompletedAt'] = now();
+        }
+        if (Schema::hasColumn('burial', 'workflowStep')) {
+            $update['workflowStep'] = SacramentRegistrySectionFilter::SECTION_PAYMENT;
+        }
 
         if ($existing === null) {
             if ($clientTrim === '' || $last === null || $last === '') {
@@ -479,7 +501,10 @@ class BurialController extends Controller
                         'customerId' => $customerId,
                     ], $update);
                     if (Schema::hasColumn('burial', 'workflowStep')) {
-                        $insertData['workflowStep'] = 'payment';
+                        $insertData['workflowStep'] = SacramentRegistrySectionFilter::SECTION_PAYMENT;
+                    }
+                    if (Schema::hasColumn('burial', 'paymentCompletedAt')) {
+                        $insertData['paymentCompletedAt'] = now();
                     }
                     $insertData = array_filter($insertData, fn ($v) => $v !== null);
 
@@ -594,12 +619,19 @@ class BurialController extends Controller
         try {
             DB::transaction(function () use ($burialId, $detailsRow, $deceasedName, $data) {
                 $nameParts = $this->splitRegistryClientName($deceasedName);
-                DB::table('burial')->where('burialId', $burialId)->update(array_filter([
+                $headerUpdate = array_filter([
                     'clientFName' => $nameParts['first'] !== '' ? $nameParts['first'] : null,
                     'clientMName' => $nameParts['middle'],
                     'clientLName' => $nameParts['last'] !== '' ? $nameParts['last'] : null,
                     'address' => ClientNameDisplay::nullableFormattedAddress($data['deceased_address'] ?? null),
-                ], fn ($v) => $v !== null));
+                ], fn ($v) => $v !== null);
+                if (Schema::hasColumn('burial', 'applicationCompletedAt')) {
+                    $headerUpdate['applicationCompletedAt'] = now();
+                }
+                if (Schema::hasColumn('burial', 'workflowStep')) {
+                    $headerUpdate['workflowStep'] = SacramentRegistrySectionFilter::SECTION_APPLICATION;
+                }
+                DB::table('burial')->where('burialId', $burialId)->update($headerUpdate);
                 $existingDetails = DB::table('burial_details')->where('burialId', $burialId)->first();
                 if ($existingDetails) {
                     DB::table('burial_details')

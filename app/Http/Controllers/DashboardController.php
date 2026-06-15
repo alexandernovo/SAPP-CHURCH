@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\DocumentationApplicationReport;
 use App\Support\ClientNameDisplay;
 use App\Support\DocumentationApplicationReportWriter;
+use App\Support\SacramentRegistrySectionFilter;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -260,41 +261,62 @@ class DashboardController extends Controller
     }
 
 
-    private function registryUnionQuery(): Builder
+    private function registryTableQuery(string $table): Builder
     {
         $shared = 'referenceCode, clientFName, clientMName, clientLName, address, sex, contactNum, dateCreated, customerId';
 
-        $confirmation = DB::table('confirmation')->selectRaw(
-            "confirmationId AS record_id, 'Confirmation' AS document_type, {$shared}, scheduleRequested, paymentStatus"
-        );
-        $christening = DB::table('christening')->selectRaw(
-            "christeningId AS record_id, 'Christening' AS document_type, {$shared}, scheduleRequested, paymentStatus"
-        );
+        return match ($table) {
+            'christening' => DB::table('christening')->selectRaw(
+                "christeningId AS record_id, 'Christening' AS document_type, {$shared}, scheduleRequested, paymentStatus"
+            ),
+            'confirmation' => DB::table('confirmation')->selectRaw(
+                "confirmationId AS record_id, 'Confirmation' AS document_type, {$shared}, scheduleRequested, paymentStatus"
+            ),
+            'wedding' => DB::table('wedding')->selectRaw(
+                "weddingId AS record_id, 'Wedding' AS document_type, {$shared}, scheduleRequested, paymentStatus"
+            ),
+            'burial' => DB::table('burial')->selectRaw(
+                "burialId AS record_id, 'Burial' AS document_type, {$shared}, scheduleRequested, paymentStatus"
+            ),
+            default => DB::query()->fromSub($this->registryUnionQuery(), 'registry'),
+        };
+    }
 
-        $wedding = DB::table('wedding')->selectRaw(
-            "weddingId AS record_id, 'Wedding' AS document_type, {$shared}, scheduleRequested, paymentStatus"
-        );
-
-        $burial = DB::table('burial')->selectRaw(
-            "burialId AS record_id, 'Burial' AS document_type, {$shared}, scheduleRequested, paymentStatus"
-        );
-
-        return $confirmation->unionAll($christening)->unionAll($wedding)->unionAll($burial);
+    private function registryUnionQuery(): Builder
+    {
+        return $this->registryTableQuery('confirmation')
+            ->unionAll($this->registryTableQuery('christening'))
+            ->unionAll($this->registryTableQuery('wedding'))
+            ->unionAll($this->registryTableQuery('burial'));
     }
 
     private function filteredRegistryBaseQuery(Request $request): Builder
     {
-        $query = DB::query()->fromSub($this->registryUnionQuery(), 'registry');
-
         $registryType = strtolower(trim((string) $request->input('registry_type', '')));
-        $registryTypeMap = [
-            'christening' => 'Christening',
-            'confirmation' => 'Confirmation',
-            'wedding' => 'Wedding',
-            'burial' => 'Burial',
-        ];
-        if ($registryType !== '' && isset($registryTypeMap[$registryType])) {
-            $query->where('document_type', $registryTypeMap[$registryType]);
+        $registrySection = strtolower(trim((string) $request->input('registry_section', '')));
+
+        $singleTable = match ($registryType) {
+            'christening' => 'christening',
+            'confirmation' => 'confirmation',
+            'wedding' => 'wedding',
+            'burial' => 'burial',
+            default => null,
+        };
+
+        if ($singleTable !== null) {
+            $query = $this->registryTableQuery($singleTable);
+            SacramentRegistrySectionFilter::apply($query, $singleTable, $registrySection);
+        } else {
+            $query = DB::query()->fromSub($this->registryUnionQuery(), 'registry');
+            $registryTypeMap = [
+                'christening' => 'Christening',
+                'confirmation' => 'Confirmation',
+                'wedding' => 'Wedding',
+                'burial' => 'Burial',
+            ];
+            if ($registryType !== '' && isset($registryTypeMap[$registryType])) {
+                $query->where('document_type', $registryTypeMap[$registryType]);
+            }
         }
 
         $searchTerm = trim((string) $request->input('search', ''));

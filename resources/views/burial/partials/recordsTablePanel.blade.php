@@ -11,6 +11,7 @@
     data-table-colspan="{{ $tableColspan }}"
     data-records-url="{{ route('admin.dashboard.records') }}" data-registry-type="burial"
     data-section="{{ $activeSection ?? 'application' }}"
+    data-next-reference-url="{{ route('admin.burial.next-reference-code') }}"
     data-sort-order="{{ $sortOrder ?? 'desc' }}"
     data-workflow-has-certification="{{ !empty($workflowHasCertification) ? '1' : '0' }}"
     data-workflow-application-url="{{ route('admin.burial.application') }}"
