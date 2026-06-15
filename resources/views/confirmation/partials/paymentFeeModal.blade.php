@@ -13,7 +13,8 @@
                     <div class="modal-body pt-0">
                         <form class="sappcPaymentFeeModalForm" id="confirmationPaymentFeeForm" action="#"
                             method="post" autocomplete="off"
-                            data-save-url="{{ route('admin.confirmation.payment-save') }}">
+                            data-save-url="{{ route('admin.confirmation.payment-save') }}"
+                            data-default-reference-code="{{ $generatedReferenceCode ?? '' }}">
                             <div class="sappcChOfficial sappcPaymentFeeModalOfficial">
                                 <header class="sappcChOfficialHeader">
                                     <div class="sappcChOfficialLogo sappcChOfficialLogoLeft">

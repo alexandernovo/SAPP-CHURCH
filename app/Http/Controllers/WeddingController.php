@@ -196,9 +196,6 @@ class WeddingController extends Controller
         }
 
         $existingWeddingId = (int) $existing->weddingId;
-        if (! SacramentApplicationGate::weddingIsSaved($existingWeddingId)) {
-            return SacramentApplicationGate::denyResponse();
-        }
         if (! SacramentApplicationGate::weddingIsPaymentComplete($existingWeddingId)) {
             return SacramentApplicationGate::paymentDenyResponse();
         }
@@ -272,9 +269,6 @@ class WeddingController extends Controller
             ], 404);
         }
 
-        if (! SacramentApplicationGate::weddingIsSaved($weddingId)) {
-            return SacramentApplicationGate::denyResponse();
-        }
         if (! SacramentApplicationGate::weddingIsPaymentComplete($weddingId)) {
             return SacramentApplicationGate::paymentDenyResponse();
         }
@@ -356,9 +350,6 @@ class WeddingController extends Controller
             return response()->json(['message' => 'Wedding record not found.'], 404);
         }
 
-        if (! SacramentApplicationGate::weddingIsSaved($weddingId)) {
-            return SacramentApplicationGate::denyResponse();
-        }
 
         return response()->json([
             'ok' => true,
@@ -370,7 +361,8 @@ class WeddingController extends Controller
     public function weddingPaymentSave(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'wedding_id' => ['required', 'integer', 'min:1'],
+            'wedding_id' => ['nullable', 'integer', 'min:1'],
+            'reference_code' => ['nullable', 'string', 'max:255'],
             'client' => ['nullable', 'string', 'max:255'],
             'contact_number' => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string', 'max:255'],
@@ -380,15 +372,20 @@ class WeddingController extends Controller
             'fee_rows.*.date_paid' => ['nullable', 'string', 'max:50'],
         ]);
 
-        $weddingId = (int) $validated['wedding_id'];
-
-        $existing = DB::table('wedding')->where('weddingId', $weddingId)->first();
-        if ($existing === null) {
-            return response()->json(['message' => 'Wedding record not found.'], 404);
+        $weddingId = ! empty($validated['wedding_id']) ? (int) $validated['wedding_id'] : 0;
+        $ref = trim((string) ($validated['reference_code'] ?? ''));
+        if ($ref === '' && $weddingId <= 0) {
+            $ref = $this->generateUniqueWeddingReferenceCode();
         }
 
-        if (! SacramentApplicationGate::weddingIsSaved($weddingId)) {
-            return SacramentApplicationGate::denyResponse();
+        $existing = null;
+        if ($weddingId > 0) {
+            $existing = DB::table('wedding')->where('weddingId', $weddingId)->first();
+            if ($existing === null) {
+                return response()->json(['message' => 'Wedding record not found.'], 404);
+            }
+        } elseif ($ref !== '') {
+            $existing = DB::table('wedding')->where('referenceCode', $ref)->first();
         }
 
         $feeRows = $validated['fee_rows'] ?? [];
@@ -454,15 +451,72 @@ class WeddingController extends Controller
         }
         $update['paymentFeeRows'] = $encoded;
 
-        try {
-            DB::table('wedding')->where('weddingId', $weddingId)->update($update);
-        } catch (QueryException $e) {
-            report($e);
+        if ($existing === null) {
+            if ($clientTrim === '' || $last === null || $last === '') {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Please enter the client\'s full name (first name and last name).',
+                    'errors' => [
+                        'client' => ['Enter at least two name parts (e.g. Juan Dela Cruz).'],
+                    ],
+                ], 422);
+            }
 
-            return response()->json([
-                'ok' => false,
-                'message' => 'Could not save payment details. If this persists, run database migrations and try again.',
-            ], 422);
+            try {
+                $weddingId = DB::transaction(function () use ($ref, $first, $middle, $last, $validated, $update) {
+                    $user = Auth::user();
+                    $customerRow = [
+                        'customerFName' => $first ?? '',
+                        'customerMName' => $middle,
+                        'customerLName' => $last ?? '',
+                        'updatedAt' => now(),
+                        'createdBy' => $user?->userName ?? $user?->userfName ?? null,
+                        'userId' => $user?->getAuthIdentifier(),
+                    ];
+                    $customerRow = array_filter($customerRow, fn ($v) => $v !== null);
+                    $customerId = DB::table('customer')->insertGetId($customerRow);
+
+                    $insertData = array_merge([
+                        'referenceCode' => $ref,
+                        'clientFName' => $first ?? '',
+                        'clientMName' => $middle,
+                        'clientLName' => $last ?? '',
+                        'contactNum' => $validated['contact_number'] ?? null,
+                        'address' => ClientNameDisplay::nullableFormattedAddress($validated['address'] ?? null),
+                        'dateCreated' => now(),
+                        'customerId' => $customerId,
+                    ], $update);
+                    if (Schema::hasColumn('wedding', 'workflowStep')) {
+                        $insertData['workflowStep'] = 'payment';
+                    }
+                    $insertData = array_filter($insertData, fn ($v) => $v !== null);
+
+                    return (int) DB::table('wedding')->insertGetId($insertData);
+                });
+            } catch (QueryException $e) {
+                report($e);
+
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Could not save payment details. If this persists, run database migrations and try again.',
+                ], 422);
+            }
+        } else {
+            $weddingId = (int) $existing->weddingId;
+            if ($ref === '') {
+                $ref = (string) ($existing->referenceCode ?? '');
+            }
+
+            try {
+                DB::table('wedding')->where('weddingId', $weddingId)->update($update);
+            } catch (QueryException $e) {
+                report($e);
+
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Could not save payment details. If this persists, run database migrations and try again.',
+                ], 422);
+            }
         }
 
         return response()->json([
@@ -470,6 +524,7 @@ class WeddingController extends Controller
             'message' => 'Payment record saved.',
             'data' => [
                 'wedding_id' => $weddingId,
+                'reference_code' => $ref,
                 'payment_status' => $paymentStatus,
             ],
         ]);
@@ -590,9 +645,6 @@ class WeddingController extends Controller
             return response()->json(['message' => 'Wedding record not found.'], 404);
         }
 
-        if (! SacramentApplicationGate::weddingIsSaved($weddingId)) {
-            return SacramentApplicationGate::denyResponse();
-        }
         if (! SacramentApplicationGate::weddingIsPaymentComplete($weddingId)) {
             return SacramentApplicationGate::paymentDenyResponse();
         }
@@ -693,9 +745,6 @@ class WeddingController extends Controller
             return response()->json(['message' => 'Wedding record not found.'], 404);
         }
 
-        if (! SacramentApplicationGate::weddingIsSaved($weddingId)) {
-            return SacramentApplicationGate::denyResponse();
-        }
         if (! SacramentApplicationGate::weddingIsPaymentComplete($weddingId)) {
             return SacramentApplicationGate::paymentDenyResponse();
         }

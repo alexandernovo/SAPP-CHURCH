@@ -87,61 +87,10 @@
             } catch (e1) {}
         }
 
-        function swalRegistryApplicationRequired(messageText) {
-            var msg = messageText || 'Please do or fill the application form first.';
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Application required',
-                    text: msg,
-                    confirmButtonText: 'OK',
-                });
-            } else {
-                window.alert(msg);
-            }
-        }
-
         function ensureRegistryApplicationSaved(recordId, thenFn) {
-            recordId = String(recordId == null ? '' : recordId).trim();
-            if (!recordId) {
-                swalRegistryApplicationRequired();
-                if (typeof thenFn === 'function') {
-                    thenFn(false);
-                }
-                return;
+            if (typeof thenFn === 'function') {
+                thenFn(true);
             }
-            var appUrl = ($('#burialRecordsPanel').attr('data-burial-application-details-url') || '').trim();
-            if (!appUrl) {
-                if (typeof thenFn === 'function') {
-                    thenFn(true);
-                }
-                return;
-            }
-            fetchJson(buildQueryUrl(appUrl, {
-                burial_id: recordId,
-            }), {
-                Accept: 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-            })
-                .done(function(res) {
-                    if (res && res.ok && res.application_saved === true) {
-                        if (typeof thenFn === 'function') {
-                            thenFn(true);
-                        }
-                        return;
-                    }
-                    swalRegistryApplicationRequired(res && res.message ? String(res.message) : '');
-                    if (typeof thenFn === 'function') {
-                        thenFn(false);
-                    }
-                })
-                .fail(function(xhr) {
-                    var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
-                    swalRegistryApplicationRequired(data && data.message ? String(data.message) : '');
-                    if (typeof thenFn === 'function') {
-                        thenFn(false);
-                    }
-                });
         }
 
         function swalRegistryPaymentRequired(messageText) {
@@ -159,9 +108,6 @@
 
         function workflowChecksForStep(targetStep) {
             var checks = [];
-            if (targetStep === 'payment' || targetStep === 'certification' || targetStep === 'schedule') {
-                checks.push('application');
-            }
             if (targetStep === 'certification' || targetStep === 'schedule') {
                 checks.push('payment');
             }
@@ -860,6 +806,18 @@
                 renumberConfirmationFeeRows();
             }
 
+            function resetBurialPaymentFormForNewEntry() {
+                setSelectedBurialId('');
+                $('#burialTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                applyConfirmationPaymentFeeFormObject({
+                    reference_code: ($paymentFeeForm.attr('data-default-reference-code') || '').trim(),
+                    client: '',
+                    contact_number: '',
+                    address: '',
+                    fee_rows: null,
+                });
+            }
+
             $addFeeBtn.on('click', function() {
                 var $tr = $(newConfirmationFeeRowHtml());
                 $feeItemsBody.append($tr);
@@ -908,7 +866,8 @@
                     e.preventDefault();
                     var cid = getSelectedBurialId();
                     if (!cid) {
-                        swalRegistryApplicationRequired();
+                        resetBurialPaymentFormForNewEntry();
+                        paymentBsModal.show();
                         return;
                     }
                     if (!paymentDetailsUrl) {
@@ -950,21 +909,22 @@
                     var saveUrl = ($paymentFeeForm.attr('data-save-url') || paymentSaveUrlPanel || '').trim();
                     if (!saveUrl) return;
                     var cid = getSelectedBurialId();
-                    if (!cid) {
-                        swalRegistryApplicationRequired();
-                        return;
-                    }
                     var payload = serializeConfirmationPaymentFeeToObject();
-                    payload.burial_id = parseInt(cid, 10);
-                    if (isNaN(payload.burial_id)) {
-                        window.alert('Invalid record.');
-                        return;
+                    if (cid) {
+                        payload.burial_id = parseInt(cid, 10);
+                        if (isNaN(payload.burial_id)) {
+                            window.alert('Invalid record.');
+                            return;
+                        }
                     }
                     var $saveBtn = $('#burialPaymentFeeSaveBtn');
                     $saveBtn.prop('disabled', true);
                     fetchPostJson(saveUrl, payload, csrf)
                         .done(function(res) {
                             if (res && res.ok) {
+                                if (res.data && res.data.burial_id) {
+                                    setSelectedBurialId(String(res.data.burial_id));
+                                }
                                 if (typeof bootstrap !== 'undefined' && $paymentModal.length) {
                                     var inst = bootstrap.Modal.getInstance($paymentModal[0]);
                                     if (inst) inst.hide();
@@ -1068,7 +1028,7 @@
                     e.preventDefault();
                     var bid = getSelectedBurialId();
                     if (!bid) {
-                        swalRegistryApplicationRequired();
+                        certBsModal.show();
                         return;
                     }
                     loadBurialCertificationForRecord(bid, function() {
@@ -1311,14 +1271,6 @@
 
                 function saveBurialCertificationRecord() {
                     var bid = getSelectedBurialId();
-                    if (!bid) {
-                        swalRegistryApplicationRequired();
-                        return $.Deferred().reject({
-                            responseJSON: {
-                                message: 'Please do or fill the application form first.'
-                            }
-                        }).promise();
-                    }
                     if (!certificationSaveUrl) {
                         return $.Deferred().reject({
                             responseJSON: {
@@ -1328,7 +1280,7 @@
                     }
 
                     var payload = {
-                        burial_id: parseInt(bid, 10),
+                        burial_id: bid ? parseInt(bid, 10) : null,
                         reference_code: certFieldValue('#brCertRefCode'),
                         client: certFieldValue('#brCertClient'),
                         contact_number: sappcPhMobileDigitsOnly(certFieldValue('#brCertContact')),
@@ -1818,8 +1770,7 @@
                 $scheduleModal.on('show.bs.modal', function(e) {
                     var cid = getSelectedBurialId();
                     if (!cid) {
-                        e.preventDefault();
-                        swalRegistryApplicationRequired();
+                        resetScheduleRequestFormForNewEntry();
                         return;
                     }
                     if ($scheduleModal.data('workflow-gate-ok')) {

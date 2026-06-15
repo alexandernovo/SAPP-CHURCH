@@ -194,9 +194,6 @@ class ConfirmationController extends Controller
         }
 
         $existingConfirmationId = (int) $existing->confirmationId;
-        if (! SacramentApplicationGate::confirmationIsSaved($existingConfirmationId)) {
-            return SacramentApplicationGate::denyResponse();
-        }
         if (! SacramentApplicationGate::confirmationIsPaymentComplete($existingConfirmationId)) {
             return SacramentApplicationGate::paymentDenyResponse();
         }
@@ -267,9 +264,6 @@ class ConfirmationController extends Controller
             ], 404);
         }
 
-        if (! SacramentApplicationGate::confirmationIsSaved($confirmationId)) {
-            return SacramentApplicationGate::denyResponse();
-        }
         if (! SacramentApplicationGate::confirmationIsPaymentComplete($confirmationId)) {
             return SacramentApplicationGate::paymentDenyResponse();
         }
@@ -348,9 +342,6 @@ class ConfirmationController extends Controller
             return response()->json(['message' => 'Confirmation record not found.'], 404);
         }
 
-        if (! SacramentApplicationGate::confirmationIsSaved($confirmationId)) {
-            return SacramentApplicationGate::denyResponse();
-        }
 
         return response()->json([
             'ok' => true,
@@ -362,7 +353,8 @@ class ConfirmationController extends Controller
     public function confirmationPaymentSave(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'confirmation_id' => ['required', 'integer', 'min:1'],
+            'confirmation_id' => ['nullable', 'integer', 'min:1'],
+            'reference_code' => ['nullable', 'string', 'max:255'],
             'client' => ['nullable', 'string', 'max:255'],
             'contact_number' => ['nullable', 'string', 'max:50'],
             'address' => ['nullable', 'string', 'max:255'],
@@ -372,15 +364,20 @@ class ConfirmationController extends Controller
             'fee_rows.*.date_paid' => ['nullable', 'string', 'max:50'],
         ]);
 
-        $confirmationId = (int) $validated['confirmation_id'];
-
-        $existing = DB::table('confirmation')->where('confirmationId', $confirmationId)->first();
-        if ($existing === null) {
-            return response()->json(['message' => 'Confirmation record not found.'], 404);
+        $confirmationId = ! empty($validated['confirmation_id']) ? (int) $validated['confirmation_id'] : 0;
+        $ref = trim((string) ($validated['reference_code'] ?? ''));
+        if ($ref === '' && $confirmationId <= 0) {
+            $ref = $this->generateUniqueConfirmationReferenceCode();
         }
 
-        if (! SacramentApplicationGate::confirmationIsSaved($confirmationId)) {
-            return SacramentApplicationGate::denyResponse();
+        $existing = null;
+        if ($confirmationId > 0) {
+            $existing = DB::table('confirmation')->where('confirmationId', $confirmationId)->first();
+            if ($existing === null) {
+                return response()->json(['message' => 'Confirmation record not found.'], 404);
+            }
+        } elseif ($ref !== '') {
+            $existing = DB::table('confirmation')->where('referenceCode', $ref)->first();
         }
 
         $feeRows = $validated['fee_rows'] ?? [];
@@ -446,15 +443,72 @@ class ConfirmationController extends Controller
         }
         $update['paymentFeeRows'] = $encoded;
 
-        try {
-            DB::table('confirmation')->where('confirmationId', $confirmationId)->update($update);
-        } catch (QueryException $e) {
-            report($e);
+        if ($existing === null) {
+            if ($clientTrim === '' || $last === null || $last === '') {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Please enter the client\'s full name (first name and last name).',
+                    'errors' => [
+                        'client' => ['Enter at least two name parts (e.g. Juan Dela Cruz).'],
+                    ],
+                ], 422);
+            }
 
-            return response()->json([
-                'ok' => false,
-                'message' => 'Could not save payment details. If this persists, run database migrations and try again.',
-            ], 422);
+            try {
+                $confirmationId = DB::transaction(function () use ($ref, $first, $middle, $last, $validated, $update) {
+                    $user = Auth::user();
+                    $customerRow = [
+                        'customerFName' => $first ?? '',
+                        'customerMName' => $middle,
+                        'customerLName' => $last ?? '',
+                        'updatedAt' => now(),
+                        'createdBy' => $user?->userName ?? $user?->userfName ?? null,
+                        'userId' => $user?->getAuthIdentifier(),
+                    ];
+                    $customerRow = array_filter($customerRow, fn ($v) => $v !== null);
+                    $customerId = DB::table('customer')->insertGetId($customerRow);
+
+                    $insertData = array_merge([
+                        'referenceCode' => $ref,
+                        'clientFName' => $first ?? '',
+                        'clientMName' => $middle,
+                        'clientLName' => $last ?? '',
+                        'contactNum' => $validated['contact_number'] ?? null,
+                        'address' => ClientNameDisplay::nullableFormattedAddress($validated['address'] ?? null),
+                        'dateCreated' => now(),
+                        'customerId' => $customerId,
+                    ], $update);
+                    if (Schema::hasColumn('confirmation', 'workflowStep')) {
+                        $insertData['workflowStep'] = 'payment';
+                    }
+                    $insertData = array_filter($insertData, fn ($v) => $v !== null);
+
+                    return (int) DB::table('confirmation')->insertGetId($insertData);
+                });
+            } catch (QueryException $e) {
+                report($e);
+
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Could not save payment details. If this persists, run database migrations and try again.',
+                ], 422);
+            }
+        } else {
+            $confirmationId = (int) $existing->confirmationId;
+            if ($ref === '') {
+                $ref = (string) ($existing->referenceCode ?? '');
+            }
+
+            try {
+                DB::table('confirmation')->where('confirmationId', $confirmationId)->update($update);
+            } catch (QueryException $e) {
+                report($e);
+
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Could not save payment details. If this persists, run database migrations and try again.',
+                ], 422);
+            }
         }
 
         return response()->json([
@@ -462,6 +516,7 @@ class ConfirmationController extends Controller
             'message' => 'Payment record saved.',
             'data' => [
                 'confirmation_id' => $confirmationId,
+                'reference_code' => $ref,
                 'payment_status' => $paymentStatus,
             ],
         ]);
@@ -683,9 +738,6 @@ class ConfirmationController extends Controller
             return response()->json(['message' => 'Confirmation record not found.'], 404);
         }
 
-        if (! SacramentApplicationGate::confirmationIsSaved($id)) {
-            return SacramentApplicationGate::denyResponse();
-        }
         if (! SacramentApplicationGate::confirmationIsPaymentComplete($id)) {
             return SacramentApplicationGate::paymentDenyResponse();
         }

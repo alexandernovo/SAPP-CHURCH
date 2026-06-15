@@ -96,61 +96,10 @@
             } catch (e1) {}
         }
 
-        function swalRegistryApplicationRequired(messageText) {
-            var msg = messageText || 'Please do or fill the application form first.';
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Application required',
-                    text: msg,
-                    confirmButtonText: 'OK',
-                });
-            } else {
-                window.alert(msg);
-            }
-        }
-
         function ensureRegistryApplicationSaved(recordId, thenFn) {
-            recordId = String(recordId == null ? '' : recordId).trim();
-            if (!recordId) {
-                swalRegistryApplicationRequired();
-                if (typeof thenFn === 'function') {
-                    thenFn(false);
-                }
-                return;
+            if (typeof thenFn === 'function') {
+                thenFn(true);
             }
-            var appUrl = ($('#christeningRecordsPanel').attr('data-application-details-url') || '').trim();
-            if (!appUrl) {
-                if (typeof thenFn === 'function') {
-                    thenFn(true);
-                }
-                return;
-            }
-            fetchJson(buildQueryUrl(appUrl, {
-                christening_id: recordId,
-            }), {
-                Accept: 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-            })
-                .done(function(res) {
-                    if (res && res.ok && res.application_saved === true) {
-                        if (typeof thenFn === 'function') {
-                            thenFn(true);
-                        }
-                        return;
-                    }
-                    swalRegistryApplicationRequired(res && res.message ? String(res.message) : '');
-                    if (typeof thenFn === 'function') {
-                        thenFn(false);
-                    }
-                })
-                .fail(function(xhr) {
-                    var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
-                    swalRegistryApplicationRequired(data && data.message ? String(data.message) : '');
-                    if (typeof thenFn === 'function') {
-                        thenFn(false);
-                    }
-                });
         }
 
         function swalRegistryPaymentRequired(messageText) {
@@ -187,9 +136,6 @@
 
         function workflowChecksForStep(targetStep) {
             var checks = [];
-            if (targetStep === 'payment' || targetStep === 'certification' || targetStep === 'schedule') {
-                checks.push('application');
-            }
             if (targetStep === 'certification' || targetStep === 'schedule') {
                 checks.push('payment');
             }
@@ -1225,6 +1171,18 @@
             renumberChristeningFeeRows();
         }
 
+        function resetChristeningPaymentFormForNewEntry() {
+            setSelectedChristeningId('');
+            $('#christeningTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+            applyChristeningPaymentFeeFormObject({
+                reference_code: ($paymentFeeForm.attr('data-default-reference-code') || '').trim(),
+                client: '',
+                contact_number: '',
+                address: '',
+                fee_rows: null,
+            });
+        }
+
         function snapshotChristeningPaymentDraft() {
             var key = christeningApplicationDraftKey();
             chPaymentDraftsByChristeningId[key] = serializeChristeningPaymentFeeToObject();
@@ -1323,7 +1281,8 @@
                 e.preventDefault();
                 var cid = getSelectedChristeningId();
                 if (!cid) {
-                    swalRegistryApplicationRequired();
+                    resetChristeningPaymentFormForNewEntry();
+                    paymentBsModal.show();
                     return;
                 }
                 if (!paymentDetailsUrl) {
@@ -1367,21 +1326,22 @@
                 var saveUrl = ($paymentFeeForm.attr('data-save-url') || paymentSaveUrl || '').trim();
                 if (!saveUrl) return;
                 var cid = getSelectedChristeningId();
-                if (!cid) {
-                    swalRegistryApplicationRequired();
-                    return;
-                }
                 var payload = serializeChristeningPaymentFeeToObject();
-                payload.christening_id = parseInt(cid, 10);
-                if (isNaN(payload.christening_id)) {
-                    window.alert('Invalid record.');
-                    return;
+                if (cid) {
+                    payload.christening_id = parseInt(cid, 10);
+                    if (isNaN(payload.christening_id)) {
+                        window.alert('Invalid record.');
+                        return;
+                    }
                 }
                 var $saveBtn = $('#christeningPaymentFeeSaveBtn');
                 $saveBtn.prop('disabled', true);
                 fetchPostJson(saveUrl, payload, csrf)
                     .done(function(res) {
                         if (res && res.ok) {
+                            if (res.data && res.data.christening_id) {
+                                setSelectedChristeningId(String(res.data.christening_id));
+                            }
                             if (typeof bootstrap !== 'undefined' && $paymentModal.length) {
                                 var inst = bootstrap.Modal.getInstance($paymentModal[0]);
                                 if (inst) inst.hide();
@@ -1880,14 +1840,6 @@
 
         function saveChristeningCertificationRecord() {
             var cid = getSelectedChristeningId();
-            if (!cid) {
-                swalRegistryApplicationRequired();
-                return $.Deferred().reject({
-                    responseJSON: {
-                        message: 'Please do or fill the application form first.'
-                    }
-                }).promise();
-            }
             if (!certificationSaveUrl) {
                 return $.Deferred().reject({
                     responseJSON: {
@@ -1897,7 +1849,7 @@
             }
 
             var payload = {
-                christening_id: parseInt(cid, 10),
+                christening_id: cid ? parseInt(cid, 10) : null,
                 reference_code: chCertFieldValue('#chCertRefCode'),
                 client: chCertFieldValue('#chCertClient'),
                 contact_number: sappcPhMobileDigitsOnly(chCertFieldValue('#chCertContact')),
@@ -2020,7 +1972,7 @@
                 e.preventDefault();
                 var cid = getSelectedChristeningId();
                 if (!cid) {
-                    swalRegistryApplicationRequired();
+                    certBsModal.show();
                     return;
                 }
                 loadChristeningCertificationForRecord(cid, function() {
@@ -2807,8 +2759,7 @@
             $scheduleModal.on('show.bs.modal', function(e) {
                 var cid = getSelectedChristeningId();
                 if (!cid) {
-                    e.preventDefault();
-                    swalRegistryApplicationRequired();
+                    resetScheduleRequestFormForNewEntry();
                     return;
                 }
                 if ($scheduleModal.data('workflow-gate-ok')) {

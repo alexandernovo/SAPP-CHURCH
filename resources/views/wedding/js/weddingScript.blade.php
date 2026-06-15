@@ -87,61 +87,10 @@
             } catch (e1) {}
         }
 
-        function swalRegistryApplicationRequired(messageText) {
-            var msg = messageText || 'Please do or fill the application form first.';
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Application required',
-                    text: msg,
-                    confirmButtonText: 'OK',
-                });
-            } else {
-                window.alert(msg);
-            }
-        }
-
         function ensureRegistryApplicationSaved(recordId, thenFn) {
-            recordId = String(recordId == null ? '' : recordId).trim();
-            if (!recordId) {
-                swalRegistryApplicationRequired();
-                if (typeof thenFn === 'function') {
-                    thenFn(false);
-                }
-                return;
+            if (typeof thenFn === 'function') {
+                thenFn(true);
             }
-            var appUrl = ($('#weddingRecordsPanel').attr('data-marriage-application-details-url') || '').trim();
-            if (!appUrl) {
-                if (typeof thenFn === 'function') {
-                    thenFn(true);
-                }
-                return;
-            }
-            fetchJson(buildQueryUrl(appUrl, {
-                    wedding_id: recordId,
-                }), {
-                    Accept: 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                })
-                .done(function(res) {
-                    if (res && res.ok && res.application_saved === true) {
-                        if (typeof thenFn === 'function') {
-                            thenFn(true);
-                        }
-                        return;
-                    }
-                    swalRegistryApplicationRequired(res && res.message ? String(res.message) : '');
-                    if (typeof thenFn === 'function') {
-                        thenFn(false);
-                    }
-                })
-                .fail(function(xhr) {
-                    var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
-                    swalRegistryApplicationRequired(data && data.message ? String(data.message) : '');
-                    if (typeof thenFn === 'function') {
-                        thenFn(false);
-                    }
-                });
         }
 
         function swalRegistryPaymentRequired(messageText) {
@@ -180,9 +129,6 @@
 
         function workflowChecksForStep(targetStep) {
             var checks = [];
-            if (targetStep === 'payment' || targetStep === 'certification' || targetStep === 'schedule') {
-                checks.push('application');
-            }
             if (targetStep === 'certification' || targetStep === 'schedule') {
                 checks.push('payment');
             }
@@ -1103,6 +1049,18 @@
                 renumberConfirmationFeeRows();
             }
 
+            function resetWeddingPaymentFormForNewEntry() {
+                setSelectedWeddingId('');
+                $('#weddingTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                applyConfirmationPaymentFeeFormObject({
+                    reference_code: ($paymentFeeForm.attr('data-default-reference-code') || '').trim(),
+                    client: '',
+                    contact_number: '',
+                    address: '',
+                    fee_rows: null,
+                });
+            }
+
             $addFeeBtn.on('click', function() {
                 var $tr = $(newConfirmationFeeRowHtml());
                 $feeItemsBody.append($tr);
@@ -1155,7 +1113,8 @@
                     e.preventDefault();
                     var cid = getSelectedWeddingId();
                     if (!cid) {
-                        swalRegistryApplicationRequired();
+                        resetWeddingPaymentFormForNewEntry();
+                        paymentBsModal.show();
                         return;
                     }
                     if (!paymentDetailsUrl) {
@@ -1199,21 +1158,22 @@
                         '').trim();
                     if (!saveUrl) return;
                     var cid = getSelectedWeddingId();
-                    if (!cid) {
-                        swalRegistryApplicationRequired();
-                        return;
-                    }
                     var payload = serializeConfirmationPaymentFeeToObject();
-                    payload.wedding_id = parseInt(cid, 10);
-                    if (isNaN(payload.wedding_id)) {
-                        window.alert('Invalid record.');
-                        return;
+                    if (cid) {
+                        payload.wedding_id = parseInt(cid, 10);
+                        if (isNaN(payload.wedding_id)) {
+                            window.alert('Invalid record.');
+                            return;
+                        }
                     }
                     var $saveBtn = $('#weddingPaymentFeeSaveBtn');
                     $saveBtn.prop('disabled', true);
                     fetchPostJson(saveUrl, payload, csrf)
                         .done(function(res) {
                             if (res && res.ok) {
+                                if (res.data && res.data.wedding_id) {
+                                    setSelectedWeddingId(String(res.data.wedding_id));
+                                }
                                 if (typeof bootstrap !== 'undefined' && $paymentModal.length) {
                                     var inst = bootstrap.Modal.getInstance($paymentModal[0]);
                                     if (inst) inst.hide();
@@ -1730,14 +1690,6 @@
 
                 function saveWeddingCertificationRecord() {
                     var wid = getSelectedWeddingId();
-                    if (!wid) {
-                        swalRegistryApplicationRequired();
-                        return $.Deferred().reject({
-                            responseJSON: {
-                                message: 'Please do or fill the application form first.'
-                            }
-                        }).promise();
-                    }
                     if (!certificationSaveUrl) {
                         return $.Deferred().reject({
                             responseJSON: {
@@ -1747,7 +1699,7 @@
                     }
 
                     var payload = {
-                        wedding_id: parseInt(wid, 10),
+                        wedding_id: wid ? parseInt(wid, 10) : null,
                         reference_code: wdCertField('#wdCertRefCode'),
                         client: wdCertField('#wdCertClient'),
                         contact_number: sappcPhMobileDigitsOnly(wdCertField('#wdCertContact')),
@@ -1865,7 +1817,7 @@
                     e.preventDefault();
                     var wid = getSelectedWeddingId();
                     if (!wid) {
-                        swalRegistryApplicationRequired();
+                        certBsModal.show();
                         return;
                     }
                     loadWeddingCertificationForRecord(wid, function() {
@@ -2607,8 +2559,7 @@
                 $scheduleModal.on('show.bs.modal', function(e) {
                     var cid = getSelectedWeddingId();
                     if (!cid) {
-                        e.preventDefault();
-                        swalRegistryApplicationRequired();
+                        resetScheduleRequestFormForNewEntry();
                         return;
                     }
                     if ($scheduleModal.data('workflow-gate-ok')) {
