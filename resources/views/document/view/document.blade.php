@@ -36,7 +36,7 @@
     </header>
 
     <h2 class="sappc-doc-report-title" id="sappcDocReportTitle">
-        <span id="sappcDocReportService">DOCUMENT</span> REPORT AS OF
+        <span id="sappcDocReportService">DOCUMENT</span> REPORT OF
         <span id="sappcDocReportLabel">{{ strtoupper($reportLabel) }}</span>
     </h2>
 
@@ -47,15 +47,14 @@
                     <th scope="col">NO.</th>
                     <th scope="col">REFERENCE CODE</th>
                     <th scope="col">CLIENT</th>
-                    <th scope="col">ADDRESS</th>
-                    <th scope="col">SEX</th>
-                    <th scope="col">CONTACT NUMBER</th>
-                    <th scope="col">DATE</th>
+                        <th scope="col">ADDRESS</th>
+                        <th scope="col">CONTACT NUMBER</th>
+                        <th scope="col">DATE</th>
                 </tr>
             </thead>
             <tbody id="sappcDocTableBody">
                 <tr>
-                    <td colspan="7" class="text-center py-3">Select a report type and click View Report.</td>
+                    <td colspan="6" class="text-center py-3">Select a report type and click View Report.</td>
                 </tr>
             </tbody>
         </table>

@@ -108,7 +108,7 @@ class ChristeningController extends Controller
             'reportType' => $reportType,
             'reportMonth' => $month,
             'reportLabel' => $reportLabel,
-            'serviceHeading' => $reportType === 'wedding' ? 'WEDDING CERTIFICATION' : 'CHRISTENING CERTIFICATION',
+            'serviceHeading' => $reportType === 'wedding' ? 'WEDDING' : 'CHRISTENING',
             'rows' => $this->buildCertificationRowsFromDetailsTable($reportType, $month),
         ]);
     }
@@ -124,7 +124,7 @@ class ChristeningController extends Controller
         $month = $this->resolveCertificationReportMonth($validated['month'] ?? null);
         $out = $this->buildCertificationRowsFromDetailsTable($reportType, $month);
         $reportLabel = ClientNameDisplay::formatMonthYearLabel($month);
-        $serviceHeading = $reportType === 'wedding' ? 'WEDDING CERTIFICATION' : 'CHRISTENING CERTIFICATION';
+        $serviceHeading = $reportType === 'wedding' ? 'WEDDING' : 'CHRISTENING';
 
         return response()->json([
             'ok' => true,

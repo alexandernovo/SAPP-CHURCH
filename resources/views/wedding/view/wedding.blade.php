@@ -251,16 +251,14 @@
                         <th scope="col">REFERENCE CODE</th>
                         <th scope="col">CLIENT</th>
                         <th scope="col">ADDRESS</th>
-                        <th scope="col">SEX</th>
                         <th scope="col">CONTACT NUMBER</th>
-                        <th scope="col">PAYMENT STATUS</th>
                         <th scope="col">DATE CREATED</th>
                         <th scope="col" class="text-center">ACTION</th>
                     </tr>
                 </thead>
                 <tbody id="weddingTableBody" aria-live="polite" aria-relevant="additions text">
                     <tr class="sappc-table-loading">
-                        <td colspan="9" class="text-center text-muted py-4">Loading...</td>
+                        <td colspan="7" class="text-center text-muted py-4">Loading...</td>
                     </tr>
                 </tbody>
             </table>

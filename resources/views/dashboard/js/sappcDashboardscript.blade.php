@@ -360,9 +360,6 @@
                     esc(typeof sappcFormatAddress === 'function' ? sappcFormatAddress(row.address) : row.address) +
                     '</td>' +
                     '<td>' +
-                    esc(row.sex) +
-                    '</td>' +
-                    '<td>' +
                     esc(row.contactNum) +
                     '</td>' +
                     '<td>' +
@@ -391,7 +388,7 @@
                 var html = '';
                 if (!res || !res.data || !res.data.length) {
                     html =
-                        '<tr class="sappc-table-empty"><td colspan="9" class="text-center text-muted py-4">No records found.</td></tr>';
+                        '<tr class="sappc-table-empty"><td colspan="8" class="text-center text-muted py-4">No records found.</td></tr>';
                 } else {
                     res.data.forEach(function(row) {
                         html += rowHtml(row);
@@ -453,7 +450,7 @@
             function fetchRecords() {
                 var tbody = document.getElementById('sappcTableBody');
                 tbody.innerHTML =
-                    '<tr class="sappc-table-loading"><td colspan="9" class="text-center text-muted py-4">Loading…</td></tr>';
+                    '<tr class="sappc-table-loading"><td colspan="8" class="text-center text-muted py-4">Loading…</td></tr>';
 
                 var reqUrl = buildQueryUrl(url, {
                     page: state.page,
@@ -468,7 +465,7 @@
                     .then(renderTable)
                     .catch(function(err) {
                         tbody.innerHTML =
-                            '<tr><td colspan="9" class="text-center text-danger py-3">Could not load records (' +
+                            '<tr><td colspan="8" class="text-center text-danger py-3">Could not load records (' +
                             (err.message || '?') +
                             ').</td></tr>';
                     });

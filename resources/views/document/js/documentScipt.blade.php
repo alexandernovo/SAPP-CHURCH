@@ -28,7 +28,7 @@
         function showTableMessage(html) {
             destroyDocDataTable();
             $body.html(
-                '<tr><td colspan="7" class="text-center py-3">' + html + '</td></tr>'
+                '<tr><td colspan="6" class="text-center py-3">' + html + '</td></tr>'
             );
         }
 
@@ -55,11 +55,10 @@
                             : (data == null ? '' : String(data));
                         return $('<div/>').text(label).html();
                     }},
-                    { data: 'sex' },
                     { data: 'contact_number' },
                     { data: 'date' },
                 ],
-                order: [[6, 'desc']],
+                order: [[5, 'desc']],
                 paging: false,
                 ordering: false,
                 info: false,

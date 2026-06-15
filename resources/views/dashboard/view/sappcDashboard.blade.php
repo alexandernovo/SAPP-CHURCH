@@ -217,7 +217,6 @@
                                     <th scope="col">REFERENCE CODE</th>
                                     <th scope="col">CLIENT</th>
                                     <th scope="col">ADDRESS</th>
-                                    <th scope="col">SEX</th>
                                     <th scope="col">CONTACT NUMBER</th>
                                     <th scope="col">TYPE OF DOCUMENT</th>
                                     <th scope="col">DATE CREATED</th>

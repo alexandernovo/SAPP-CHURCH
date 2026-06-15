@@ -26,7 +26,7 @@
         </header>
 
         <h2 class="sappc-doc-report-title">
-            {{ strtoupper($service_heading ?? '') }} REPORT AS OF {{ strtoupper($report_label ?? '') }}
+            {{ strtoupper($service_heading ?? '') }} REPORT OF {{ strtoupper($report_label ?? '') }}
         </h2>
 
         <div class="sappc-doc-table-wrap">
@@ -37,7 +37,6 @@
                         <th scope="col">REFERENCE CODE</th>
                         <th scope="col">CLIENT</th>
                         <th scope="col">ADDRESS</th>
-                        <th scope="col">SEX</th>
                         <th scope="col">CONTACT NUMBER</th>
                         <th scope="col">DATE</th>
                     </tr>
@@ -49,13 +48,12 @@
                             <td>{{ $r['reference_code'] ?? '' }}</td>
                             <td>{{ $r['client'] ?? '' }}</td>
                             <td>{{ $r['address'] ?? '' }}</td>
-                            <td>{{ $r['sex'] ?? '' }}</td>
                             <td>{{ $r['contact_number'] ?? '' }}</td>
                             <td>{{ $r['date'] ?? '' }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center py-3">No records for this month.</td>
+                            <td colspan="6" class="text-center py-3">No records for this month.</td>
                         </tr>
                     @endforelse
                 </tbody>

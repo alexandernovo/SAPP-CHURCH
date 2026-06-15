@@ -357,7 +357,6 @@
                 '<td>' + esc(row.referenceCode) + '</td>' +
                 '<td>' + esc(typeof sappcFormatClientDisplayName === 'function' ? sappcFormatClientDisplayName(row.client) : row.client) + '</td>' +
                 '<td>' + esc(typeof sappcFormatAddress === 'function' ? sappcFormatAddress(row.address) : row.address) + '</td>' +
-                '<td>' + esc(row.sex) + '</td>' +
                 '<td>' + esc(row.contactNum) + '</td>' +
                 '<td>' + esc(row.dateCreated) + '</td>' +
                 '<td class="text-center"><div class="sappc-icon-action_group">' +
@@ -453,7 +452,7 @@
 
             var tableColspan = parseInt($panel.attr('data-table-colspan'), 10);
             if (isNaN(tableColspan) || tableColspan < 1) {
-                tableColspan = 8;
+                tableColspan = 7;
             }
 
             var url = $panel.attr('data-records-url');

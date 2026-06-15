@@ -50,7 +50,7 @@
             'activeSection' => 'certification',
             'sectionLabel' => 'certification records',
             'tableColumns' => [
-                'NO.', 'REFERENCE CODE', 'CLIENT', 'ADDRESS', 'SEX', 'CONTACT NUMBER', 'DATE CREATED', 'ACTION',
+                'NO.', 'REFERENCE CODE', 'CLIENT', 'ADDRESS', 'CONTACT NUMBER', 'DATE CREATED', 'ACTION',
             ],
         ])
     </div>

@@ -1,6 +1,6 @@
 @php
     $tableColumns = $tableColumns ?? [
-        'NO.', 'REFERENCE CODE', 'CLIENT', 'ADDRESS', 'SEX', 'CONTACT NUMBER', 'PAYMENT STATUS', 'DATE CREATED', 'ACTION',
+        'NO.', 'REFERENCE CODE', 'CLIENT', 'ADDRESS', 'CONTACT NUMBER', 'DATE CREATED', 'ACTION',
     ];
     $tableColspan = $tableColspan ?? count($tableColumns);
 @endphp

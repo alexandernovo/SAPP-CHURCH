@@ -398,7 +398,7 @@
     <section
         class="sappc-table-panel"
         id="confirmationRecordsPanel"
-        data-table-colspan="8"
+        data-table-colspan="7"
         data-records-url="{{ route('admin.dashboard.records') }}"
         data-registry-type="confirmation"
         data-payment-details-url="{{ route('admin.confirmation.payment-details') }}"
@@ -455,7 +455,6 @@
                         <th scope="col">REFERENCE CODE</th>
                         <th scope="col">CLIENT</th>
                         <th scope="col">ADDRESS</th>
-                        <th scope="col">SEX</th>
                         <th scope="col">CONTACT NUMBER</th>
                         <th scope="col">DATE CREATED</th>
                         <th scope="col" class="text-center">ACTION</th>
@@ -463,7 +462,7 @@
                 </thead>
                 <tbody id="confirmationTableBody" aria-live="polite" aria-relevant="additions text">
                     <tr class="sappc-table-loading">
-                        <td colspan="8" class="text-center text-muted py-4">Loading...</td>
+                        <td colspan="7" class="text-center text-muted py-4">Loading...</td>
                     </tr>
                 </tbody>
             </table>

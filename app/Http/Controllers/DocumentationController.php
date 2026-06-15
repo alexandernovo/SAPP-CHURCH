@@ -111,10 +111,10 @@ class DocumentationController extends Controller
         }
 
         $serviceHeading = match ($serviceType) {
-            'christening' => 'CHRISTENING DOCUMENTATION',
-            'burial' => 'BURIAL DOCUMENTATION',
-            'confirmation' => 'CONFIRMATION DOCUMENTATION',
-            'wedding' => 'WEDDING DOCUMENTATION',
+            'christening' => 'CHRISTENING',
+            'burial' => 'BURIAL',
+            'confirmation' => 'CONFIRMATION',
+            'wedding' => 'WEDDING',
             default => 'DOCUMENT',
         };
 

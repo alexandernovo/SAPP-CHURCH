@@ -364,16 +364,7 @@
         function rowHtml(row) {
             var base = '<tr data-record-id="' + esc(row.recordId) + '" data-document-type="' + esc(row.documentType) + '">' +
                 '<td>' + esc(row.rowNumber) + '</td><td>' + esc(row.referenceCode) + '</td><td>' + esc(row.client) + '</td><td>' + esc(typeof sappcFormatAddress === 'function' ? sappcFormatAddress(row.address) : row.address) + '</td>';
-            if (activeSection === 'certification') {
-                return base + '<td>' + esc(row.contactNum) + '</td><td>' + esc(row.dateCreated) + '</td>' + rowActionCell(row.recordId) + '</tr>';
-            }
-            if (activeSection === 'application') {
-                return base + '<td>' + esc(row.sex) + '</td><td>' + esc(row.contactNum) + '</td><td>' + esc(row.dateCreated) + '</td>' + rowActionCell(row.recordId) + '</tr>';
-            }
-            if (activeSection === 'payment') {
-                return base + '<td>' + esc(row.contactNum) + '</td><td class="text-center align-middle">' + paymentStatusCell(row.paymentStatus) + '</td><td>' + esc(row.dateCreated) + '</td>' + rowActionCell(row.recordId) + '</tr>';
-            }
-            return base + '<td>' + esc(row.sex) + '</td><td>' + esc(row.contactNum) + '</td><td class="text-center align-middle">' + paymentStatusCell(row.paymentStatus) + '</td><td>' + esc(row.dateCreated) + '</td>' + rowActionCell(row.recordId) + '</tr>';
+            return base + '<td>' + esc(row.contactNum) + '</td><td>' + esc(row.dateCreated) + '</td>' + rowActionCell(row.recordId) + '</tr>';
         }
 
         $(function() {
@@ -443,7 +434,7 @@
 
             var tableColspan = parseInt($panel.attr('data-table-colspan'), 10);
             if (isNaN(tableColspan) || tableColspan < 1) {
-                tableColspan = 9;
+                tableColspan = 7;
             }
 
             var url = $panel.attr('data-records-url');

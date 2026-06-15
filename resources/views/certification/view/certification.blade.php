@@ -124,7 +124,7 @@
             </header>
 
             <h2 class="sappc-doc-report-title" id="sappcCertReportTitle">
-                <span id="sappcCertReportService">CERTIFICATION</span> REPORT AS OF
+                <span id="sappcCertReportService">CHRISTENING</span> REPORT OF
                 <span id="sappcCertReportLabel">{{ strtoupper($certReportLabel ?? '') }}</span>
             </h2>
 
@@ -135,15 +135,14 @@
                             <th scope="col">NO.</th>
                             <th scope="col">REFERENCE CODE</th>
                             <th scope="col">CLIENT</th>
-                            <th scope="col">ADDRESS</th>
-                            <th scope="col">SEX</th>
-                            <th scope="col">CONTACT NUMBER</th>
-                            <th scope="col">DATE &amp; TIME</th>
+                                <th scope="col">ADDRESS</th>
+                                <th scope="col">CONTACT NUMBER</th>
+                                <th scope="col">DATE &amp; TIME</th>
                         </tr>
                     </thead>
                     <tbody id="sappcCertTableBody">
                         <tr>
-                            <td colspan="7" class="text-center py-3">Select a certification type and click View Report.</td>
+                            <td colspan="6" class="text-center py-3">Select a certification type and click View Report.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -196,7 +195,7 @@
             function renderRows(rows) {
                 if (!Array.isArray(rows) || rows.length === 0) {
                     $tbody.html(
-                        '<tr><td colspan="7" class="text-center text-muted py-3">No certification records found.</td></tr>'
+                        '<tr><td colspan="6" class="text-center text-muted py-3">No certification records found.</td></tr>'
                     );
                     return;
                 }
@@ -208,7 +207,6 @@
                         '<td>' + esc(r.reference_code) + '</td>' +
                         '<td>' + esc(r.client) + '</td>' +
                         '<td>' + esc(r.address) + '</td>' +
-                        '<td>' + esc(r.sex) + '</td>' +
                         '<td>' + esc(r.contact_number) + '</td>' +
                         '<td>' + esc(r.date) + '</td>' +
                         '</tr>';
@@ -276,7 +274,7 @@
                 pushMonthToUrl(monthVal);
 
                 $tbody.html(
-                    '<tr><td colspan="7" class="text-center text-muted py-3">Loading…</td></tr>'
+                    '<tr><td colspan="6" class="text-center text-muted py-3">Loading…</td></tr>'
                 );
 
                 $.ajax({
@@ -297,7 +295,7 @@
                     .done(function (res) {
                         if (!res || !res.ok) {
                             $tbody.html(
-                                '<tr><td colspan="7" class="text-center text-danger py-3">Invalid response.</td></tr>'
+                                '<tr><td colspan="6" class="text-center text-danger py-3">Invalid response.</td></tr>'
                             );
                             return;
                         }
@@ -314,7 +312,7 @@
                             msg = data.message;
                         }
                         $tbody.html(
-                            '<tr><td colspan="7" class="text-center text-danger py-3">' + esc(msg) + '</td></tr>'
+                            '<tr><td colspan="6" class="text-center text-danger py-3">' + esc(msg) + '</td></tr>'
                         );
                     });
             }

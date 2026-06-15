@@ -851,9 +851,7 @@
                         <th scope="col">REFERENCE CODE</th>
                         <th scope="col">CLIENT</th>
                         <th scope="col">ADDRESS</th>
-                        <th scope="col">SEX</th>
                         <th scope="col">CONTACT NUMBER</th>
-                        <th scope="col">PAYMENT STATUS</th>
                         <th scope="col">DATE CREATED</th>
                         <th scope="col" class="text-center">ACTION</th>
                     </tr>
