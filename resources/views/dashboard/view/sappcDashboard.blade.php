@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="sappc-dash-html sappc-dash-html--dashboard">
 
 <head>
     <meta charset="UTF-8">
@@ -7,7 +7,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Dashboard — {{ config('app.name', 'SAPP Church') }}</title>
     @include('layouts.cdn')
-    <link rel="stylesheet" href="{{ asset('css/sappcDashboard/sappcDashboard.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/sappcDashboard/sappcDashboard.css') }}?v={{ filemtime(public_path('css/sappcDashboard/sappcDashboard.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/christening/applicationOfChristening.css') }}">
     <link rel="stylesheet" href="{{ asset('css/confirmation/confirmationKompirmaModals.css') }}">
     <link rel="stylesheet" href="{{ asset('css/wedding/marriageApplicationKasal.css') }}">
@@ -15,7 +15,7 @@
     @stack('styles')
 </head>
 
-<body class="sappc-dash" data-sappc-sidebar-collapsed="0">
+<body class="sappc-dash sappc-dash--dashboard" data-sappc-sidebar-collapsed="0">
     <div class="sappc-dash_backdrop" id="sappcSidebarBackdrop" aria-hidden="true"></div>
 
     <div class="sappc-dash_layout">
@@ -352,8 +352,7 @@
             </main>
 
             <footer class="sappc-site-footer">
-                <p class="sappc-site-footer_text mb-0">© Copyright 2026. Developed by IS-TECH UNSTOPPABLE. All Rights
-                    Reserved</p>
+                <p class="sappc-site-footer_text mb-0">© Copyright {{ date('Y') }}. Developed by IS-TECH UNSTOPPABLE. All Rights Reserved</p>
             </footer>
         </div>
     </div>
