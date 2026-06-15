@@ -936,15 +936,36 @@
                 });
             }
 
+            function syncWeddingPaymentFeeRowBadgeColors($row) {
+                var $status = $row.find('.sappcPaymentFeeModalStatus');
+                var $toggle = $row.find('.sappcPaymentFeeModalTogglePaid, .sappcPaymentFeeModalToggleUnpaid');
+                var isPaid = $status.hasClass('sappcPaymentFeeModalStatusPaid');
+                $status.addClass('sappc-payment-badge').removeClass('sappc-payment-badge--paid sappc-payment-badge--unpaid')
+                    .addClass(isPaid ? 'sappc-payment-badge--paid' : 'sappc-payment-badge--unpaid');
+                $toggle.addClass('sappc-payment-badge').removeClass(
+                    'sappcPaymentFeeModalTogglePaid sappcPaymentFeeModalToggleUnpaid sappc-payment-badge--paid sappc-payment-badge--unpaid');
+                if (isPaid) {
+                    $toggle.addClass('sappcPaymentFeeModalToggleUnpaid sappc-payment-badge--unpaid');
+                } else {
+                    $toggle.addClass('sappcPaymentFeeModalTogglePaid sappc-payment-badge--paid');
+                }
+            }
+
+            function syncAllWeddingPaymentFeeRowBadgeColors() {
+                $feeItemsBody.find('[data-fee-row]').each(function() {
+                    syncWeddingPaymentFeeRowBadgeColors($(this));
+                });
+            }
+
             function newConfirmationFeeRowHtml() {
                 return '' +
                     '<tr class="sappcPaymentFeeModalRow" data-fee-row>' +
                     '<td class="sappcPaymentFeeModalCellNo"></td>' +
                     '<td><input type="text" class="sappcPaymentFeeModalItemInput" name="fee_items[]" value="" aria-label="Fee item"></td>' +
-                    '<td><span class="sappcPaymentFeeModalStatus sappcPaymentFeeModalStatusUnpaid">Unpaid</span></td>' +
+                    '<td><span class="sappc-payment-badge sappc-payment-badge--unpaid sappcPaymentFeeModalStatus sappcPaymentFeeModalStatusUnpaid">Unpaid</span></td>' +
                     '<td><span class="sappcPaymentFeeModalDatePaid" data-date-paid="">\u2014</span></td>' +
                     '<td class="text-center"><div class="sappcPaymentFeeModalActions">' +
-                    '<button type="button" class="sappcPaymentFeeModalTogglePaid">Paid</button>' +
+                    '<button type="button" class="sappc-payment-badge sappc-payment-badge--paid sappcPaymentFeeModalTogglePaid">Paid</button>' +
                     '<button type="button" class="sappcPaymentFeeModalBtnRemove" aria-label="Remove row">' +
                     '<i class="fa-solid fa-trash-can" aria-hidden="true"></i></button>' +
                     '</div></td></tr>';
@@ -1016,6 +1037,7 @@
                     $date.removeAttr('data-date-paid');
                     $date.text('\u2014');
                 }
+                syncWeddingPaymentFeeRowBadgeColors($tr);
                 return $tr;
             }
 
@@ -1047,6 +1069,7 @@
                     $feeItemsBody.append(buildConfirmationPaymentFeeRowFromData(fr));
                 });
                 renumberConfirmationFeeRows();
+                syncAllWeddingPaymentFeeRowBadgeColors();
             }
 
             function resetWeddingPaymentFormForNewEntry() {
@@ -1097,6 +1120,7 @@
                     $date.attr('data-date-paid', iso);
                     $date.text(formatPaymentFeeDateDisplay(iso));
                 }
+                syncWeddingPaymentFeeRowBadgeColors($row);
             });
 
             if ($paymentModal.length && $paymentBtn.length && typeof bootstrap !== 'undefined') {
@@ -1104,6 +1128,7 @@
 
                 $paymentModal.on('shown.bs.modal', function() {
                     $paymentBtn.attr('aria-expanded', 'true');
+                    syncAllWeddingPaymentFeeRowBadgeColors();
                 });
                 $paymentModal.on('hidden.bs.modal', function() {
                     $paymentBtn.attr('aria-expanded', 'false');

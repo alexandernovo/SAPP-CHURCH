@@ -678,6 +678,57 @@ a.sappc-registry-toolbar_btn.is-active:hover {
     color: #fff;
 }
 
+button.sappc-payment-badge {
+    appearance: none;
+    -webkit-appearance: none;
+    border: none;
+    cursor: pointer;
+    line-height: 1.2;
+}
+
+.sappcPaymentFeeModalTable .sappc-payment-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    min-width: auto;
+    padding: 0.22rem 0.55rem;
+    border-radius: 0.3rem;
+    text-transform: capitalize;
+}
+
+.sappcPaymentFeeModalTable button.sappc-payment-badge {
+    font-size: 0.62rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+}
+
+.sappcPaymentFeeModal .sappcPaymentFeeModalStatus.sappc-payment-badge--unpaid,
+.sappcPaymentFeeModal .sappcPaymentFeeModalStatus:not(.sappcPaymentFeeModalStatusPaid) {
+    background-color: #7f1d1d !important;
+    border-color: #7f1d1d !important;
+    color: #fff !important;
+}
+
+.sappcPaymentFeeModal .sappcPaymentFeeModalStatus.sappc-payment-badge--paid,
+.sappcPaymentFeeModal .sappcPaymentFeeModalStatus.sappcPaymentFeeModalStatusPaid {
+    background-color: #1e4d2a !important;
+    border-color: #1e4d2a !important;
+    color: #fff !important;
+}
+
+.sappcPaymentFeeModalTable .sappcPaymentFeeModalActions button.sappc-payment-badge--paid,
+.sappcPaymentFeeModalTable .sappcPaymentFeeModalActions button.sappcPaymentFeeModalTogglePaid {
+    background-color: #1e4d2a !important;
+    border: 1px solid #1e4d2a !important;
+    color: #fff !important;
+}
+
+.sappcPaymentFeeModalTable .sappcPaymentFeeModalActions button.sappc-payment-badge--unpaid,
+.sappcPaymentFeeModalTable .sappcPaymentFeeModalActions button.sappcPaymentFeeModalToggleUnpaid {
+    background-color: #7f1d1d !important;
+    border: 1px solid #7f1d1d !important;
+    color: #fff !important;
+}
+
 .sappc-doc-stats {
     margin-bottom: 1.25rem;
 }

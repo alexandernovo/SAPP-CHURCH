@@ -85,7 +85,7 @@
                                                 </td>
                                                 <td>
                                                     <span
-                                                        class="sappcPaymentFeeModalStatus sappcPaymentFeeModalStatusUnpaid">Unpaid</span>
+                                                        class="sappc-payment-badge sappc-payment-badge--unpaid sappcPaymentFeeModalStatus sappcPaymentFeeModalStatusUnpaid">Unpaid</span>
                                                 </td>
                                                 <td>
                                                     <span class="sappcPaymentFeeModalDatePaid" data-date-paid="">&#8212;</span>
@@ -93,7 +93,7 @@
                                                 <td class="text-center">
                                                     <div class="sappcPaymentFeeModalActions">
                                                         <button type="button"
-                                                            class="sappcPaymentFeeModalTogglePaid">Paid</button>
+                                                            class="sappc-payment-badge sappc-payment-badge--paid sappcPaymentFeeModalTogglePaid">Paid</button>
                                                         <button type="button" class="sappcPaymentFeeModalBtnRemove"
                                                             aria-label="Remove row">
                                                             <i class="fa-solid fa-trash-can" aria-hidden="true"></i>

@@ -3,7 +3,7 @@
 @section('title', 'Christening — Payment Fee — ' . config('app.name', 'SAPP Church'))
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/christening/applicationOfChristening.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/christening/applicationOfChristening.css') }}?v={{ filemtime(public_path('css/christening/applicationOfChristening.css')) }}">
 @endpush
 
 @section('content')

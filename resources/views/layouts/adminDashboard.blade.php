@@ -5,7 +5,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Dashboard — ' . config('app.name', 'SAPP Church'))</title>
     @include('layouts.cdn')
-    <link rel="stylesheet" href="{{ asset('css/sappcDashboard/sappcDashboard.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/sappcDashboard/sappcDashboard.css') }}?v={{ filemtime(public_path('css/sappcDashboard/sappcDashboard.css')) }}">
     @stack('styles')
 </head>
 <body

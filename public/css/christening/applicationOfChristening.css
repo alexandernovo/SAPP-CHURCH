@@ -1721,15 +1721,20 @@
     font-weight: 700;
     text-transform: capitalize;
     border: 1px solid rgba(0, 0, 0, 0.2);
-}
-
-.sappcPaymentFeeModalStatusPaid {
-    background: #b88618;
+    background-color: #9b1c2e;
     color: #fff;
 }
 
-.sappcPaymentFeeModalStatusUnpaid {
-    background: #30435d;
+.sappcPaymentFeeModalStatusPaid,
+.sappcPaymentFeeModal .sappcPaymentFeeModalStatus.sappcPaymentFeeModalStatusPaid {
+    background-color: #22a047;
+    color: #fff;
+}
+
+.sappcPaymentFeeModalStatusUnpaid,
+.sappcPaymentFeeModal .sappcPaymentFeeModalStatus.sappcPaymentFeeModalStatusUnpaid,
+.sappcPaymentFeeModal .sappcPaymentFeeModalStatus:not(.sappcPaymentFeeModalStatusPaid) {
+    background-color: #9b1c2e;
     color: #fff;
 }
 
@@ -1747,7 +1752,9 @@
 }
 
 .sappcPaymentFeeModalTogglePaid,
-.sappcPaymentFeeModalToggleUnpaid {
+.sappcPaymentFeeModalToggleUnpaid,
+.sappcPaymentFeeModal .sappcPaymentFeeModalActions button.sappcPaymentFeeModalTogglePaid,
+.sappcPaymentFeeModal .sappcPaymentFeeModalActions button.sappcPaymentFeeModalToggleUnpaid {
     appearance: none;
     -webkit-appearance: none;
     border: 1px solid #111;
@@ -1761,21 +1768,25 @@
     line-height: 1.2;
 }
 
-.sappcPaymentFeeModalTogglePaid {
-    background: #b88618;
+.sappcPaymentFeeModalTogglePaid,
+.sappcPaymentFeeModal .sappcPaymentFeeModalActions button.sappcPaymentFeeModalTogglePaid {
+    background-color: #22a047 !important;
 }
 
-.sappcPaymentFeeModalTogglePaid:hover {
-    background: #9a7114;
+.sappcPaymentFeeModalTogglePaid:hover,
+.sappcPaymentFeeModal .sappcPaymentFeeModalActions button.sappcPaymentFeeModalTogglePaid:hover {
+    background-color: #1a8038 !important;
     color: #fff;
 }
 
-.sappcPaymentFeeModalToggleUnpaid {
-    background: #30435d;
+.sappcPaymentFeeModalToggleUnpaid,
+.sappcPaymentFeeModal .sappcPaymentFeeModalActions button.sappcPaymentFeeModalToggleUnpaid {
+    background-color: #9b1c2e !important;
 }
 
-.sappcPaymentFeeModalToggleUnpaid:hover {
-    background: #243649;
+.sappcPaymentFeeModalToggleUnpaid:hover,
+.sappcPaymentFeeModal .sappcPaymentFeeModalActions button.sappcPaymentFeeModalToggleUnpaid:hover {
+    background-color: #7a1628 !important;
     color: #fff;
 }
 
