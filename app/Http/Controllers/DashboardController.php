@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 use Illuminate\Database\QueryException;
 
@@ -220,9 +221,11 @@ class DashboardController extends Controller
                 $row->clientLName ?? null
             ) ?: '—');
 
-        $dateCreated = property_exists($row, 'displayDateCreated') && $row->displayDateCreated !== null && $row->displayDateCreated !== ''
-            ? $row->displayDateCreated
-            : ClientNameDisplay::formatDateCreated($row->dateCreated ?? null);
+        $dateCreated = property_exists($row, 'cert_created_at') && $row->cert_created_at !== null && $row->cert_created_at !== ''
+            ? ClientNameDisplay::formatDateTimeCreated($row->cert_created_at)
+            : (property_exists($row, 'displayDateCreated') && $row->displayDateCreated !== null && $row->displayDateCreated !== ''
+                ? $row->displayDateCreated
+                : ClientNameDisplay::formatDateCreated($row->dateCreated ?? null));
 
         return [
             'rowNumber' => $rowNumber,
@@ -306,6 +309,9 @@ class DashboardController extends Controller
         if ($singleTable !== null) {
             $query = $this->registryTableQuery($singleTable);
             SacramentRegistrySectionFilter::apply($query, $singleTable, $registrySection);
+            if ($registrySection === SacramentRegistrySectionFilter::SECTION_CERTIFICATION) {
+                $this->applyCertificationCreatedAtJoin($query, $singleTable);
+            }
         } else {
             $query = DB::query()->fromSub($this->registryUnionQuery(), 'registry');
             $registryTypeMap = [
@@ -353,19 +359,71 @@ class DashboardController extends Controller
             }
         }
 
+        $usesCertCreatedAt = $singleTable !== null
+            && $registrySection === SacramentRegistrySectionFilter::SECTION_CERTIFICATION
+            && Schema::hasTable('certification_details');
+
         if ($request->filled('date_from')) {
-            $query->whereDate('dateCreated', '>=', $request->input('date_from'));
+            $dateColumn = $usesCertCreatedAt ? 'cert_created_at' : 'dateCreated';
+            $query->whereDate($dateColumn, '>=', $request->input('date_from'));
         }
         if ($request->filled('date_to')) {
-            $query->whereDate('dateCreated', '<=', $request->input('date_to'));
+            $dateColumn = $usesCertCreatedAt ? 'cert_created_at' : 'dateCreated';
+            $query->whereDate($dateColumn, '<=', $request->input('date_to'));
         }
 
         $sortOrder = strtolower(trim((string) $request->input('sort_order', 'desc')));
+        if ($usesCertCreatedAt) {
+            if ($sortOrder === 'asc') {
+                return $query->orderBy('cert_created_at')->orderBy('record_id');
+            }
+
+            return $query->orderByDesc('cert_created_at')->orderByDesc('record_id');
+        }
+
         if ($sortOrder === 'asc') {
             return $query->orderBy('dateCreated')->orderBy('record_id');
         }
 
         return $query->orderByDesc('dateCreated')->orderByDesc('record_id');
+    }
+
+    private function applyCertificationCreatedAtJoin(Builder $query, string $table): void
+    {
+        if (! Schema::hasTable('certification_details')) {
+            return;
+        }
+
+        $primaryKey = match ($table) {
+            'christening' => 'christeningId',
+            'confirmation' => 'confirmationId',
+            'wedding' => 'weddingId',
+            'burial' => 'burialId',
+            default => null,
+        };
+
+        $registryType = match ($table) {
+            'christening' => 'Christening',
+            'confirmation' => 'Confirmation',
+            'wedding' => 'Wedding',
+            'burial' => 'Burial',
+            default => null,
+        };
+
+        if ($primaryKey === null || $registryType === null) {
+            return;
+        }
+
+        $query->selectSub(function (Builder $sub) use ($registryType, $table, $primaryKey) {
+            $sub->from('certification_details as cd')
+                ->selectRaw('MAX(cd.created_at)')
+                ->where(function (Builder $match) use ($registryType, $table, $primaryKey) {
+                    $match->where(function (Builder $linked) use ($registryType, $table, $primaryKey) {
+                        $linked->where('cd.registryType', $registryType)
+                            ->whereColumn('cd.registryRecordId', "{$table}.{$primaryKey}");
+                    })->orWhereColumn('cd.referenceCode', "{$table}.referenceCode");
+                });
+        }, 'cert_created_at');
     }
 
     public function deleteRecord(Request $request): JsonResponse

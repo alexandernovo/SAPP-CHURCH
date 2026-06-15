@@ -438,7 +438,9 @@
                 '<td>' + esc(row.client) + '</td>' +
                 '<td>' + esc(typeof sappcFormatAddress === 'function' ? sappcFormatAddress(row.address) : row
                     .address) + '</td>';
-            return base + '<td>' + esc(row.contactNum) + '</td><td>' + esc(row.dateCreated) + '</td>' +
+            return base + '<td>' + esc(row.contactNum) + '</td>' +
+                (activeSection === 'payment' ? '<td>' + paymentStatusCell(row.paymentStatus) + '</td>' : '') +
+                '<td>' + esc(row.dateCreated) + '</td>' +
                 rowActionCell(row.recordId) + '</tr>';
         }
 

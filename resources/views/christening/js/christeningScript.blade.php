@@ -2129,6 +2129,7 @@
 
             return base +
                 '<td>' + esc(row.contactNum) + '</td>' +
+                (activeSection === 'payment' ? '<td>' + paymentStatusCell(row.paymentStatus) + '</td>' : '') +
                 '<td>' + esc(row.dateCreated) + '</td>' +
                 rowActionCell(row.recordId) + '</tr>';
         }

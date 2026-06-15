@@ -89,7 +89,7 @@ body.admin-login-page {
 
 .admin-login-card__title {
     margin: 0;
-    font-size: clamp(0.95rem, 2.5vw, 1.2rem);
+    font-size: clamp(1.15rem, 3.5vw, 1.5rem);
     font-weight: 400;
     line-height: 1.25;
     letter-spacing: 0.04em;
@@ -110,14 +110,14 @@ body.admin-login-page {
 
 .admin-login-card__intro h2 {
     margin: 0 0 0.25rem;
-    font-size: clamp(1rem, 2.2vw, 1.15rem);
+    font-size: clamp(1.125rem, 2.5vw, 1.35rem);
     font-weight: 400;
     color: #111;
 }
 
 .admin-login-card__intro p {
     margin: 0;
-    font-size: clamp(0.8125rem, 1.8vw, 0.9375rem);
+    font-size: clamp(0.9375rem, 2vw, 1.0625rem);
     line-height: 1.35;
     color: #555;
 }
@@ -154,7 +154,7 @@ body.admin-login-page {
 .admin-login-field label {
     display: block;
     margin-bottom: 0.25rem;
-    font-size: clamp(0.875rem, 1.8vw, 0.9375rem);
+    font-size: clamp(0.9375rem, 2vw, 1.0625rem);
     font-weight: 400;
     color: #111;
 }
@@ -181,9 +181,9 @@ body.admin-login-page {
 .admin-login-input {
     flex: 1 1 auto;
     min-width: 0;
-    padding: 0.5rem 0.65rem;
+    padding: 0.55rem 0.7rem;
     border: none;
-    font-size: clamp(0.875rem, 1.8vw, 1rem);
+    font-size: clamp(0.9375rem, 2vw, 1.0625rem);
     font-weight: 400;
     outline: none;
 }
@@ -220,12 +220,12 @@ body.admin-login-page {
 .admin-login-submit {
     margin-top: 0.1rem;
     width: 100%;
-    padding: 0.6rem 1rem;
+    padding: 0.65rem 1rem;
     border: none;
     border-radius: 0.5rem;
     background: linear-gradient(180deg, #b8890a 0%, var(--admin-gold) 100%);
     color: #fff;
-    font-size: 0.9375rem;
+    font-size: 1.0625rem;
     font-weight: 400;
     cursor: pointer;
     transition: filter 0.15s ease, transform 0.05s ease;

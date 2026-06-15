@@ -804,6 +804,8 @@ class BurialController extends Controller
 
         try {
             DB::table('certification_details')->insert([
+                'registryType' => 'Burial',
+                'registryRecordId' => $burialId,
                 'referenceCode' => $this->nullableText($resolvedReferenceCode),
                 'client' => $this->nullableText($resolvedClient),
                 'address' => ClientNameDisplay::nullableFormattedAddress($resolvedAddress),

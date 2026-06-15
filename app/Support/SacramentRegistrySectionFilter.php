@@ -49,11 +49,12 @@ final class SacramentRegistrySectionFilter
             self::SECTION_SCHEDULE => $query->whereNotNull('scheduleRequested')
                 ->whereRaw("TRIM(COALESCE(scheduleRequested, '')) <> ''"),
             self::SECTION_PAYMENT => self::wherePaymentFeeSaved($query, 'christening'),
-            self::SECTION_CERTIFICATION => $query->whereExists(function (Builder $sub) {
-                $sub->select(DB::raw('1'))
-                    ->from('christening_certification as cc')
-                    ->whereColumn('cc.christeningId', 'christening.christeningId');
-            }),
+            self::SECTION_CERTIFICATION => self::whereCertificationDetailsSaved(
+                $query,
+                'christening',
+                'christeningId',
+                'Christening'
+            ),
             default => null,
         };
     }
@@ -93,13 +94,12 @@ final class SacramentRegistrySectionFilter
             self::SECTION_SCHEDULE => $query->whereNotNull('scheduleRequested')
                 ->whereRaw("TRIM(COALESCE(scheduleRequested, '')) <> ''"),
             self::SECTION_PAYMENT => self::wherePaymentFeeSaved($query, 'wedding'),
-            self::SECTION_CERTIFICATION => Schema::hasTable('wedding_certification')
-                ? $query->whereExists(function (Builder $sub) {
-                    $sub->select(DB::raw('1'))
-                        ->from('wedding_certification as wc')
-                        ->whereColumn('wc.weddingId', 'wedding.weddingId');
-                })
-                : null,
+            self::SECTION_CERTIFICATION => self::whereCertificationDetailsSaved(
+                $query,
+                'wedding',
+                'weddingId',
+                'Wedding'
+            ),
             default => null,
         };
     }
@@ -122,15 +122,38 @@ final class SacramentRegistrySectionFilter
             self::SECTION_SCHEDULE => $query->whereNotNull('scheduleRequested')
                 ->whereRaw("TRIM(COALESCE(scheduleRequested, '')) <> ''"),
             self::SECTION_PAYMENT => self::wherePaymentFeeSaved($query, 'burial'),
-            self::SECTION_CERTIFICATION => Schema::hasTable('burial_certification')
-                ? $query->whereExists(function (Builder $sub) {
-                    $sub->select(DB::raw('1'))
-                        ->from('burial_certification as bc')
-                        ->whereColumn('bc.burialId', 'burial.burialId');
-                })
-                : null,
+            self::SECTION_CERTIFICATION => self::whereCertificationDetailsSaved(
+                $query,
+                'burial',
+                'burialId',
+                'Burial'
+            ),
             default => null,
         };
+    }
+
+    private static function whereCertificationDetailsSaved(
+        Builder $query,
+        string $table,
+        string $primaryKey,
+        string $registryType
+    ): void {
+        if (! Schema::hasTable('certification_details')) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+
+        $query->whereExists(function (Builder $sub) use ($table, $primaryKey, $registryType) {
+            $sub->select(DB::raw('1'))
+                ->from('certification_details as cd')
+                ->where(function (Builder $match) use ($table, $primaryKey, $registryType) {
+                    $match->where(function (Builder $linked) use ($table, $primaryKey, $registryType) {
+                        $linked->where('cd.registryType', $registryType)
+                            ->whereColumn('cd.registryRecordId', "{$table}.{$primaryKey}");
+                    })->orWhereColumn('cd.referenceCode', "{$table}.referenceCode");
+                });
+        });
     }
 
     private static function wherePaymentFeeSaved(Builder $query, string $table): void

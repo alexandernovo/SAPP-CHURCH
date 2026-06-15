@@ -1475,6 +1475,8 @@ class WeddingController extends Controller
         }
 
         return [
+            'registryType' => 'Wedding',
+            'registryRecordId' => (int) ($wedding->weddingId ?? 0),
             'referenceCode' => $this->nullableText($resolvedReferenceCode),
             'client' => $this->nullableText($resolvedClient),
             'address' => ClientNameDisplay::nullableFormattedAddress($resolvedAddress),

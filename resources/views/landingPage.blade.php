@@ -26,11 +26,13 @@
             <div class="container">
                 <div class="row align-items-center g-4 g-lg-5">
                     <div class="col-lg-7 sappc-main__copy">
-                        <p class="sappc-welcome">Welcome to</p>
-                        <h1 class="sappc-main-title">Saint Anthony of Padua Parish Church</h1>
+                        <h1 class="sappc-main-title">
+                            <span class="sappc-main-title__line">Saint Anthony of Padua</span>
+                            <span class="sappc-main-title__line">Parish Church</span>
+                        </h1>
                         <p class="sappc-main-subtitle">Automated Recording Management System</p>
-                        <p class="sappc-main-quote">
-                            &ldquo;Digitizing Church Records, Strengthening Faith Communities&rdquo;
+                        <p class="sappc-main-tagline">
+                            Digitizing Church Records, Strengthening Faith Communities
                         </p>
                     </div>
                     <div class="col-lg-5 text-center text-lg-end">

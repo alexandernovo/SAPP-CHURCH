@@ -19,6 +19,15 @@ body.landing-page {
     background-attachment: fixed;
 }
 
+body.landing-page::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background: rgba(10, 15, 20, 0.58);
+    pointer-events: none;
+}
+
 .landing-ribbon {
     position: fixed;
     right: -10rem;
@@ -39,7 +48,6 @@ body.landing-page {
         background-attachment: scroll;
     }
 }
-
 
 .landing-main {
     position: relative;
@@ -67,39 +75,38 @@ body.landing-page {
 
 .sappc-main__copy {
     color: #fff;
-}
-
-.sappc-welcome {
-    margin: 0 0 0.35rem;
-    font-size: 1.0625rem;
-    font-weight: 500;
-    letter-spacing: 0.02em;
-    opacity: 0.95;
+    text-align: center;
 }
 
 .sappc-main-title {
-    margin: 0 0 0.75rem;
-    font-size: clamp(2.65rem, 6.2vw, 4rem);
-    font-weight: 700;
-    line-height: 1.2;
-    text-wrap: balance;
+    margin: 0 0 0.65rem;
+    font-size: clamp(1.65rem, 3.8vw, 2.5rem);
+    font-weight: 400;
+    line-height: 1.12;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.sappc-main-title__line {
+    display: block;
 }
 
 .sappc-main-subtitle {
-    margin: 0 0 1rem;
-    font-size: clamp(1.5rem, 3.2vw, 2rem);
-    font-weight: 600;
-    letter-spacing: 0.02em;
+    margin: 0 0 0.35rem;
+    font-size: clamp(0.9375rem, 1.9vw, 1.125rem);
+    font-weight: 400;
+    line-height: 1.35;
+    letter-spacing: 0.01em;
 }
 
-.sappc-main-quote {
+.sappc-main-tagline {
     margin: 0;
-    font-size: 1.0625rem;
-    font-style: italic;
-    line-height: 1.55;
-    opacity: 0.92;
+    font-size: clamp(0.875rem, 1.7vw, 1rem);
+    font-weight: 400;
+    line-height: 1.45;
+    letter-spacing: 0.01em;
+    opacity: 0.95;
 }
-
 
 .sappc-main-logo {
     display: block;
@@ -126,5 +133,19 @@ body.landing-page {
         margin-left: auto;
         margin-right: auto;
         transform: none;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .sappc-main-title {
+        font-size: clamp(1.45rem, 7vw, 1.85rem);
+    }
+
+    .sappc-main-subtitle {
+        font-size: clamp(0.875rem, 3.8vw, 1rem);
+    }
+
+    .sappc-main-tagline {
+        font-size: clamp(0.8125rem, 3.4vw, 0.9375rem);
     }
 }

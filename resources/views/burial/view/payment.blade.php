@@ -49,7 +49,7 @@
             'activeSection' => 'payment',
             'sectionLabel' => 'payment records',
             'tableColumns' => [
-                'NO.', 'REFERENCE CODE', 'CLIENT', 'ADDRESS', 'CONTACT NUMBER', 'DATE CREATED', 'ACTION',
+                'NO.', 'REFERENCE CODE', 'CLIENT', 'ADDRESS', 'CONTACT NUMBER', 'PAYMENT STATUS', 'DATE CREATED', 'ACTION',
             ],
         ])
     </div>

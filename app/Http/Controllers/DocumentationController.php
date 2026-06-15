@@ -85,12 +85,22 @@ class DocumentationController extends Controller
 
         [$table, $idColumn] = $registry[$serviceType];
 
-        $rows = DB::table($table)
-            ->whereYear('dateCreated', $carbon->year)
-            ->whereMonth('dateCreated', $carbon->month)
-            ->orderByDesc('dateCreated')
-            ->orderByDesc($idColumn)
-            ->get();
+        $rowsQuery = DB::table($table)->orderByDesc('dateCreated')->orderByDesc($idColumn);
+
+        $bounds = ClientNameDisplay::monthBoundsUtcForDisplayTimezone($month);
+        if ($bounds !== null) {
+            [$startUtc, $endUtc] = $bounds;
+            $rowsQuery->whereBetween('dateCreated', [
+                $startUtc->format('Y-m-d H:i:s'),
+                $endUtc->format('Y-m-d H:i:s'),
+            ]);
+        } else {
+            $rowsQuery
+                ->whereYear('dateCreated', $carbon->year)
+                ->whereMonth('dateCreated', $carbon->month);
+        }
+
+        $rows = $rowsQuery->get();
 
         $out = [];
         $n = 1;

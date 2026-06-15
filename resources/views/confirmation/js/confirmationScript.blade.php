@@ -348,6 +348,21 @@
             }
         });
 
+        function paymentStatusCell(raw) {
+            var s = String(raw == null ? '' : raw).trim();
+            var lower = s.toLowerCase();
+            if (!s || s === '\u2014') {
+                return '<span class="text-muted">\u2014</span>';
+            }
+            if (lower === 'paid') {
+                return '<span class="sappc-payment-badge sappc-payment-badge--paid">Paid</span>';
+            }
+            if (lower === 'unpaid') {
+                return '<span class="sappc-payment-badge sappc-payment-badge--unpaid">Unpaid</span>';
+            }
+            return esc(s);
+        }
+
         function rowHtml(row) {
             var viewLabel = activeSection === 'certification' ? 'View certificate' : 'View record';
             return (
@@ -358,6 +373,7 @@
                 '<td>' + esc(typeof sappcFormatClientDisplayName === 'function' ? sappcFormatClientDisplayName(row.client) : row.client) + '</td>' +
                 '<td>' + esc(typeof sappcFormatAddress === 'function' ? sappcFormatAddress(row.address) : row.address) + '</td>' +
                 '<td>' + esc(row.contactNum) + '</td>' +
+                (activeSection === 'payment' ? '<td>' + paymentStatusCell(row.paymentStatus) + '</td>' : '') +
                 '<td>' + esc(row.dateCreated) + '</td>' +
                 '<td class="text-center"><div class="sappc-icon-action_group">' +
                 '<a href="#" class="sappc-icon-action sappc-icon-action--view" title="' + viewLabel + '" aria-label="' + viewLabel + '" data-record-id="' +

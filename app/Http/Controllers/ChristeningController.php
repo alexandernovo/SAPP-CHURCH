@@ -8,6 +8,7 @@ use App\Support\SacramentApplicationGate;
 use App\Support\SacramentRegistrySectionFilter;
 use App\Support\SacramentScheduleReservedDates;
 use Carbon\Carbon;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -143,14 +144,25 @@ class ChristeningController extends Controller
             ->orderByDesc('certificationDetailsId');
 
         if ($reportType !== '') {
+            $registryType = match ($reportType) {
+                'christening' => 'Christening',
+                'wedding' => 'Wedding',
+                default => null,
+            };
             $suffixMap = [
                 'christening' => '-'.self::CHRISTENING_REFERENCE_SUFFIX,
                 'wedding' => '-W',
             ];
             $suffix = $suffixMap[$reportType] ?? '';
-            if ($suffix !== '') {
-                $rowsQuery->where('referenceCode', 'like', '%'.$suffix);
-            }
+
+            $rowsQuery->where(function (Builder $match) use ($registryType, $suffix) {
+                if ($registryType !== null) {
+                    $match->where('registryType', $registryType);
+                }
+                if ($suffix !== '') {
+                    $match->orWhere('referenceCode', 'like', '%'.$suffix);
+                }
+            });
         }
 
         $resolvedMonth = $monthYm !== null && $monthYm !== '' ? $this->resolveCertificationReportMonth($monthYm) : null;
@@ -1687,6 +1699,8 @@ class ChristeningController extends Controller
         }
 
         return [
+            'registryType' => 'Christening',
+            'registryRecordId' => (int) ($christening->christeningId ?? 0),
             'referenceCode' => $this->nullableText($resolvedReferenceCode),
             'client' => $this->nullableText($resolvedClient),
             'address' => ClientNameDisplay::nullableFormattedAddress($resolvedAddress),

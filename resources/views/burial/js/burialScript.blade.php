@@ -364,7 +364,9 @@
         function rowHtml(row) {
             var base = '<tr data-record-id="' + esc(row.recordId) + '" data-document-type="' + esc(row.documentType) + '">' +
                 '<td>' + esc(row.rowNumber) + '</td><td>' + esc(row.referenceCode) + '</td><td>' + esc(row.client) + '</td><td>' + esc(typeof sappcFormatAddress === 'function' ? sappcFormatAddress(row.address) : row.address) + '</td>';
-            return base + '<td>' + esc(row.contactNum) + '</td><td>' + esc(row.dateCreated) + '</td>' + rowActionCell(row.recordId) + '</tr>';
+            return base + '<td>' + esc(row.contactNum) + '</td>' +
+                (activeSection === 'payment' ? '<td>' + paymentStatusCell(row.paymentStatus) + '</td>' : '') +
+                '<td>' + esc(row.dateCreated) + '</td>' + rowActionCell(row.recordId) + '</tr>';
         }
 
         $(function() {
