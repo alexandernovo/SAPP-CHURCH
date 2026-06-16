@@ -30,7 +30,8 @@
             </button>
             <button type="button" class="sappc-registry-toolbar_btn sappc-registry-toolbar_btn--cta"
                 id="burialScheduleRequestBtn"
-                data-schedule-save-url="{{ route('admin.burial.schedule-request') }}" title="Schedule request"
+                data-schedule-save-url="{{ route('admin.burial.schedule-request') }}"
+                data-schedule-reserved-url="{{ route('admin.burial.schedule-reserved-dates') }}" title="Schedule request"
                 aria-label="Open schedule request" aria-expanded="false" aria-controls="burialScheduleRequestModal"
                 data-bs-toggle="modal" data-bs-target="#burialScheduleRequestModal">
                 <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>

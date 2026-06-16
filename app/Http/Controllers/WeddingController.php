@@ -214,9 +214,6 @@ class WeddingController extends Controller
         }
 
         $existingWeddingId = (int) $existing->weddingId;
-        if (! SacramentApplicationGate::weddingIsPaymentComplete($existingWeddingId)) {
-            return SacramentApplicationGate::paymentDenyResponse();
-        }
         if (! SacramentApplicationGate::weddingIsCertificationSaved($existingWeddingId)) {
             return SacramentApplicationGate::certificationDenyResponse();
         }
@@ -293,9 +290,6 @@ class WeddingController extends Controller
             ], 404);
         }
 
-        if (! SacramentApplicationGate::weddingIsPaymentComplete($weddingId)) {
-            return SacramentApplicationGate::paymentDenyResponse();
-        }
         if (! SacramentApplicationGate::weddingIsCertificationSaved($weddingId)) {
             return SacramentApplicationGate::certificationDenyResponse();
         }
@@ -343,7 +337,7 @@ class WeddingController extends Controller
 
         $year = (int) $validated['year'];
         $month = (int) $validated['month'];
-        $byDate = SacramentScheduleReservedDates::forMonth($year, $month);
+        $byDate = SacramentScheduleReservedDates::forMonth($year, $month, 'wedding');
 
         return response()->json([
             'ok' => true,
@@ -678,10 +672,6 @@ class WeddingController extends Controller
             return response()->json(['message' => 'Wedding record not found.'], 404);
         }
 
-        if (! SacramentApplicationGate::weddingIsPaymentComplete($weddingId)) {
-            return SacramentApplicationGate::paymentDenyResponse();
-        }
-
         $details = DB::table('wedding_details')
             ->where('weddingId', $weddingId)
             ->orderByDesc('weddingDetailsId')
@@ -776,10 +766,6 @@ class WeddingController extends Controller
         $wedding = DB::table('wedding')->where('weddingId', $weddingId)->first();
         if ($wedding === null) {
             return response()->json(['message' => 'Wedding record not found.'], 404);
-        }
-
-        if (! SacramentApplicationGate::weddingIsPaymentComplete($weddingId)) {
-            return SacramentApplicationGate::paymentDenyResponse();
         }
 
         $this->ensureWeddingReferenceCode($weddingId);

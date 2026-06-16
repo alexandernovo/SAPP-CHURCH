@@ -352,9 +352,6 @@ class ChristeningController extends Controller
         }
 
         $existingChristeningId = (int) $existing->christeningId;
-        if (! SacramentApplicationGate::christeningIsPaymentComplete($existingChristeningId)) {
-            return SacramentApplicationGate::paymentDenyResponse();
-        }
         if (! SacramentApplicationGate::christeningIsCertificationSaved($existingChristeningId)) {
             return SacramentApplicationGate::certificationDenyResponse();
         }
@@ -431,9 +428,6 @@ class ChristeningController extends Controller
             ], 404);
         }
 
-        if (! SacramentApplicationGate::christeningIsPaymentComplete($christeningId)) {
-            return SacramentApplicationGate::paymentDenyResponse();
-        }
         if (! SacramentApplicationGate::christeningIsCertificationSaved($christeningId)) {
             return SacramentApplicationGate::certificationDenyResponse();
         }
@@ -1034,7 +1028,7 @@ class ChristeningController extends Controller
 
         $year = (int) $validated['year'];
         $month = (int) $validated['month'];
-        $byDate = SacramentScheduleReservedDates::forMonth($year, $month);
+        $byDate = SacramentScheduleReservedDates::forMonth($year, $month, 'christening');
 
         return response()->json([
             'ok' => true,
@@ -1392,10 +1386,6 @@ class ChristeningController extends Controller
             return response()->json(['message' => 'Christening record not found.'], 404);
         }
 
-        if (! SacramentApplicationGate::christeningIsPaymentComplete($christeningId)) {
-            return SacramentApplicationGate::paymentDenyResponse();
-        }
-
         $this->ensureChristeningReferenceCode($christeningId);
         $christening = DB::table('christening')->where('christeningId', $christeningId)->first();
 
@@ -1461,10 +1451,6 @@ class ChristeningController extends Controller
 
         if (! DB::table('christening')->where('christeningId', $christeningId)->exists()) {
             return response()->json(['message' => 'Christening record not found.'], 404);
-        }
-
-        if (! SacramentApplicationGate::christeningIsPaymentComplete($christeningId)) {
-            return SacramentApplicationGate::paymentDenyResponse();
         }
 
         $christening = DB::table('christening')->where('christeningId', $christeningId)->first();

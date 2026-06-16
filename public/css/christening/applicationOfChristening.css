@@ -247,13 +247,16 @@
 }
 
 .sappcScheduleDayService,
+.sappcScheduleDayReserved,
 .sappcScheduleDayWhen {
-    display: inline;
+    display: block;
+    width: 100%;
 }
 
 .sappcScheduleDayWhen {
     letter-spacing: 0.02em;
     opacity: 0.95;
+    text-transform: none;
 }
 
 .sappcScheduleFormCard {
