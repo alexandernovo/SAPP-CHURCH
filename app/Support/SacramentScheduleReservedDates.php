@@ -15,11 +15,20 @@ class SacramentScheduleReservedDates
         'burial' => 'Burial',
     ];
 
-    public static function forMonth(int $year, int $month): array
+    public static function forMonth(int $year, int $month, ?string $service = null): array
     {
+        $tables = self::SERVICE_TABLES;
+
+        if ($service !== null) {
+            if (! isset($tables[$service])) {
+                return [];
+            }
+            $tables = [$service => $tables[$service]];
+        }
+
         $grouped = [];
 
-        foreach (array_keys(self::SERVICE_TABLES) as $table) {
+        foreach (array_keys($tables) as $table) {
             $rows = DB::table($table)
                 ->whereNotNull('scheduleRequested')
                 ->whereYear('scheduleRequested', $year)

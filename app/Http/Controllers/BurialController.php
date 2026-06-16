@@ -223,9 +223,6 @@ class BurialController extends Controller
         }
 
         $existingBurialId = (int) $existing->burialId;
-        if (! SacramentApplicationGate::burialIsPaymentComplete($existingBurialId)) {
-            return SacramentApplicationGate::paymentDenyResponse();
-        }
 
         if (! empty($existing->customerId)) {
             $user = Auth::user();
@@ -299,10 +296,6 @@ class BurialController extends Controller
             ], 404);
         }
 
-        if (! SacramentApplicationGate::burialIsPaymentComplete($burialId)) {
-            return SacramentApplicationGate::paymentDenyResponse();
-        }
-
         $client = ClientNameDisplay::fullDisplayName(
             $row->clientFName ?? null,
             $row->clientMName ?? null,
@@ -346,7 +339,7 @@ class BurialController extends Controller
 
         $year = (int) $validated['year'];
         $month = (int) $validated['month'];
-        $byDate = SacramentScheduleReservedDates::forMonth($year, $month);
+        $byDate = SacramentScheduleReservedDates::forMonth($year, $month, 'burial');
 
         return response()->json([
             'ok' => true,
@@ -692,10 +685,6 @@ class BurialController extends Controller
             return response()->json(['message' => 'Burial record not found.'], 404);
         }
 
-        if (! SacramentApplicationGate::burialIsPaymentComplete($burialId)) {
-            return SacramentApplicationGate::paymentDenyResponse();
-        }
-
         $details = DB::table('burial_details')
             ->where('burialId', $burialId)
             ->orderByDesc('burialDetailsId')
@@ -779,10 +768,6 @@ class BurialController extends Controller
         $burial = DB::table('burial')->where('burialId', $burialId)->first();
         if ($burial === null) {
             return response()->json(['message' => 'Burial record not found.'], 404);
-        }
-
-        if (! SacramentApplicationGate::burialIsPaymentComplete($burialId)) {
-            return SacramentApplicationGate::paymentDenyResponse();
         }
 
         $this->ensureBurialReferenceCode($burialId);

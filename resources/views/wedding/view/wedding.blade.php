@@ -28,7 +28,8 @@
             </button>
             <button type="button" class="sappc-registry-toolbar_btn sappc-registry-toolbar_btn--cta"
                 id="weddingScheduleRequestBtn"
-                data-schedule-save-url="{{ route('admin.wedding.schedule-request') }}" title="Schedule request"
+                data-schedule-save-url="{{ route('admin.wedding.schedule-request') }}"
+                data-schedule-reserved-url="{{ route('admin.wedding.schedule-reserved-dates') }}" title="Schedule request"
                 aria-label="Open schedule request" aria-expanded="false" aria-controls="weddingScheduleRequestModal"
                 data-bs-toggle="modal" data-bs-target="#weddingScheduleRequestModal">
                 <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>

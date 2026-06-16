@@ -129,9 +129,6 @@
 
         function workflowChecksForStep(targetStep) {
             var checks = [];
-            if (targetStep === 'certification' || targetStep === 'schedule') {
-                checks.push('payment');
-            }
             if (registryWorkflowHasCertification() && targetStep === 'schedule') {
                 checks.push('certification');
             }
@@ -139,35 +136,7 @@
         }
 
         function ensureRegistryPaymentComplete(recordId, thenFn) {
-            recordId = String(recordId == null ? '' : recordId).trim();
-            if (!recordId) {
-                if (typeof thenFn === 'function') thenFn(true);
-                return;
-            }
-            var payUrl = ($('#weddingRecordsPanel').attr('data-payment-details-url') || '').trim();
-            if (!payUrl) {
-                if (typeof thenFn === 'function') thenFn(true);
-                return;
-            }
-            fetchJson(buildQueryUrl(payUrl, {
-                wedding_id: recordId
-            }), {
-                Accept: 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-            }).done(function(res) {
-                var paid = !!(res && res.ok && (res.payment_complete === true ||
-                    (res.data && String(res.data.payment_status || '').toLowerCase() === 'paid')));
-                if (paid) {
-                    if (typeof thenFn === 'function') thenFn(true);
-                    return;
-                }
-                swalRegistryPaymentRequired(res && res.message ? String(res.message) : '');
-                if (typeof thenFn === 'function') thenFn(false);
-            }).fail(function(xhr) {
-                var data = xhr && xhr.responseJSON ? xhr.responseJSON : null;
-                swalRegistryPaymentRequired(data && data.message ? String(data.message) : '');
-                if (typeof thenFn === 'function') thenFn(false);
-            });
+            if (typeof thenFn === 'function') thenFn(true);
         }
 
         function ensureRegistryCertificationSaved(recordId, thenFn) {
@@ -2242,7 +2211,6 @@
                 'data-schedule-save-url') || '';
             var scheduleReservedUrl = ($scheduleForm.attr('data-schedule-reserved-url') || '').trim();
             var calendarReservedLookup = {};
-            var scheduleServiceLabel = 'Wedding';
             var $scheduleModal = $('#weddingScheduleRequestModal');
             var $calMonthSel = $('#wdCalMonth');
             var $calYearSel = $('#wdCalYear');
@@ -2288,25 +2256,18 @@
                 return h12 + ':' + String(m).padStart(2, '0') + ' ' + ampm;
             }
 
-            function scheduleCaptionTimeOnly(text) {
-                var raw = (text || '').trim();
-                if (!raw) return '';
-                if (raw.indexOf(' / ') !== -1) {
-                    return raw.split(' / ').map(function (part) {
-                        return scheduleCaptionTimeOnly(part);
-                    }).filter(Boolean).join(' / ');
+            function buildReservedDayCaptionHtml(timeText) {
+                var time = (timeText || '').trim();
+                var html = '<span class="sappcScheduleDayReserved">Reserved</span>';
+                if (time) {
+                    html += '<span class="sappcScheduleDayWhen">' + esc(time) + '</span>';
                 }
-                var sep = raw.indexOf(' · ');
-                if (sep !== -1) {
-                    return raw.slice(sep + 3).trim();
-                }
-                return raw;
+                return html;
             }
 
-            function buildScheduleDayCaptionHtml(captionText) {
-                var timeText = scheduleCaptionTimeOnly(captionText);
-                if (!timeText) return '';
-                return '<span class="sappcScheduleDayWhen">' + esc(timeText) + '</span>';
+            function reservedLookupTime(value) {
+                if (value === true || value === false || value == null) return '';
+                return String(value).trim();
             }
 
             var calendarViewDate = (function() {
@@ -2353,10 +2314,12 @@
                     headers: jsonHeaders,
                 }).done(function(res) {
                     if (res && res.ok && res.by_date && typeof res.by_date === 'object') {
-                        calendarReservedLookup = res.by_date;
+                        Object.keys(res.by_date).forEach(function(d) {
+                            calendarReservedLookup[d] = res.by_date[d] || true;
+                        });
                     } else if (res && res.ok && res.dates && res.dates.length) {
                         res.dates.forEach(function(d) {
-                            if (d) calendarReservedLookup[String(d)] = scheduleServiceLabel;
+                            if (d) calendarReservedLookup[String(d)] = true;
                         });
                     }
                 }).always(function() {
@@ -2384,26 +2347,27 @@
                     if (dow === 6) classes += ' is-saturday';
                     var isSel = selected && selected.getFullYear() === year && selected.getMonth() ===
                         month && selected.getDate() === day;
-                    var reservedCaption = calendarReservedLookup[iso] || '';
-                    var isReserved = !!reservedCaption;
+                    var reservedEntry = calendarReservedLookup[iso];
+                    var isReserved = !!reservedEntry;
                     if (isSel) {
                         classes += ' is-selected';
                     } else if (isReserved) {
                         classes += ' is-reserved';
                     }
-                    var cellCaptionText = reservedCaption;
-                    if (!cellCaptionText && isSel) {
-                        cellCaptionText = formatTime12h($scheduleTimeInput.val());
+                    var captionTime = reservedLookupTime(reservedEntry);
+                    if (isSel && !captionTime) {
+                        captionTime = formatTime12h($scheduleTimeInput.val());
                     }
                     var label = monthNameFromIndex(month) + ' ' + day + ', ' + year;
                     if (isSel || isReserved) {
-                        label += ', ' + cellCaptionText;
+                        label += ', reserved';
+                        if (captionTime) label += ' ' + captionTime;
                     }
                     var inner;
                     if (isSel || isReserved) {
                         inner = '<span class="sappcScheduleDayNum" aria-hidden="true">' + day +
                             '</span><span class="sappcScheduleDayLabel" aria-hidden="true">' +
-                            buildScheduleDayCaptionHtml(cellCaptionText) + '</span>';
+                            buildReservedDayCaptionHtml(captionTime) + '</span>';
                     } else {
                         inner = String(day);
                     }

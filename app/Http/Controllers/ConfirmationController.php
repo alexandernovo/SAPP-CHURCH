@@ -214,9 +214,6 @@ class ConfirmationController extends Controller
         }
 
         $existingConfirmationId = (int) $existing->confirmationId;
-        if (! SacramentApplicationGate::confirmationIsPaymentComplete($existingConfirmationId)) {
-            return SacramentApplicationGate::paymentDenyResponse();
-        }
 
         if (! empty($existing->customerId)) {
             $user = Auth::user();
@@ -290,10 +287,6 @@ class ConfirmationController extends Controller
             ], 404);
         }
 
-        if (! SacramentApplicationGate::confirmationIsPaymentComplete($confirmationId)) {
-            return SacramentApplicationGate::paymentDenyResponse();
-        }
-
         $client = ClientNameDisplay::fullDisplayName(
             $row->clientFName ?? null,
             $row->clientMName ?? null,
@@ -337,7 +330,7 @@ class ConfirmationController extends Controller
 
         $year = (int) $validated['year'];
         $month = (int) $validated['month'];
-        $byDate = SacramentScheduleReservedDates::forMonth($year, $month);
+        $byDate = SacramentScheduleReservedDates::forMonth($year, $month, 'confirmation');
 
         return response()->json([
             'ok' => true,
@@ -771,10 +764,6 @@ class ConfirmationController extends Controller
         $row = DB::table('confirmation')->where('confirmationId', $id)->first();
         if ($row === null) {
             return response()->json(['message' => 'Confirmation record not found.'], 404);
-        }
-
-        if (! SacramentApplicationGate::confirmationIsPaymentComplete($id)) {
-            return SacramentApplicationGate::paymentDenyResponse();
         }
 
         $details = $this->latestConfirmationDetailsRow($id);

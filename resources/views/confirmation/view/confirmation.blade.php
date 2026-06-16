@@ -30,7 +30,8 @@
             </button>
             <button type="button" class="sappc-registry-toolbar_btn sappc-registry-toolbar_btn--cta"
                 id="confirmationScheduleRequestBtn"
-                data-schedule-save-url="{{ route('admin.confirmation.schedule-request') }}" title="Schedule request"
+                data-schedule-save-url="{{ route('admin.confirmation.schedule-request') }}"
+                data-schedule-reserved-url="{{ route('admin.confirmation.schedule-reserved-dates') }}" title="Schedule request"
                 aria-label="Open schedule request" aria-expanded="false" aria-controls="confirmationScheduleRequestModal"
                 data-bs-toggle="modal" data-bs-target="#confirmationScheduleRequestModal">
                 <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
