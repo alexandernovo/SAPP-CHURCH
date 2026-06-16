@@ -1392,18 +1392,20 @@
                     }, 350);
                 }
 
-                $certForm.on('submit', function(e) {
-                    e.preventDefault();
-                    printBurialCertificationSheet();
-                });
-
-                $('#brCertAddRecordBtn').on('click', function(e) {
-                    e.preventDefault();
-                    var $btn = $(this);
+                function runBurialCertificationSave($btn) {
+                    $btn = ($btn && $btn.length) ? $btn : $('#brCertAddRecordBtn');
                     $btn.prop('disabled', true);
                     saveBurialCertificationRecord()
                         .done(function(res) {
-                            printBurialCertificationSheet();
+                            if (typeof fetchRecords === 'function') {
+                                fetchRecords();
+                            }
+                            if (typeof bootstrap !== 'undefined' && $certModal.length) {
+                                var certInst = bootstrap.Modal.getInstance($certModal[0]);
+                                if (certInst) {
+                                    certInst.hide();
+                                }
+                            }
                             var msg = (res && res.message) ? res.message : 'Certification record saved.';
                             if (typeof Swal !== 'undefined') {
                                 Swal.fire({
@@ -1437,6 +1439,16 @@
                         .always(function() {
                             $btn.prop('disabled', false);
                         });
+                }
+
+                $certForm.on('submit', function(e) {
+                    e.preventDefault();
+                    runBurialCertificationSave($('#brCertAddRecordBtn'));
+                });
+
+                $('#brCertAddRecordBtn').on('click', function(e) {
+                    e.preventDefault();
+                    runBurialCertificationSave($(this));
                 });
                 } catch (err) {
                     if (window.console && typeof window.console.error === 'function') {

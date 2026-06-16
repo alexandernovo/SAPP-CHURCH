@@ -1777,7 +1777,7 @@
                     return fetchPostJson(certificationSaveUrl, payload, csrf);
                 }
 
-                function runWeddingCertificationSaveAndPrint($btn) {
+                function runWeddingCertificationSave($btn) {
                     $btn = ($btn && $btn.length) ? $btn : $('#wdCertAddRecordBtn');
                     $btn.prop('disabled', true);
                     saveWeddingCertificationRecord()
@@ -1796,7 +1796,15 @@
                                 }
                                 return;
                             }
-                            printMarriageCertificateSheet(null, true);
+                            if (typeof fetchRecords === 'function') {
+                                fetchRecords();
+                            }
+                            if (typeof bootstrap !== 'undefined' && $certModal.length) {
+                                var certInst = bootstrap.Modal.getInstance($certModal[0]);
+                                if (certInst) {
+                                    certInst.hide();
+                                }
+                            }
                             var msg = (res && res.message) ? res.message :
                                 'Certification record saved.';
                             if (typeof Swal !== 'undefined') {
@@ -1844,12 +1852,12 @@
 
                 $certForm.on('submit', function(e) {
                     e.preventDefault();
-                    runWeddingCertificationSaveAndPrint($('#wdCertAddRecordBtn'));
+                    runWeddingCertificationSave($('#wdCertAddRecordBtn'));
                 });
 
                 $('#wdCertAddRecordBtn').on('click', function(e) {
                     e.preventDefault();
-                    runWeddingCertificationSaveAndPrint($(this));
+                    runWeddingCertificationSave($(this));
                 });
 
                 $certModal.on('shown.bs.modal', function() {
