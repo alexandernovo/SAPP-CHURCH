@@ -75,6 +75,7 @@ class ConfirmationController extends Controller
             'perPageOptions' => DashboardController::perPageOptionsList(),
             'letterOptions' => range('A', 'Z'),
             'generatedReferenceCode' => $this->generateUniqueConfirmationReferenceCode(),
+            'defaultPaymentFeeRows' => $this->defaultConfirmationPaymentFeeRows(),
         ];
     }
 

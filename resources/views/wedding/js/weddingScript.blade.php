@@ -1054,6 +1054,17 @@
                 };
             }
 
+            function defaultPaymentFeeRowsFromForm() {
+                var raw = ($paymentFeeForm.attr('data-default-fee-rows') || '').trim();
+                if (!raw) return null;
+                try {
+                    var rows = JSON.parse(raw);
+                    return Array.isArray(rows) && rows.length ? rows : null;
+                } catch (e1) {
+                    return null;
+                }
+            }
+
             function applyConfirmationPaymentFeeFormObject(data) {
                 if (!data || typeof data !== 'object') return;
                 $('#wdPaymentRefCode').val(data.reference_code != null ? String(data.reference_code) : '');
@@ -1065,7 +1076,7 @@
                 $('#wdPaymentAddress').val(data.address != null ? String(data.address) : '');
                 var feeRows = data.fee_rows;
                 if (!Array.isArray(feeRows) || !feeRows.length) {
-                    feeRows = [{}];
+                    feeRows = defaultPaymentFeeRowsFromForm() || [{}];
                 }
                 $feeItemsBody.empty();
                 feeRows.forEach(function(fr) {
@@ -1088,7 +1099,7 @@
                         client: '',
                         contact_number: '',
                         address: '',
-                        fee_rows: null,
+                        fee_rows: defaultPaymentFeeRowsFromForm(),
                     });
                 });
             }

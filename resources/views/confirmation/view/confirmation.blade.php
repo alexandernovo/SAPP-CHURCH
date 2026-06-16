@@ -72,7 +72,14 @@
                     <div class="modal-body pt-0">
                         <form class="sappcPaymentFeeModalForm" id="confirmationPaymentFeeForm" action="#"
                             method="post" autocomplete="off"
-                            data-save-url="{{ route('admin.confirmation.payment-save') }}">
+                            data-save-url="{{ route('admin.confirmation.payment-save') }}"
+                            data-default-fee-rows='@json($defaultPaymentFeeRows ?? [
+                                ["label" => "Arancel (By Appointment)", "paid" => false, "date_paid" => null],
+                                ["label" => "Candle", "paid" => false, "date_paid" => null],
+                                ["label" => "Maninoy kag Maninay", "paid" => false, "date_paid" => null],
+                                ["label" => "Seminar", "paid" => false, "date_paid" => null],
+                                ["label" => "Others:", "paid" => false, "date_paid" => null],
+                            ])'>
                             <div class="sappcChOfficial sappcPaymentFeeModalOfficial">
                                 <header class="sappcChOfficialHeader">
                                     <div class="sappcChOfficialLogo sappcChOfficialLogoLeft">

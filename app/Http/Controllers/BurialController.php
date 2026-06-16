@@ -84,6 +84,7 @@ class BurialController extends Controller
             'perPageOptions' => DashboardController::perPageOptionsList(),
             'letterOptions' => range('A', 'Z'),
             'generatedReferenceCode' => $this->generateUniqueBurialReferenceCode(),
+            'defaultPaymentFeeRows' => $this->defaultBurialPaymentFeeRows(),
         ];
     }
 

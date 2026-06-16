@@ -14,7 +14,8 @@
                         <form class="sappcPaymentFeeModalForm" id="confirmationPaymentFeeForm" action="#"
                             method="post" autocomplete="off"
                             data-save-url="{{ route('admin.confirmation.payment-save') }}"
-                            data-default-reference-code="{{ $generatedReferenceCode ?? '' }}">
+                            data-default-reference-code="{{ $generatedReferenceCode ?? '' }}"
+                            data-default-fee-rows='@json($defaultPaymentFeeRows ?? [])'>
                             <div class="sappcChOfficial sappcPaymentFeeModalOfficial">
                                 <header class="sappcChOfficialHeader">
                                     <div class="sappcChOfficialLogo sappcChOfficialLogoLeft">

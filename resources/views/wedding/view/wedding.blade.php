@@ -74,7 +74,14 @@
                     <div class="modal-body pt-0">
                         <form class="sappcPaymentFeeModalForm" id="weddingPaymentFeeForm" action="#"
                             method="post" autocomplete="off"
-                            data-save-url="{{ route('admin.wedding.payment-save') }}">
+                            data-save-url="{{ route('admin.wedding.payment-save') }}"
+                            data-default-fee-rows='@json($defaultPaymentFeeRows ?? [
+                                ["label" => "Church / venue (Arancel)", "paid" => false, "date_paid" => null],
+                                ["label" => "Marriage license / permit", "paid" => false, "date_paid" => null],
+                                ["label" => "Music / choir", "paid" => false, "date_paid" => null],
+                                ["label" => "Flowers / decorations", "paid" => false, "date_paid" => null],
+                                ["label" => "Others:", "paid" => false, "date_paid" => null],
+                            ])'>
                             <div class="sappcChOfficial sappcPaymentFeeModalOfficial">
                                 <header class="sappcChOfficialHeader">
                                     <div class="sappcChOfficialLogo sappcChOfficialLogoLeft">
