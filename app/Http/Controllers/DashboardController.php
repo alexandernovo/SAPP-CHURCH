@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DocumentationApplicationReport;
+use App\Support\CertificationRegistryMatch;
 use App\Support\ClientNameDisplay;
 use App\Support\DocumentationApplicationReportWriter;
 use App\Support\SacramentRegistrySectionFilter;
@@ -418,10 +419,7 @@ class DashboardController extends Controller
             $sub->from('certification_details as cd')
                 ->selectRaw('MAX(cd.created_at)')
                 ->where(function (Builder $match) use ($registryType, $table, $primaryKey) {
-                    $match->where(function (Builder $linked) use ($registryType, $table, $primaryKey) {
-                        $linked->where('cd.registryType', $registryType)
-                            ->whereColumn('cd.registryRecordId', "{$table}.{$primaryKey}");
-                    })->orWhereColumn('cd.referenceCode', "{$table}.referenceCode");
+                    CertificationRegistryMatch::applyMatch($match, $table, $primaryKey, $registryType);
                 });
         }, 'cert_created_at');
     }

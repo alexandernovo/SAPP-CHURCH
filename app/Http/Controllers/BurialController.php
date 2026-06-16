@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Support\ClientNameDisplay;
 use App\Support\DocumentationApplicationReportWriter;
 use App\Support\SacramentApplicationGate;
+use App\Support\SacramentReferenceCode;
 use App\Support\SacramentRegistrySectionFilter;
 use App\Support\SacramentScheduleReservedDates;
 use Carbon\Carbon;
@@ -34,7 +35,16 @@ class BurialController extends Controller
 
     public function certificationIndex(Request $request): View
     {
-        return view('burial.view.certification', $this->burialSectionViewData($request, SacramentRegistrySectionFilter::SECTION_CERTIFICATION));
+        $monthYm = $request->input('month', now()->format('Y-m'));
+
+        return view('burial.view.certification', array_merge(
+            $this->burialSectionViewData($request, SacramentRegistrySectionFilter::SECTION_CERTIFICATION),
+            [
+                'certReportLabel' => ClientNameDisplay::formatMonthYearLabel(
+                    is_string($monthYm) ? $monthYm : now()->format('Y-m')
+                ),
+            ]
+        ));
     }
 
     public function paymentIndex(Request $request): View
@@ -358,6 +368,8 @@ class BurialController extends Controller
             return response()->json(['message' => 'Burial record not found.'], 404);
         }
 
+        $this->ensureBurialReferenceCode($burialId);
+        $row = DB::table('burial')->where('burialId', $burialId)->first();
 
         return response()->json([
             'ok' => true,
@@ -773,9 +785,15 @@ class BurialController extends Controller
             return SacramentApplicationGate::paymentDenyResponse();
         }
 
+        $this->ensureBurialReferenceCode($burialId);
+        $burial = DB::table('burial')->where('burialId', $burialId)->first();
+
         $resolvedReferenceCode = trim((string) ($validated['reference_code'] ?? ''));
         if ($resolvedReferenceCode === '') {
             $resolvedReferenceCode = trim((string) ($burial->referenceCode ?? ''));
+        }
+        if ($resolvedReferenceCode === '') {
+            $resolvedReferenceCode = $this->ensureBurialReferenceCode($burialId);
         }
 
         $resolvedClient = trim((string) ($validated['client'] ?? ''));
@@ -1208,5 +1226,15 @@ class BurialController extends Controller
 
             return [$id, $ref];
         });
+    }
+
+    private function ensureBurialReferenceCode(int $burialId): string
+    {
+        return SacramentReferenceCode::ensureOnRegistryRow(
+            'burial',
+            'burialId',
+            $burialId,
+            fn () => $this->generateUniqueBurialReferenceCode()
+        );
     }
 }

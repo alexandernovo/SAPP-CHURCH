@@ -81,6 +81,12 @@ final class SacramentRegistrySectionFilter
             self::SECTION_SCHEDULE => $query->whereNotNull('scheduleRequested')
                 ->whereRaw("TRIM(COALESCE(scheduleRequested, '')) <> ''"),
             self::SECTION_PAYMENT => self::wherePaymentFeeSaved($query, 'confirmation'),
+            self::SECTION_CERTIFICATION => self::whereCertificationDetailsSaved(
+                $query,
+                'confirmation',
+                'confirmationId',
+                'Confirmation'
+            ),
             default => null,
         };
     }
@@ -148,10 +154,7 @@ final class SacramentRegistrySectionFilter
             $sub->select(DB::raw('1'))
                 ->from('certification_details as cd')
                 ->where(function (Builder $match) use ($table, $primaryKey, $registryType) {
-                    $match->where(function (Builder $linked) use ($table, $primaryKey, $registryType) {
-                        $linked->where('cd.registryType', $registryType)
-                            ->whereColumn('cd.registryRecordId', "{$table}.{$primaryKey}");
-                    })->orWhereColumn('cd.referenceCode', "{$table}.referenceCode");
+                    CertificationRegistryMatch::applyMatch($match, $table, $primaryKey, $registryType);
                 });
         });
     }

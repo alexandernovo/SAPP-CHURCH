@@ -25,8 +25,10 @@
             <img class="sappc-doc-letterhead_seal" src="{{ asset('assets/logos/SAPPC.png') }}" width="100" height="100" alt="">
         </header>
 
-        <h2 class="sappc-doc-report-title">
-            {{ strtoupper($serviceHeading ?? 'CHRISTENING') }} REPORT OF {{ strtoupper($reportLabel ?? '') }}
+        <h2 class="sappc-doc-report-title sappc-doc-report-title--stack">
+            <span class="sappc-doc-report-title__line">{{ strtoupper($serviceHeading ?? 'CHRISTENING') }}</span>
+            <span class="sappc-doc-report-title__line">CERTIFICATION REPORT</span>
+            <span class="sappc-doc-report-title__line">OF {{ strtoupper($reportLabel ?? '') }}</span>
         </h2>
 
         <div class="sappc-doc-table-wrap">

@@ -1499,6 +1499,7 @@
                     (typeof sappcFormatAddress === 'function' ? sappcFormatAddress(String(data.address)) : String(data.address)) :
                     ''
             );
+            ensureCertificationReferenceCode($('#chCertRefCode'), $certForm);
         }
 
         function applyChristeningCertificationFromApplicationDetails(data) {
@@ -2069,11 +2070,20 @@
                 e.preventDefault();
                 var cid = getSelectedChristeningId();
                 if (!cid) {
-                    certBsModal.show();
+                    setSelectedChristeningId('');
+                    $('#christeningTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                    if ($certForm.length && $certForm[0]) {
+                        $certForm[0].reset();
+                    }
+                    ensureCertificationReferenceCode($('#chCertRefCode'), $certForm, function() {
+                        certBsModal.show();
+                    });
                     return;
                 }
                 loadChristeningCertificationForRecord(cid, function() {
-                    certBsModal.show();
+                    ensureCertificationReferenceCode($('#chCertRefCode'), $certForm, function() {
+                        certBsModal.show();
+                    });
                 }, function(msg) {
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
@@ -2328,6 +2338,32 @@
                 });
         }
 
+        function ensureCertificationReferenceCode($refInput, $form, doneFn) {
+            if (!$refInput.length) {
+                if (typeof doneFn === 'function') {
+                    doneFn('');
+                }
+                return;
+            }
+            var current = ($refInput.val() || '').trim();
+            if (current) {
+                if (typeof doneFn === 'function') {
+                    doneFn(current);
+                }
+                return;
+            }
+            fetchNextReferenceCode(function(ref) {
+                var code = ref || ($form && $form.length ? ($form.attr('data-default-reference-code') || '').trim() : '');
+                if (code && $form && $form.length) {
+                    $form.attr('data-default-reference-code', code);
+                    $refInput.val(code);
+                }
+                if (typeof doneFn === 'function') {
+                    doneFn(code);
+                }
+            });
+        }
+
         function fetchQueryParams() {
             var q = {
                 page: state.page,
@@ -2517,25 +2553,25 @@
             return h12 + ':' + String(m).padStart(2, '0') + ' ' + ampm;
         }
 
-        function formatScheduleDayCaption(serviceText, timeText) {
-            var service = (serviceText || '').trim();
-            var time = (timeText || '').trim();
-            if (!service) return '';
-            return time ? (service + ' · ' + time) : service;
+        function scheduleCaptionTimeOnly(text) {
+            var raw = (text || '').trim();
+            if (!raw) return '';
+            if (raw.indexOf(' / ') !== -1) {
+                return raw.split(' / ').map(function (part) {
+                    return scheduleCaptionTimeOnly(part);
+                }).filter(Boolean).join(' / ');
+            }
+            var sep = raw.indexOf(' · ');
+            if (sep !== -1) {
+                return raw.slice(sep + 3).trim();
+            }
+            return raw;
         }
 
         function buildScheduleDayCaptionHtml(captionText) {
-            var text = (captionText || '').trim();
-            if (!text) return '';
-            if (text.indexOf(' / ') !== -1) {
-                return esc(text);
-            }
-            var sep = text.indexOf(' · ');
-            if (sep === -1) {
-                return esc(text);
-            }
-            return '<span class="sappcScheduleDayService">' + esc(text.slice(0, sep)) + '</span>' +
-                '<span class="sappcScheduleDayWhen">' + esc(text.slice(sep + 3)) + '</span>';
+            var timeText = scheduleCaptionTimeOnly(captionText);
+            if (!timeText) return '';
+            return '<span class="sappcScheduleDayWhen">' + esc(timeText) + '</span>';
         }
 
         var calendarViewDate = (function() {
@@ -2630,10 +2666,7 @@
                 }
                 var cellCaptionText = reservedCaption;
                 if (!cellCaptionText && isSel) {
-                    cellCaptionText = formatScheduleDayCaption(
-                        scheduleServiceLabel,
-                        formatTime12h($scheduleTimeInput.val())
-                    );
+                    cellCaptionText = formatTime12h($scheduleTimeInput.val());
                 }
                 var label = monthNameFromIndex(month) + ' ' + day + ', ' + year;
                 if (isSel || isReserved) {

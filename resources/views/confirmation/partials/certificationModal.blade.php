@@ -13,7 +13,7 @@
                     </div>
                     <div class="modal-body pt-0">
                         <form class="sappcCertModalForm" id="confirmationCertificationForm" action="#" method="post"
-                            autocomplete="off">
+                            autocomplete="off" data-default-reference-code="{{ $generatedReferenceCode ?? '' }}">
                             <div class="sappcCertModalMasthead">
                                 <div class="sappcCertModalLogoWrap">
                                     <img src="{{ asset('assets/logos/SAPPC.png') }}" width="72" height="72"
@@ -27,8 +27,9 @@
                                 <div class="sappcCertModalMetaRow">
                                     <label class="sappcCertModalLabel" for="cnCertRefCode">Reference Code</label>
                                     <input type="text" class="sappcCertModalInput" id="cnCertRefCode"
-                                        name="reference_code" value="" readonly
-                                        title="Populated from selected record">
+                                        name="reference_code" value="{{ $generatedReferenceCode ?? '' }}" readonly
+                                        tabindex="-1" aria-readonly="true" placeholder="Auto-generated"
+                                        title="Auto-generated reference code">
                                     <label class="sappcCertModalLabel" for="cnCertClient">Client</label>
                                     <input type="text" class="sappcCertModalInput" id="cnCertClient" name="client"
                                         value="" readonly>
