@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Support\ClientNameDisplay;
 use App\Support\DocumentationApplicationReportWriter;
 use App\Support\SacramentApplicationGate;
+use App\Support\SacramentReferenceCode;
 use App\Support\SacramentRegistrySectionFilter;
 use App\Support\SacramentScheduleReservedDates;
 use Carbon\Carbon;
@@ -798,6 +799,8 @@ class ChristeningController extends Controller
             return response()->json(['message' => 'Christening record not found.'], 404);
         }
 
+        $this->ensureChristeningReferenceCode($christeningId);
+        $row = DB::table('christening')->where('christeningId', $christeningId)->first();
 
         return response()->json([
             'ok' => true,
@@ -1393,6 +1396,9 @@ class ChristeningController extends Controller
             return SacramentApplicationGate::paymentDenyResponse();
         }
 
+        $this->ensureChristeningReferenceCode($christeningId);
+        $christening = DB::table('christening')->where('christeningId', $christeningId)->first();
+
         $certRow = $this->mapCertificationRequestToCertificationTableRow($request);
         $certificationDetailsRow = $this->mapCertificationRequestToCertificationDetailsRow($request, $christening);
 
@@ -1671,6 +1677,9 @@ class ChristeningController extends Controller
         if ($resolvedReferenceCode === '') {
             $resolvedReferenceCode = trim((string) ($christening->referenceCode ?? ''));
         }
+        if ($resolvedReferenceCode === '') {
+            $resolvedReferenceCode = $this->ensureChristeningReferenceCode((int) ($christening->christeningId ?? 0));
+        }
 
         $resolvedClient = trim((string) ($request->input('client') ?? ''));
         if ($resolvedClient === '') {
@@ -1710,5 +1719,15 @@ class ChristeningController extends Controller
             'created_at' => now(),
             'updated_at' => now(),
         ];
+    }
+
+    private function ensureChristeningReferenceCode(int $christeningId): string
+    {
+        return SacramentReferenceCode::ensureOnRegistryRow(
+            'christening',
+            'christeningId',
+            $christeningId,
+            fn () => $this->generateUniqueChristeningReferenceCode()
+        );
     }
 }

@@ -10,12 +10,12 @@
                         <section class="sappcScheduleCalendarCard" aria-label="Calendar">
                             <div class="sappcScheduleCalendarHead sappcScheduleCalendarHead--interactive">
                                 <button type="button" class="sappcScheduleCalNav" id="chCalPrev"
-                                    aria-label="Previous month">&#8249;</button>
+                                    aria-label="Previous month"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
                                 <span class="sappcScheduleCalendarMonthNo" id="chCalMonthNum">3</span>
                                 <select class="sappcScheduleCalendarMonth" id="chCalMonth" aria-label="Month"></select>
                                 <select class="sappcScheduleCalendarYear" id="chCalYear" aria-label="Year"></select>
                                 <button type="button" class="sappcScheduleCalNav" id="chCalNext"
-                                    aria-label="Next month">&#8250;</button>
+                                    aria-label="Next month"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
                             </div>
 
                             <div class="sappcScheduleCalendarGrid" role="grid" aria-label="Select baptism date"

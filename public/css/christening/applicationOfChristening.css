@@ -1979,8 +1979,8 @@
     width: 1.85rem;
     height: 1.85rem;
     padding: 0;
-    border: 1px solid #111;
-    background: #30435d;
+    border: 1px solid #8b1a1a;
+    background: #c62828;
     color: #fff;
     border-radius: 0.25rem;
     cursor: pointer;
@@ -1988,7 +1988,8 @@
 }
 
 .sappcPaymentFeeModalBtnRemove:hover {
-    background: #243649;
+    background: #b71c1c;
+    border-color: #7f1515;
     color: #fff;
 }
 

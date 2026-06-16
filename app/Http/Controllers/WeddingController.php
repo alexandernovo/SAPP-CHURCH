@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Support\ClientNameDisplay;
 use App\Support\DocumentationApplicationReportWriter;
 use App\Support\SacramentApplicationGate;
+use App\Support\SacramentReferenceCode;
 use App\Support\SacramentRegistrySectionFilter;
 use App\Support\SacramentScheduleReservedDates;
 use Carbon\Carbon;
@@ -364,6 +365,8 @@ class WeddingController extends Controller
             return response()->json(['message' => 'Wedding record not found.'], 404);
         }
 
+        $this->ensureWeddingReferenceCode($weddingId);
+        $row = DB::table('wedding')->where('weddingId', $weddingId)->first();
 
         return response()->json([
             'ok' => true,
@@ -778,6 +781,9 @@ class WeddingController extends Controller
         if (! SacramentApplicationGate::weddingIsPaymentComplete($weddingId)) {
             return SacramentApplicationGate::paymentDenyResponse();
         }
+
+        $this->ensureWeddingReferenceCode($weddingId);
+        $wedding = DB::table('wedding')->where('weddingId', $weddingId)->first();
 
         if (! Schema::hasTable('wedding_certification')) {
             return response()->json([
@@ -1449,6 +1455,9 @@ class WeddingController extends Controller
         if ($resolvedReferenceCode === '') {
             $resolvedReferenceCode = trim((string) ($wedding->referenceCode ?? ''));
         }
+        if ($resolvedReferenceCode === '') {
+            $resolvedReferenceCode = $this->ensureWeddingReferenceCode((int) ($wedding->weddingId ?? 0));
+        }
 
         $resolvedClient = trim((string) ($request->input('client') ?? ''));
         if ($resolvedClient === '') {
@@ -1588,5 +1597,15 @@ class WeddingController extends Controller
 
             return [$id, $ref];
         });
+    }
+
+    private function ensureWeddingReferenceCode(int $weddingId): string
+    {
+        return SacramentReferenceCode::ensureOnRegistryRow(
+            'wedding',
+            'weddingId',
+            $weddingId,
+            fn () => $this->generateUniqueWeddingReferenceCode()
+        );
     }
 }

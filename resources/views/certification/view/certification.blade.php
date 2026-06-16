@@ -123,9 +123,10 @@
                 >
             </header>
 
-            <h2 class="sappc-doc-report-title" id="sappcCertReportTitle">
-                <span id="sappcCertReportService">CHRISTENING</span> REPORT OF
-                <span id="sappcCertReportLabel">{{ strtoupper($certReportLabel ?? '') }}</span>
+            <h2 class="sappc-doc-report-title sappc-doc-report-title--stack" id="sappcCertReportTitle">
+                <span class="sappc-doc-report-title__line" id="sappcCertReportService">CHRISTENING</span>
+                <span class="sappc-doc-report-title__line">CERTIFICATION REPORT</span>
+                <span class="sappc-doc-report-title__line">OF <span id="sappcCertReportLabel">{{ strtoupper($certReportLabel ?? '') }}</span></span>
             </h2>
 
             <div class="sappc-doc-table-wrap" id="sappcCertTableOuter">
@@ -178,6 +179,11 @@
             function syncViewBtn() {
                 var ok = $type.val() !== '' && $type.val() != null;
                 $btn.prop('disabled', !ok);
+                var typeVal = ($type.val() || '').toString().trim();
+                if (typeVal && $service.length) {
+                    var optText = $type.find('option:selected').text();
+                    $service.text(String(optText || typeVal).toUpperCase());
+                }
             }
 
             function showPicker() {

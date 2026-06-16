@@ -486,12 +486,12 @@
                         <section class="sappcScheduleCalendarCard" aria-label="Calendar">
                             <div class="sappcScheduleCalendarHead sappcScheduleCalendarHead--interactive">
                                 <button type="button" class="sappcScheduleCalNav" id="cnCalPrev"
-                                    aria-label="Previous month">‹</button>
+                                    aria-label="Previous month"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
                                 <span class="sappcScheduleCalendarMonthNo" id="cnCalMonthNum">3</span>
                                 <select class="sappcScheduleCalendarMonth" id="cnCalMonth" aria-label="Month"></select>
                                 <select class="sappcScheduleCalendarYear" id="cnCalYear" aria-label="Year"></select>
                                 <button type="button" class="sappcScheduleCalNav" id="cnCalNext"
-                                    aria-label="Next month">›</button>
+                                    aria-label="Next month"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
                             </div>
 
                             <div class="sappcScheduleCalendarGrid" role="grid" aria-label="Select confirmation date"

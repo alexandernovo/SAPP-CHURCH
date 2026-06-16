@@ -10,12 +10,12 @@
                         <section class="sappcScheduleCalendarCard" aria-label="Calendar">
                             <div class="sappcScheduleCalendarHead sappcScheduleCalendarHead--interactive">
                                 <button type="button" class="sappcScheduleCalNav" id="brCalPrev"
-                                    aria-label="Previous month">â€¹</button>
+                                    aria-label="Previous month"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
                                 <span class="sappcScheduleCalendarMonthNo" id="brCalMonthNum">3</span>
                                 <select class="sappcScheduleCalendarMonth" id="brCalMonth" aria-label="Month"></select>
                                 <select class="sappcScheduleCalendarYear" id="brCalYear" aria-label="Year"></select>
                                 <button type="button" class="sappcScheduleCalNav" id="brCalNext"
-                                    aria-label="Next month">â€º</button>
+                                    aria-label="Next month"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
                             </div>
 
                             <div class="sappcScheduleCalendarGrid" role="grid" aria-label="Select burial date"

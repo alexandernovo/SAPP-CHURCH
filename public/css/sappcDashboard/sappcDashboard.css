@@ -1045,6 +1045,20 @@ button.sappc-doc-stat_clickable:focus-visible {
     overscroll-behavior: contain;
 }
 
+body.sappc-dash--locked-viewport .sappc-doc-page--report-active .sappc-doc-report-table-panel .sappc-table-panel_scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+body.sappc-dash--locked-viewport .sappc-doc-page--report-active .sappc-doc-report-table-panel .sappc-table-panel_scroll::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
 .sappc-table-panel .sappc-table-panel_scroll .sappc-data-table thead th {
     position: sticky;
     top: 0;

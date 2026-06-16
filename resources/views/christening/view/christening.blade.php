@@ -198,12 +198,12 @@
                         <section class="sappcScheduleCalendarCard" aria-label="Calendar">
                             <div class="sappcScheduleCalendarHead sappcScheduleCalendarHead--interactive">
                                 <button type="button" class="sappcScheduleCalNav" id="chCalPrev"
-                                    aria-label="Previous month">‹</button>
+                                    aria-label="Previous month"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>
                                 <span class="sappcScheduleCalendarMonthNo" id="chCalMonthNum">3</span>
                                 <select class="sappcScheduleCalendarMonth" id="chCalMonth" aria-label="Month"></select>
                                 <select class="sappcScheduleCalendarYear" id="chCalYear" aria-label="Year"></select>
                                 <button type="button" class="sappcScheduleCalNav" id="chCalNext"
-                                    aria-label="Next month">›</button>
+                                    aria-label="Next month"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>
                             </div>
 
                             <div class="sappcScheduleCalendarGrid" role="grid" aria-label="Select baptism date"
@@ -607,7 +607,7 @@
                     </div>
                     <div class="modal-body pt-0">
                         <form class="sappcCertModalForm" id="christeningCertificationForm" action="#" method="post"
-                            autocomplete="off">
+                            autocomplete="off" data-default-reference-code="{{ $generatedReferenceCode ?? '' }}">
                             <div class="sappcCertModalMasthead">
                                 <div class="sappcCertModalLogoWrap">
                                     <img src="{{ asset('assets/logos/SAPPC.png') }}" width="72" height="72"
@@ -621,8 +621,9 @@
                                 <div class="sappcCertModalMetaRow">
                                     <label class="sappcCertModalLabel" for="chCertRefCode">Reference Code</label>
                                     <input type="text" class="sappcCertModalInput" id="chCertRefCode"
-                                        name="reference_code" value="" readonly
-                                        title="Populated from selected record">
+                                        name="reference_code" value="{{ $generatedReferenceCode ?? '' }}" readonly
+                                        tabindex="-1" aria-readonly="true" placeholder="Auto-generated"
+                                        title="Auto-generated reference code">
                                     <label class="sappcCertModalLabel" for="chCertClient">Client</label>
                                     <input type="text" class="sappcCertModalInput" id="chCertClient" name="client"
                                         value="" readonly>

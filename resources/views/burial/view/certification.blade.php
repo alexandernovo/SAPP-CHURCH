@@ -21,6 +21,26 @@
         .sappc-page-breadcrumb a {
             font-family: Arial;
         }
+
+        .sappc-page-title--cert-report {
+            align-items: flex-start;
+        }
+
+        .sappc-page-title--cert-report .sappc-page-title__stack {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.1rem;
+            line-height: 1.25;
+        }
+
+        .sappc-page-title--cert-report .sappc-page-title__line {
+            display: block;
+            font-size: 1.65rem;
+            font-weight: 400;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
     </style>
 @endpush
 
@@ -28,9 +48,13 @@
     <div class="sappc-registry-page">
         <div class="sappc-registry-page_head">
             <div class="sappc-registry-page_head-main">
-                <h1 class="sappc-page-title">
+                <h1 class="sappc-page-title sappc-page-title--cert-report">
                     <i class="fa-solid fa-certificate" aria-hidden="true"></i>
-                    BURIAL
+                    <span class="sappc-page-title__stack">
+                        <span class="sappc-page-title__line">BURIAL</span>
+                        <span class="sappc-page-title__line">CERTIFICATION REPORT</span>
+                        <span class="sappc-page-title__line">OF {{ strtoupper($certReportLabel ?? '') }}</span>
+                    </span>
                 </h1>
                 <p class="sappc-page-breadcrumb mb-0">
                     <a href="{{ route('admin.dashboard') }}">Dashboard</a>

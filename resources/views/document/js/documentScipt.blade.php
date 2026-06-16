@@ -22,6 +22,11 @@
         function syncViewBtn() {
             var ok = $type.val() !== '' && $type.val() != null;
             $btn.prop('disabled', !ok);
+            var typeVal = ($type.val() || '').toString().trim();
+            if (typeVal && $service.length) {
+                var optText = $type.find('option:selected').text();
+                $service.text(String(optText || typeVal).toUpperCase());
+            }
         }
 
         function showSheet() {
@@ -110,6 +115,10 @@
             }
             var u = new URL(window.location.href);
             u.searchParams.set('month', monthVal);
+            var typeVal = ($type.val() || '').toString().trim();
+            if (typeVal) {
+                u.searchParams.set('service_type', typeVal);
+            }
             window.history.replaceState({}, '', u);
         }
 
@@ -172,6 +181,23 @@
         if (initialMonth) {
             syncMonthInputs(initialMonth);
         }
+
+        (function restoreReportFromUrl() {
+            try {
+                var u = new URL(window.location.href);
+                var urlType = (u.searchParams.get('service_type') || '').trim();
+                var urlMonth = (u.searchParams.get('month') || '').trim();
+                if (urlType && $type.find('option[value="' + urlType.replace(/"/g, '\\"') + '"]').length) {
+                    $type.val(urlType);
+                    syncViewBtn();
+                }
+                if (urlType && urlMonth) {
+                    syncMonthInputs(urlMonth);
+                    showSheet();
+                    loadReport(urlMonth);
+                }
+            } catch (e1) {}
+        })();
 
         $monthToolbar.on('change input', function () {
             var v = ($(this).val() || '').toString().trim();

@@ -15,15 +15,11 @@ class SacramentScheduleReservedDates
         'burial' => 'Burial',
     ];
 
-    /**
-     * @return array<string, string> ISO date (Y-m-d) => "Service · 10:00 AM" label(s)
-     */
     public static function forMonth(int $year, int $month): array
     {
-        /** @var array<string, list<string>> $grouped */
         $grouped = [];
 
-        foreach (self::SERVICE_TABLES as $table => $label) {
+        foreach (array_keys(self::SERVICE_TABLES) as $table) {
             $rows = DB::table($table)
                 ->whereNotNull('scheduleRequested')
                 ->whereYear('scheduleRequested', $year)
@@ -40,13 +36,12 @@ class SacramentScheduleReservedDates
                 $dt = Carbon::parse($row->scheduleRequested);
                 $iso = $dt->format('Y-m-d');
                 $timeLabel = $dt->format('g:i A');
-                $entry = $label.' · '.$timeLabel;
 
                 if (! isset($grouped[$iso])) {
                     $grouped[$iso] = [];
                 }
-                if (! in_array($entry, $grouped[$iso], true)) {
-                    $grouped[$iso][] = $entry;
+                if (! in_array($timeLabel, $grouped[$iso], true)) {
+                    $grouped[$iso][] = $timeLabel;
                 }
             }
         }

@@ -505,6 +505,32 @@
                     });
             }
 
+            function ensureCertificationReferenceCode($refInput, $form, doneFn) {
+                if (!$refInput.length) {
+                    if (typeof doneFn === 'function') {
+                        doneFn('');
+                    }
+                    return;
+                }
+                var current = ($refInput.val() || '').trim();
+                if (current) {
+                    if (typeof doneFn === 'function') {
+                        doneFn(current);
+                    }
+                    return;
+                }
+                fetchNextReferenceCode(function(ref) {
+                    var code = ref || ($form && $form.length ? ($form.attr('data-default-reference-code') || '').trim() : '');
+                    if (code && $form && $form.length) {
+                        $form.attr('data-default-reference-code', code);
+                        $refInput.val(code);
+                    }
+                    if (typeof doneFn === 'function') {
+                        doneFn(code);
+                    }
+                });
+            }
+
             var burialAppDetailsUrl = ($panel.attr('data-burial-application-details-url') || '').trim();
             var burialAppSaveUrl = ($panel.attr('data-burial-application-save-url') || '').trim();
             var certificationSaveUrl = ($panel.attr('data-certification-save-url') || '').trim();
@@ -1034,6 +1060,7 @@
                         data.contact_number != null ? formatPhMobileDisplay(String(data.contact_number)) : ''
                     );
                     $('#brCertTopAddress').val(data.address != null ? String(data.address) : '');
+                    ensureCertificationReferenceCode($('#brCertRefCode'), $certForm);
                 }
 
                 function applyBurialCertificationFromDetails(data) {
@@ -1073,11 +1100,20 @@
                     e.preventDefault();
                     var bid = getSelectedBurialId();
                     if (!bid) {
-                        certBsModal.show();
+                        setSelectedBurialId('');
+                        $('#burialTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
+                        if ($certForm.length && $certForm[0]) {
+                            $certForm[0].reset();
+                        }
+                        ensureCertificationReferenceCode($('#brCertRefCode'), $certForm, function() {
+                            certBsModal.show();
+                        });
                         return;
                     }
                     loadBurialCertificationForRecord(bid, function() {
-                        certBsModal.show();
+                        ensureCertificationReferenceCode($('#brCertRefCode'), $certForm, function() {
+                            certBsModal.show();
+                        });
                     }, function(msg) {
                         if (typeof Swal !== 'undefined') {
                             Swal.fire({
@@ -1479,25 +1515,25 @@
                 return h12 + ':' + String(m).padStart(2, '0') + ' ' + ampm;
             }
 
-            function formatScheduleDayCaption(serviceText, timeText) {
-                var service = (serviceText || '').trim();
-                var time = (timeText || '').trim();
-                if (!service) return '';
-                return time ? (service + ' · ' + time) : service;
+            function scheduleCaptionTimeOnly(text) {
+                var raw = (text || '').trim();
+                if (!raw) return '';
+                if (raw.indexOf(' / ') !== -1) {
+                    return raw.split(' / ').map(function (part) {
+                        return scheduleCaptionTimeOnly(part);
+                    }).filter(Boolean).join(' / ');
+                }
+                var sep = raw.indexOf(' · ');
+                if (sep !== -1) {
+                    return raw.slice(sep + 3).trim();
+                }
+                return raw;
             }
 
             function buildScheduleDayCaptionHtml(captionText) {
-                var text = (captionText || '').trim();
-                if (!text) return '';
-                if (text.indexOf(' / ') !== -1) {
-                    return esc(text);
-                }
-                var sep = text.indexOf(' · ');
-                if (sep === -1) {
-                    return esc(text);
-                }
-                return '<span class="sappcScheduleDayService">' + esc(text.slice(0, sep)) + '</span>' +
-                    '<span class="sappcScheduleDayWhen">' + esc(text.slice(sep + 3)) + '</span>';
+                var timeText = scheduleCaptionTimeOnly(captionText);
+                if (!timeText) return '';
+                return '<span class="sappcScheduleDayWhen">' + esc(timeText) + '</span>';
             }
 
             var calendarViewDate = (function() {
@@ -1583,10 +1619,7 @@
                     }
                     var cellCaptionText = reservedCaption;
                     if (!cellCaptionText && isSel) {
-                        cellCaptionText = formatScheduleDayCaption(
-                            scheduleServiceLabel,
-                            formatTime12h($scheduleTimeInput.val())
-                        );
+                        cellCaptionText = formatTime12h($scheduleTimeInput.val());
                     }
                     var label = monthNameFromIndex(month) + ' ' + day + ', ' + year;
                     if (isSel || isReserved) {

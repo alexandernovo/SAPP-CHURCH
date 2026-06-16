@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Support\ClientNameDisplay;
 use App\Support\DocumentationApplicationReportWriter;
 use App\Support\SacramentApplicationGate;
+use App\Support\SacramentReferenceCode;
 use App\Support\SacramentRegistrySectionFilter;
 use App\Support\SacramentScheduleReservedDates;
 use Carbon\Carbon;
@@ -358,6 +359,8 @@ class ConfirmationController extends Controller
             return response()->json(['message' => 'Confirmation record not found.'], 404);
         }
 
+        $this->ensureConfirmationReferenceCode($confirmationId);
+        $row = DB::table('confirmation')->where('confirmationId', $confirmationId)->first();
 
         return response()->json([
             'ok' => true,
@@ -1411,5 +1414,15 @@ class ConfirmationController extends Controller
 
             return [$id, $ref];
         });
+    }
+
+    private function ensureConfirmationReferenceCode(int $confirmationId): string
+    {
+        return SacramentReferenceCode::ensureOnRegistryRow(
+            'confirmation',
+            'confirmationId',
+            $confirmationId,
+            fn () => $this->generateUniqueConfirmationReferenceCode()
+        );
     }
 }

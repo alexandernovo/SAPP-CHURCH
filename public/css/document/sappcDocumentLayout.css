@@ -35,8 +35,16 @@ body.sappc-dash--locked-viewport .sappc-doc-picker-wrap {
     overflow: hidden;
 }
 
-body.sappc-dash--locked-viewport .sappc-doc-page--report-active .sappc-doc-sheet,
-body.sappc-dash--locked-viewport .sappc-doc-page--report-active #sappcDocumentSheet {
+.sappc-doc-page--report-active .sappc-doc-sheet__content {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Locked viewport only: internal table scroll (burial registry, etc.) */
+body.sappc-dash--locked-viewport .sappc-doc-page--report-active .sappc-doc-sheet {
     flex: 1 1 auto;
     min-height: 0;
     display: flex !important;
@@ -44,10 +52,6 @@ body.sappc-dash--locked-viewport .sappc-doc-page--report-active #sappcDocumentSh
     overflow: hidden;
     margin-top: 0;
     padding-bottom: 1rem;
-}
-
-body.sappc-dash--locked-viewport .sappc-doc-page--report-active .sappc-doc-sheet__actions {
-    flex-shrink: 0;
 }
 
 body.sappc-dash--locked-viewport .sappc-doc-page--report-active .sappc-doc-sheet__content {
@@ -58,16 +62,25 @@ body.sappc-dash--locked-viewport .sappc-doc-page--report-active .sappc-doc-sheet
     overflow: hidden;
 }
 
-body.sappc-dash--locked-viewport .sappc-doc-page--report-active .sappc-doc-table-wrap,
-body.sappc-dash--locked-viewport .sappc-doc-page--report-active .sappc-doc-table-panel_scroll,
 body.sappc-dash--locked-viewport .sappc-doc-page--report-active .sappc-doc-letterhead,
 body.sappc-dash--locked-viewport .sappc-doc-page--report-active .sappc-doc-report-title,
 body.sappc-dash--locked-viewport .sappc-doc-page--report-active .sappc-doc-signature {
     flex-shrink: 0;
 }
 
-body.sappc-dash--locked-viewport .sappc-doc-page--report-active .sappc-doc-table-wrap,
-body.sappc-dash--locked-viewport .sappc-doc-page--report-active .sappc-doc-table-panel_scroll {
+body.sappc-dash--locked-viewport .sappc-doc-page--report-active .sappc-doc-report-table-panel {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    margin-bottom: 0;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+}
+
+body.sappc-dash--locked-viewport .sappc-doc-page--report-active .sappc-doc-report-table-panel .sappc-table-panel_scroll {
     flex: 1 1 auto;
     min-height: 0;
     max-height: none;
@@ -76,18 +89,15 @@ body.sappc-dash--locked-viewport .sappc-doc-page--report-active .sappc-doc-table
     overscroll-behavior: contain;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    margin-bottom: 0;
 }
 
-body.sappc-dash--locked-viewport .sappc-doc-page--report-active .sappc-doc-table-wrap::-webkit-scrollbar,
-body.sappc-dash--locked-viewport .sappc-doc-page--report-active .sappc-doc-table-panel_scroll::-webkit-scrollbar {
+body.sappc-dash--locked-viewport .sappc-doc-page--report-active .sappc-doc-report-table-panel .sappc-table-panel_scroll::-webkit-scrollbar {
     display: none;
     width: 0;
     height: 0;
 }
 
-body.sappc-dash--locked-viewport .sappc-doc-page--report-active .sappc-doc-table-wrap .sappc-doc-table thead th,
-body.sappc-dash--locked-viewport .sappc-doc-page--report-active .sappc-doc-table-panel_scroll .sappc-doc-table thead th {
+body.sappc-dash--locked-viewport .sappc-doc-page--report-active .sappc-doc-report-table-panel .sappc-data-table thead th {
     position: sticky;
     top: 0;
     z-index: 2;
@@ -139,8 +149,31 @@ body.sappc-dash--locked-viewport .sappc-registry-page {
     display: none;
 }
 
+.sappc-doc-page--report-active {
+    overflow: visible;
+    height: auto;
+    min-height: 0;
+    flex: none;
+}
+
+.sappc-content:has(.sappc-doc-page--report-active) {
+    overflow: visible;
+    min-height: auto;
+}
+
 .sappc-doc-page--report-active .sappc-doc-sheet {
     margin-top: 0;
+    display: block !important;
+    overflow: visible;
+    flex: none;
+    min-height: 0;
+    height: auto;
+}
+
+.sappc-doc-page--report-active .sappc-doc-table-wrap {
+    width: 100%;
+    margin-bottom: 2.5rem;
+    overflow: visible;
 }
 
 .sappc-doc-page_sep {
@@ -579,6 +612,30 @@ body.sappc-dash--locked-viewport .sappc-registry-page {
     padding: 0.5rem 0.5rem 0.6rem;
 }
 
+.sappc-doc-report-title--stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.12rem;
+    line-height: 1.25;
+}
+
+.sappc-doc-report-title--stack .sappc-doc-report-title__line {
+    display: block;
+}
+
+.sappc-doc-report-table-panel {
+    width: 100%;
+}
+
+.sappc-doc-page--report-active .sappc-doc-sheet__content {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
 .sappc-doc-table-wrap {
     width: 100%;
     margin-bottom: 2.5rem;
@@ -604,11 +661,46 @@ body.sappc-dash--locked-viewport .sappc-registry-page {
     font-size: clamp(0.72rem, 1.2vw, 0.82rem);
 }
 
+.sappc-doc-report-table-panel .sappc-data-table {
+    font-family: Arial, sans-serif;
+    font-size: 0.8rem;
+    line-height: 1.35;
+}
+
+.sappc-doc-report-table-panel .sappc-data-table thead th {
+    background: var(--sappc-panel-bg, #091d3a);
+    color: #fff;
+    font-weight: 400;
+    font-size: 0.7rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 0.65rem 0.5rem;
+    border-color: #000;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    line-height: 1.35;
+}
+
+.sappc-doc-report-table-panel .sappc-data-table tbody td {
+    padding: 0.55rem 0.5rem;
+    border-color: #e0e0e0;
+    color: var(--sappc-charcoal, #212121);
+    vertical-align: middle;
+    text-align: center;
+    line-height: 1.35;
+}
+
+.sappc-doc-report-table-panel .sappc-data-table tbody td:nth-child(1) {
+    width: 2.5rem;
+}
+
 .sappc-doc-table {
     width: 100%;
     border-collapse: collapse;
-    font-family: Arial;
-    font-size: clamp(0.72rem, 1.3vw, 0.8rem);
+    font-family: Arial, sans-serif;
+    font-size: 0.8rem;
+    line-height: 1.35;
 }
 
 .sappc-doc-table thead th {
@@ -616,20 +708,23 @@ body.sappc-dash--locked-viewport .sappc-registry-page {
     color: #fff;
     font-weight: 400;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding: 0.55rem 0.5rem;
+    letter-spacing: 0.03em;
+    padding: 0.65rem 0.5rem;
     border: 1px solid rgba(255, 255, 255, 0.28);
     text-align: center;
     white-space: nowrap;
-    font-size: clamp(0.68rem, 1.2vw, 0.78rem);
+    font-size: 0.7rem;
+    vertical-align: middle;
+    line-height: 1.35;
 }
 
 .sappc-doc-table tbody td {
-    padding: 0.45rem 0.4rem;
+    padding: 0.55rem 0.5rem;
     border: 1px solid var(--sappc-border, #bdbdbd);
     color: var(--sappc-charcoal, #212121);
     vertical-align: middle;
     text-align: center;
+    line-height: 1.35;
 }
 
 .sappc-doc-table tbody td:nth-child(1) {
@@ -642,6 +737,7 @@ body.sappc-dash--locked-viewport .sappc-registry-page {
     max-width: 20rem;
     margin-left: auto;
     margin-top: 0.5rem;
+    flex-shrink: 0;
 }
 
 .sappc-doc-signature_name {
@@ -661,13 +757,26 @@ body.sappc-dash--locked-viewport .sappc-registry-page {
 }
 
 @media print {
+    html,
+    body,
+    .sappc-dash,
+    .sappc-dash_layout,
+    .sappc-dash_main,
+    .sappc-content {
+        overflow: visible !important;
+        height: auto !important;
+        max-height: none !important;
+        min-height: 0 !important;
+    }
+
     .sappc-doc-page,
     .sappc-doc-page *,
     .sappc-doc-letterhead,
     .sappc-doc-letterhead_line,
     .sappc-doc-report-title,
     .sappc-doc-signature_name,
-    .sappc-doc-table {
+    .sappc-doc-table,
+    .sappc-data-table {
         font-family: Arial !important;
     }
 
@@ -684,6 +793,19 @@ body.sappc-dash--locked-viewport .sappc-registry-page {
         border: none;
         box-shadow: none;
         padding: 0.5rem 0 !important;
+        display: block !important;
+        overflow: visible !important;
+        height: auto !important;
+        max-height: none !important;
+    }
+
+    .sappc-doc-sheet__actions {
+        display: none !important;
+    }
+
+    .sappc-doc-table-wrap {
+        overflow: visible !important;
+        max-height: none !important;
     }
 
     .sappc-content {
@@ -693,6 +815,9 @@ body.sappc-dash--locked-viewport .sappc-registry-page {
     .sappc-doc-page {
         max-width: none;
         margin: 0;
+        overflow: visible !important;
+        height: auto !important;
+        max-height: none !important;
     }
 
     #sappcDocTableOuter .sappc-doc-dt-controls,
@@ -712,7 +837,6 @@ body.sappc-dash--locked-viewport .sappc-registry-page {
         margin: 0 !important;
     }
 
-    /* Strip DataTables sort UI if present (older / theme classes) */
     #sappcDocDataTable thead th.sorting:before,
     #sappcDocDataTable thead th.sorting:after,
     #sappcDocDataTable thead th.sorting_asc:before,
@@ -740,11 +864,13 @@ body.sappc-dash--locked-viewport .sappc-registry-page {
         background-color: transparent !important;
     }
 
+    #sappcDocTableOuter .sappc-data-table,
     #sappcDocTableOuter .sappc-doc-table {
         width: 100% !important;
         font-size: 9pt;
     }
 
+    #sappcDocTableOuter .sappc-data-table tbody td,
     #sappcDocTableOuter .sappc-doc-table tbody td {
         border: 1px solid #bdbdbd !important;
     }
@@ -758,6 +884,11 @@ body.sappc-dash--locked-viewport .sappc-registry-page {
     .sappc-doc-letterhead_seal {
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
+    }
+
+    #sappcDocTableOuter .sappc-table-panel_scroll {
+        max-height: none !important;
+        overflow: visible !important;
     }
 
     #sappcDocDataTable thead {
