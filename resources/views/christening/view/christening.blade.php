@@ -69,7 +69,14 @@
                     <div class="modal-body pt-0">
                         <form class="sappcPaymentFeeModalForm" id="christeningPaymentFeeForm" action="#"
                             method="post" autocomplete="off"
-                            data-save-url="{{ route('admin.christening.payment-save') }}">
+                            data-save-url="{{ route('admin.christening.payment-save') }}"
+                            data-default-fee-rows='@json($defaultPaymentFeeRows ?? [
+                                ["label" => "Arancel (For Parents if by Appointment)", "paid" => false, "date_paid" => null],
+                                ["label" => "Baptismal Symbols (White Garment, Candle, etc.)", "paid" => false, "date_paid" => null],
+                                ["label" => "Godparents", "paid" => false, "date_paid" => null],
+                                ["label" => "Parent\'s Seminar (if by Appointment)", "paid" => false, "date_paid" => null],
+                                ["label" => "Others:", "paid" => false, "date_paid" => null],
+                            ])'>
                             <div class="sappcChOfficial sappcPaymentFeeModalOfficial">
                                 <header class="sappcChOfficialHeader">
                                     <div class="sappcChOfficialLogo sappcChOfficialLogoLeft">
@@ -608,6 +615,7 @@
                     <div class="modal-body pt-0">
                         <form class="sappcCertModalForm" id="christeningCertificationForm" action="#" method="post"
                             autocomplete="off" data-default-reference-code="{{ $generatedReferenceCode ?? '' }}">
+                            <input type="hidden" id="chCertChristeningId" name="christening_id" value="">
                             <div class="sappcCertModalMasthead">
                                 <div class="sappcCertModalLogoWrap">
                                     <img src="{{ asset('assets/logos/SAPPC.png') }}" width="72" height="72"

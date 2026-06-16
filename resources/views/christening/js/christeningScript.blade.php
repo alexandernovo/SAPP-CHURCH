@@ -43,6 +43,22 @@
             }
         }
 
+        function setChristeningCertRecordId(id) {
+            id = id == null ? '' : String(id).trim();
+            $('#chCertChristeningId').val(id);
+            if (id) {
+                setSelectedChristeningId(id);
+            }
+        }
+
+        function getChristeningCertRecordId() {
+            var fromForm = ($('#chCertChristeningId').val() || '').trim();
+            if (fromForm) {
+                return fromForm;
+            }
+            return getSelectedChristeningId();
+        }
+
         function registryWorkflowNextUrl(currentStep) {
             var $panel = $('#christeningRecordsPanel');
             if (!$panel.length) {
@@ -1197,6 +1213,17 @@
             };
         }
 
+        function defaultPaymentFeeRowsFromForm() {
+            var raw = ($paymentFeeForm.attr('data-default-fee-rows') || '').trim();
+            if (!raw) return null;
+            try {
+                var rows = JSON.parse(raw);
+                return Array.isArray(rows) && rows.length ? rows : null;
+            } catch (e1) {
+                return null;
+            }
+        }
+
         function applyChristeningPaymentFeeFormObject(data) {
             if (!data || typeof data !== 'object') return;
             $('#chPaymentRefCode').val(data.reference_code != null ? String(data.reference_code) : '');
@@ -1207,7 +1234,7 @@
             $('#chPaymentAddress').val(data.address != null ? String(data.address) : '');
             var feeRows = data.fee_rows;
             if (!Array.isArray(feeRows) || !feeRows.length) {
-                feeRows = [{}];
+                feeRows = defaultPaymentFeeRowsFromForm() || [{}];
             }
             $feeItemsBody.empty();
             feeRows.forEach(function(fr) {
@@ -1230,7 +1257,7 @@
                     client: '',
                     contact_number: '',
                     address: '',
-                    fee_rows: null,
+                    fee_rows: defaultPaymentFeeRowsFromForm(),
                 });
             });
         }
@@ -1759,7 +1786,7 @@
                 return;
             }
 
-            setSelectedChristeningId(id);
+            setChristeningCertRecordId(id);
             selectChristeningTableRow(id);
 
             ensureRegistryWorkflowStep('certification', id, function(ok) {
@@ -1896,7 +1923,7 @@
         };
 
         function saveChristeningCertificationRecord() {
-            var cid = getSelectedChristeningId();
+            var cid = getChristeningCertRecordId();
             if (!certificationSaveUrl) {
                 return $.Deferred().reject({
                     responseJSON: {
@@ -1938,7 +1965,7 @@
             return fetchPostJson(certificationSaveUrl, payload, csrf);
         }
 
-        function runChristeningCertificationSaveAndPrint($btn) {
+        function runChristeningCertificationSave($btn) {
             $btn = ($btn && $btn.length) ? $btn : $('#chCertAddRecordBtn');
             $btn.prop('disabled', true);
             return saveChristeningCertificationRecord()
@@ -1956,7 +1983,19 @@
                         }
                         return;
                     }
-                    printBaptismCertificationSheet();
+                    if (res.data && res.data.christening_id != null) {
+                        setChristeningCertRecordId(String(res.data.christening_id));
+                        selectChristeningTableRow(String(res.data.christening_id));
+                    }
+                    if (typeof fetchRecords === 'function') {
+                        fetchRecords();
+                    }
+                    if (typeof bootstrap !== 'undefined' && $certModal.length) {
+                        var certInst = bootstrap.Modal.getInstance($certModal[0]);
+                        if (certInst) {
+                            certInst.hide();
+                        }
+                    }
                     var msg = (res && res.message) ? res.message : 'Certification record saved.';
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
@@ -1993,17 +2032,17 @@
         }
 
         $(document)
-            .off('submit.sappcBaptismPrint', '#christeningCertificationForm')
-            .on('submit.sappcBaptismPrint', '#christeningCertificationForm', function(e) {
+            .off('submit.sappcBaptismCertSave', '#christeningCertificationForm')
+            .on('submit.sappcBaptismCertSave', '#christeningCertificationForm', function(e) {
                 e.preventDefault();
-                runChristeningCertificationSaveAndPrint($('#chCertAddRecordBtn'));
+                runChristeningCertificationSave($('#chCertAddRecordBtn'));
             });
 
         $(document)
-            .off('click.sappcBaptismPrint', '#chCertAddRecordBtn')
-            .on('click.sappcBaptismPrint', '#chCertAddRecordBtn', function(e) {
+            .off('click.sappcBaptismCertSave', '#chCertAddRecordBtn')
+            .on('click.sappcBaptismCertSave', '#chCertAddRecordBtn', function(e) {
                 e.preventDefault();
-                runChristeningCertificationSaveAndPrint($(this));
+                runChristeningCertificationSave($(this));
             });
 
         if ($certModal.length && $certBtn.length && typeof bootstrap !== 'undefined') {
@@ -2030,9 +2069,11 @@
                 var cid = getSelectedChristeningId();
                 if (!cid) {
                     setSelectedChristeningId('');
+                    setChristeningCertRecordId('');
                     $('#christeningTableBody tr.is-schedule-selected').removeClass('is-schedule-selected');
                     if ($certForm.length && $certForm[0]) {
                         $certForm[0].reset();
+                        $('#chCertChristeningId').val('');
                     }
                     ensureCertificationReferenceCode($('#chCertRefCode'), $certForm, function() {
                         certBsModal.show();

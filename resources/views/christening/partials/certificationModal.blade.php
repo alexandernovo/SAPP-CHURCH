@@ -14,6 +14,7 @@
                     <div class="modal-body pt-0">
                         <form class="sappcCertModalForm" id="christeningCertificationForm" action="#" method="post"
                             autocomplete="off" data-default-reference-code="{{ $generatedReferenceCode ?? '' }}">
+                            <input type="hidden" id="chCertChristeningId" name="christening_id" value="">
                             <div class="sappcCertModalMasthead">
                                 <div class="sappcCertModalLogoWrap">
                                     <img src="{{ asset('assets/logos/SAPPC.png') }}" width="72" height="72"

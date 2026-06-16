@@ -820,6 +820,17 @@
                 };
             }
 
+            function defaultPaymentFeeRowsFromForm() {
+                var raw = ($paymentFeeForm.attr('data-default-fee-rows') || '').trim();
+                if (!raw) return null;
+                try {
+                    var rows = JSON.parse(raw);
+                    return Array.isArray(rows) && rows.length ? rows : null;
+                } catch (e1) {
+                    return null;
+                }
+            }
+
             function applyConfirmationPaymentFeeFormObject(data) {
                 if (!data || typeof data !== 'object') return;
                 $('#brPaymentRefCode').val(data.reference_code != null ? String(data.reference_code) : '');
@@ -830,7 +841,7 @@
                 $('#brPaymentAddress').val(data.address != null ? String(data.address) : '');
                 var feeRows = data.fee_rows;
                 if (!Array.isArray(feeRows) || !feeRows.length) {
-                    feeRows = [{}];
+                    feeRows = defaultPaymentFeeRowsFromForm() || [{}];
                 }
                 $feeItemsBody.empty();
                 feeRows.forEach(function(fr) {
@@ -853,7 +864,7 @@
                         client: '',
                         contact_number: '',
                         address: '',
-                        fee_rows: null,
+                        fee_rows: defaultPaymentFeeRowsFromForm(),
                     });
                 });
             }
@@ -1381,18 +1392,20 @@
                     }, 350);
                 }
 
-                $certForm.on('submit', function(e) {
-                    e.preventDefault();
-                    printBurialCertificationSheet();
-                });
-
-                $('#brCertAddRecordBtn').on('click', function(e) {
-                    e.preventDefault();
-                    var $btn = $(this);
+                function runBurialCertificationSave($btn) {
+                    $btn = ($btn && $btn.length) ? $btn : $('#brCertAddRecordBtn');
                     $btn.prop('disabled', true);
                     saveBurialCertificationRecord()
                         .done(function(res) {
-                            printBurialCertificationSheet();
+                            if (typeof fetchRecords === 'function') {
+                                fetchRecords();
+                            }
+                            if (typeof bootstrap !== 'undefined' && $certModal.length) {
+                                var certInst = bootstrap.Modal.getInstance($certModal[0]);
+                                if (certInst) {
+                                    certInst.hide();
+                                }
+                            }
                             var msg = (res && res.message) ? res.message : 'Certification record saved.';
                             if (typeof Swal !== 'undefined') {
                                 Swal.fire({
@@ -1426,6 +1439,16 @@
                         .always(function() {
                             $btn.prop('disabled', false);
                         });
+                }
+
+                $certForm.on('submit', function(e) {
+                    e.preventDefault();
+                    runBurialCertificationSave($('#brCertAddRecordBtn'));
+                });
+
+                $('#brCertAddRecordBtn').on('click', function(e) {
+                    e.preventDefault();
+                    runBurialCertificationSave($(this));
                 });
                 } catch (err) {
                     if (window.console && typeof window.console.error === 'function') {

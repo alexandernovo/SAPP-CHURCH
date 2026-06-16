@@ -82,6 +82,7 @@ class ChristeningController extends Controller
             'perPageOptions' => DashboardController::perPageOptionsList(),
             'letterOptions' => range('A', 'Z'),
             'generatedReferenceCode' => $this->generateUniqueChristeningReferenceCode(),
+            'defaultPaymentFeeRows' => $this->defaultChristeningPaymentFeeRows(),
         ];
     }
 
@@ -1350,7 +1351,7 @@ class ChristeningController extends Controller
     public function christeningCertificationForm(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'christening_id' => ['required', 'integer', 'min:1'],
+            'christening_id' => ['nullable', 'integer', 'min:1'],
             'reference_code' => ['nullable', 'string', 'max:255'],
             'client' => ['nullable', 'string', 'max:255'],
             'contact_number' => ['nullable', 'string', 'max:50'],
@@ -1379,12 +1380,95 @@ class ChristeningController extends Controller
             'date_issued' => ['nullable', 'date'],
         ]);
 
-        $christeningId = (int) $validated['christening_id'];
-
-        $christening = DB::table('christening')->where('christeningId', $christeningId)->first();
-        if ($christening === null) {
-            return response()->json(['message' => 'Christening record not found.'], 404);
+        $christeningId = ! empty($validated['christening_id']) ? (int) $validated['christening_id'] : 0;
+        $ref = trim((string) ($validated['reference_code'] ?? ''));
+        if ($ref === '' && $christeningId <= 0) {
+            $ref = $this->generateUniqueChristeningReferenceCode();
         }
+
+        $christening = null;
+        if ($christeningId > 0) {
+            $christening = DB::table('christening')->where('christeningId', $christeningId)->first();
+            if ($christening === null) {
+                return response()->json(['message' => 'Christening record not found.'], 404);
+            }
+        } elseif ($ref !== '') {
+            $christening = DB::table('christening')->where('referenceCode', $ref)->first();
+            if ($christening !== null) {
+                $christeningId = (int) $christening->christeningId;
+            }
+        }
+
+        if ($christening === null) {
+            $clientTrim = trim((string) ($validated['client'] ?? ''));
+            $first = trim((string) ($validated['child_first_name'] ?? ''));
+            $middle = trim((string) ($validated['child_middle_name'] ?? ''));
+            $last = trim((string) ($validated['child_last_name'] ?? ''));
+
+            if ($clientTrim !== '') {
+                $parts = preg_split('/\s+/', $clientTrim) ?: [];
+                $first = $parts[0] ?? $first;
+                $last = count($parts) > 1 ? array_pop($parts) : $last;
+                $middle = count($parts) > 1 ? implode(' ', array_slice($parts, 1)) : $middle;
+            }
+
+            if ($first === '' || $last === '') {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Please enter the complete name (first name and last name) before saving certification.',
+                    'errors' => [
+                        'child_last_name' => ['Enter at least first name and last name.'],
+                    ],
+                ], 422);
+            }
+
+            try {
+                $christeningId = DB::transaction(function () use ($ref, $first, $middle, $last, $validated) {
+                    $user = Auth::user();
+                    $customerRow = [
+                        'customerFName' => $first,
+                        'customerMName' => $middle !== '' ? $middle : null,
+                        'customerLName' => $last,
+                        'updatedAt' => now(),
+                        'createdBy' => $user?->userName ?? $user?->userfName ?? null,
+                        'userId' => $user?->getAuthIdentifier(),
+                    ];
+                    $customerRow = array_filter($customerRow, fn ($v) => $v !== null);
+                    $customerId = DB::table('customer')->insertGetId($customerRow);
+
+                    $insertData = [
+                        'referenceCode' => $ref,
+                        'clientFName' => $first,
+                        'clientMName' => $middle !== '' ? $middle : null,
+                        'clientLName' => $last,
+                        'contactNum' => $this->nullableText($validated['contact_number'] ?? null),
+                        'address' => ClientNameDisplay::nullableFormattedAddress($validated['top_address'] ?? null),
+                        'dateCreated' => now(),
+                        'customerId' => $customerId,
+                    ];
+                    if (Schema::hasColumn('christening', 'workflowStep')) {
+                        $insertData['workflowStep'] = SacramentRegistrySectionFilter::SECTION_CERTIFICATION;
+                    }
+                    $insertData = array_filter($insertData, fn ($v) => $v !== null);
+
+                    return (int) DB::table('christening')->insertGetId($insertData);
+                });
+            } catch (QueryException $e) {
+                report($e);
+
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Could not create christening record for certification. If this persists, run database migrations and try again.',
+                ], 422);
+            }
+
+            $christening = DB::table('christening')->where('christeningId', $christeningId)->first();
+            if ($christening === null) {
+                return response()->json(['message' => 'Christening record not found.'], 404);
+            }
+        }
+
+        $christeningId = (int) $christening->christeningId;
 
         $this->ensureChristeningReferenceCode($christeningId);
         $christening = DB::table('christening')->where('christeningId', $christeningId)->first();

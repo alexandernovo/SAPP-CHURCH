@@ -75,6 +75,7 @@ class WeddingController extends Controller
             'perPageOptions' => DashboardController::perPageOptionsList(),
             'letterOptions' => range('A', 'Z'),
             'generatedReferenceCode' => $this->generateUniqueWeddingReferenceCode(),
+            'defaultPaymentFeeRows' => $this->defaultWeddingPaymentFeeRows(),
         ];
     }
 

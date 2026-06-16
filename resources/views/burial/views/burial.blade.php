@@ -70,7 +70,14 @@
                     <div class="modal-body pt-0">
                         <form class="sappcPaymentFeeModalForm" id="burialPaymentFeeForm" action="#"
                             method="post" autocomplete="off"
-                            data-save-url="{{ route('admin.burial.payment-save') }}">
+                            data-save-url="{{ route('admin.burial.payment-save') }}"
+                            data-default-fee-rows='@json($defaultPaymentFeeRows ?? [
+                                ["label" => "Chapel / cemetery (Arancel)", "paid" => false, "date_paid" => null],
+                                ["label" => "Opening / digging", "paid" => false, "date_paid" => null],
+                                ["label" => "Vault / urn", "paid" => false, "date_paid" => null],
+                                ["label" => "Mass / memorial offering", "paid" => false, "date_paid" => null],
+                                ["label" => "Others:", "paid" => false, "date_paid" => null],
+                            ])'>
                             <div class="sappcChOfficial sappcPaymentFeeModalOfficial">
                                 <header class="sappcChOfficialHeader">
                                     <div class="sappcChOfficialLogo sappcChOfficialLogoLeft">
